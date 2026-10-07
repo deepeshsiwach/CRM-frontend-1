@@ -174,9 +174,11 @@ export default function DashboardPage() {
           datasets: [{
             data: Object.values(statusCounts),
             backgroundColor: ["#2563eb", "#16a34a", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#f97316", "#ec4899", "#14b8a6", "#6366f1"],
+            borderWidth: 0,
+            hoverOffset: 8,
           }],
         },
-        options: { responsive: true, plugins: { legend: { position: "bottom" } } },
+        options: { responsive: true, maintainAspectRatio: false, cutout: "68%", plugins: { legend: { position: "bottom", labels: { usePointStyle: true, padding: 15 } } } },
       });
     }
 
@@ -186,9 +188,9 @@ export default function DashboardPage() {
       crmActivityChartRef.current = new Chart(crmActivityCanvasRef.current, {
         type: "bar",
         data: {
-          labels: ["Total Leads", "Assignments", "Call Logs", "Follow-ups"],
+          labels: ["Leads", "Assigned", "Calls", "Follow-ups"],
           datasets: [{
-            label: "Count",
+            label: "CRM Activity",
             data: [
               (summary.totalLeads as number) || 0,
               (summary.assignedLeads as number) || 0,
@@ -196,9 +198,19 @@ export default function DashboardPage() {
               (summary.totalFollowUps as number) || 0,
             ],
             backgroundColor: ["#2563eb", "#16a34a", "#f59e0b", "#ef4444"],
+            borderRadius: 8,
+            maxBarThickness: 60,
           }],
         },
-        options: { responsive: true, plugins: { legend: { display: false } } },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } },
+            x: { grid: { display: false } },
+          },
+        },
       });
     }
 
@@ -216,9 +228,19 @@ export default function DashboardPage() {
             label: "Active Leads",
             data: agentDist.map((a: Record<string, unknown>) => (a.activeLeads as number) || 0),
             backgroundColor: "#2563eb",
+            borderRadius: 8,
+            maxBarThickness: 60,
           }],
         },
-        options: { responsive: true, plugins: { legend: { display: false } } },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } },
+            x: { grid: { display: false } },
+          },
+        },
       });
     }
   }
@@ -401,9 +423,11 @@ export default function DashboardPage() {
           datasets: [{
             data: Object.values(statusCounts),
             backgroundColor: ["#2563eb", "#16a34a", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#f97316", "#ec4899", "#14b8a6", "#6366f1"],
+            borderWidth: 0,
+            hoverOffset: 8,
           }],
         },
-        options: { responsive: true, plugins: { legend: { position: "bottom" } } },
+        options: { responsive: true, maintainAspectRatio: false, cutout: "68%", plugins: { legend: { position: "bottom", labels: { usePointStyle: true, padding: 15 } } } },
       });
     }
 
@@ -415,14 +439,24 @@ export default function DashboardPage() {
       crmActivityChartRef.current = new Chart(crmActivityCanvasRef.current, {
         type: "bar",
         data: {
-          labels: ["Total Leads", "Assignments", "Call Logs", "Follow-ups"],
+          labels: ["Leads", "Assigned", "Calls", "Follow-ups"],
           datasets: [{
-            label: "Count",
+            label: "CRM Activity",
             data: [leads.length, assignments.length, calls.length, 0],
             backgroundColor: ["#2563eb", "#16a34a", "#f59e0b", "#ef4444"],
+            borderRadius: 8,
+            maxBarThickness: 60,
           }],
         },
-        options: { responsive: true, plugins: { legend: { display: false } } },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } },
+            x: { grid: { display: false } },
+          },
+        },
       });
     }
 
@@ -451,9 +485,19 @@ export default function DashboardPage() {
             label: "Active Leads",
             data: agentCounts,
             backgroundColor: "#2563eb",
+            borderRadius: 8,
+            maxBarThickness: 60,
           }],
         },
-        options: { responsive: true, plugins: { legend: { display: false } } },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } },
+            x: { grid: { display: false } },
+          },
+        },
       });
     }
 
@@ -586,23 +630,23 @@ export default function DashboardPage() {
 
         {/* LEAD OVERVIEW */}
         <AnalyticsCard title="Lead Overview" subtitle="Current lead distribution" large>
-          <div className="h-64">
-            <canvas id="leadOverviewChart" ref={leadOverviewCanvasRef}></canvas>
+          <div className="relative h-64">
+            <canvas id="leadOverviewChart" ref={leadOverviewCanvasRef} className="block w-full h-full"></canvas>
           </div>
         </AnalyticsCard>
 
         {/* CRM ACTIVITY */}
         <AnalyticsCard title="CRM Activity" subtitle="Current activity summary">
-          <div className="h-64">
-            <canvas id="crmActivityChart" ref={crmActivityCanvasRef}></canvas>
+          <div className="relative h-64">
+            <canvas id="crmActivityChart" ref={crmActivityCanvasRef} className="block w-full h-full"></canvas>
           </div>
         </AnalyticsCard>
 
         {/* AGENT LEAD DISTRIBUTION - MANAGEMENT ONLY */}
         {isManagement && (
           <AnalyticsCard title="Agent Lead Distribution" subtitle="Currently assigned leads by agent" large>
-            <div className="h-64">
-              <canvas id="agentLeadDistributionChart" ref={agentLeadDistCanvasRef}></canvas>
+            <div className="relative h-64">
+              <canvas id="agentLeadDistributionChart" ref={agentLeadDistCanvasRef} className="block w-full h-full"></canvas>
             </div>
           </AnalyticsCard>
         )}
