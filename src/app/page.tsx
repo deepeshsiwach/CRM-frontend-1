@@ -73,7 +73,16 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-2xl px-10 py-10">
           {/* Logo */}
           <div className="flex justify-center mb-6">
-            <Image src="/derivion_logo.png" alt="DERIVION" width={150} height={50} priority />
+            <div className="flex items-center justify-center w-full py-4 px-6 rounded-xl bg-gradient-to-r from-[#0b1220] to-[#172554] shadow-md border border-slate-800/40">
+              <Image
+                src="/derivion_logo.png"
+                alt="DERIVION"
+                width={160}
+                height={53}
+                priority
+                className="h-10 w-auto object-contain"
+              />
+            </div>
           </div>
 
           <h1 className="text-2xl font-bold text-gray-800 text-center mb-1">Welcome back</h1>
