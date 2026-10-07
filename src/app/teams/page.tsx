@@ -107,20 +107,24 @@ export default function TeamsPage() {
 
   return (
     <DashboardLayout activePage="teams">
-      <div className="teams-page">
-        <div className="teams-page-header">
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2>Teams</h2>
-            <p>Manage CRM teams and their members.</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Teams</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Manage CRM teams and their members.</p>
           </div>
-          <div className="teams-header-actions">
-            <button type="button" onClick={() => router.push("/dashboard")}>
-              ← Dashboard
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard")}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              &larr; Dashboard
             </button>
             <button
               type="button"
-              className="primary-button"
               onClick={() => router.push("/add-team")}
+              className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
             >
               + Add Team
             </button>
@@ -128,73 +132,102 @@ export default function TeamsPage() {
         </div>
 
         {message && (
-          <div id="message" style={{ color: message.isError ? "red" : "green", marginBottom: "16px" }}>
+          <div
+            className={`p-3 rounded-lg text-sm font-medium border ${
+              message.isError
+                ? "bg-red-50 text-red-700 border-red-200"
+                : "bg-green-50 text-green-700 border-green-200"
+            }`}
+          >
             {message.text}
           </div>
         )}
 
-        <div className="teams-toolbar">
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
           <input
             type="text"
             id="searchTeam"
             placeholder="Search teams..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full sm:w-80 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           />
-          <button type="button" id="refreshTeams" onClick={loadTeams} disabled={loading}>
+          <button
+            type="button"
+            id="refreshTeams"
+            onClick={loadTeams}
+            disabled={loading}
+            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors disabled:opacity-50"
+          >
             {loading ? "Refreshing..." : "Refresh"}
           </button>
         </div>
 
-        <div className="teams-table-container">
-          <table className="teams-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Team Name</th>
-                <th>Description</th>
-                <th>Status</th>
-                <th>Created At</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="teamsTableBody">
-              {filteredTeams.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: "center" }}>
-                    {loading ? "Loading..." : "No teams found."}
-                  </td>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-900 text-white text-xs uppercase tracking-wider">
+                  <th className="px-4 py-3 font-semibold">ID</th>
+                  <th className="px-4 py-3 font-semibold">Team Name</th>
+                  <th className="px-4 py-3 font-semibold">Description</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">Created At</th>
+                  <th className="px-4 py-3 font-semibold text-center sticky right-0 bg-gray-900 z-10 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.1)]">
+                    Action
+                  </th>
                 </tr>
-              ) : (
-                filteredTeams.map((team) => (
-                  <tr key={team.id}>
-                    <td>{team.id}</td>
-                    <td>{team.teamName ?? ""}</td>
-                    <td>{team.description ?? ""}</td>
-                    <td>{team.status ?? ""}</td>
-                    <td>{team.createdAt ?? ""}</td>
-                    <td>
-                      <button
-                        type="button"
-                        onClick={() => startTransition(() => router.push(`/team-details?id=${team.id}`))}
-                      >
-                        View
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => startTransition(() => router.push(`/edit-team?id=${team.id}`))}
-                      >
-                        Edit
-                      </button>
-                      <button type="button" onClick={() => handleDelete(team.id)}>
-                        Delete
-                      </button>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                {filteredTeams.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                      {loading ? "Loading..." : "No teams found."}
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredTeams.map((team) => (
+                    <tr key={team.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-gray-900">{team.id}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">{team.teamName ?? ""}</td>
+                      <td className="px-4 py-3 max-w-xs truncate" title={team.description ?? ""}>
+                        {team.description ?? ""}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium status-${(team.status || "active").toLowerCase()}`}>
+                          {team.status ?? "Active"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{team.createdAt ?? ""}</td>
+                      <td className="px-4 py-3 sticky right-0 bg-white z-10 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] text-center whitespace-nowrap min-w-[200px]">
+                        <button
+                          type="button"
+                          onClick={() => startTransition(() => router.push(`/team-details?id=${team.id}`))}
+                          className="text-xs px-2.5 py-1 border border-gray-200 rounded hover:bg-gray-50 text-gray-700 font-medium transition-colors mr-1.5"
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => startTransition(() => router.push(`/edit-team?id=${team.id}`))}
+                          className="text-xs px-2.5 py-1 border border-blue-200 text-blue-600 rounded hover:bg-blue-50 font-medium transition-colors mr-1.5"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(team.id)}
+                          className="text-xs px-2.5 py-1 border border-red-200 text-red-600 rounded hover:bg-red-50 font-medium transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </DashboardLayout>

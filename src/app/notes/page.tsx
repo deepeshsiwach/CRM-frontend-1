@@ -138,108 +138,91 @@ export default function NotesPage() {
     }
   };
 
+  const thCls = "px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider";
+  const tdCls = "px-3 py-3 text-sm text-gray-700 border-t border-gray-100";
+
   return (
     <DashboardLayout activeMenu="notes" title="Notes">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15, gap: 15, flexWrap: "wrap" }}>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <input
           type="text"
           id="searchNote"
           placeholder="Search notes..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          style={{ maxWidth: 300, width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid #d1d5db" }}
+          className="max-w-xs w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
         />
 
-        <div style={{ display: "flex", gap: 10 }}>
+        <div className="flex gap-2">
           <button
             type="button"
-            className="primary-button"
             onClick={() => router.push("/add-note")}
-            style={{ padding: "8px 14px", background: "#2563eb", color: "#fff", borderRadius: 6, fontWeight: 600 }}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
           >
             + Add Note
           </button>
           <button
             type="button"
             onClick={loadData}
-            style={{ padding: "8px 14px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer" }}
+            className="border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
           >
-            Refresh
+            🔄 Refresh
           </button>
         </div>
       </div>
 
-      {message && <p id="message" style={{ color: "#2563eb", fontSize: 13, margin: "6px 0 12px" }}>{message}</p>}
+      {message && (
+        <p id="message" className="text-blue-600 text-sm font-medium mb-3">{message}</p>
+      )}
 
-      <div className="table-container" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, overflowX: "auto" }}>
-        <table className="leads-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ background: "#111827", color: "#fff" }}>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>ID</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Lead</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>User</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Note</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Created At</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Action</th>
-            </tr>
-          </thead>
-          <tbody id="notesTableBody">
-            {loading ? (
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-900">
               <tr>
-                <td colSpan={6} style={{ textAlign: "center", padding: 24 }}>Loading notes...</td>
+                <th className={thCls}>ID</th>
+                <th className={thCls}>Lead</th>
+                <th className={thCls}>User</th>
+                <th className={thCls}>Note</th>
+                <th className={thCls}>Created At</th>
+                <th className={thCls}>Action</th>
               </tr>
-            ) : filteredNotes.length === 0 ? (
-              <tr>
-                <td colSpan={6} style={{ textAlign: "center", padding: 24, color: "#6b7280" }}>
-                  No notes found.
-                </td>
-              </tr>
-            ) : (
-              filteredNotes.map((note) => (
-                <tr key={note.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                  <td style={{ padding: "10px" }}>{note.id}</td>
-                  <td style={{ padding: "10px" }}>
-                    <strong>{leadNameMap[String(note.leadId)] || "Unknown Lead"}</strong>
-                    <br />
-                    <small style={{ color: "#6b7280" }}>ID: {note.leadId}</small>
-                  </td>
-                  <td style={{ padding: "10px" }}>
-                    <strong>{userNameMap[String(note.userId)] || "Unknown User"}</strong>
-                    <br />
-                    <small style={{ color: "#6b7280" }}>ID: {note.userId}</small>
-                  </td>
-                  <td style={{ padding: "10px", maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {note.note || "-"}
-                  </td>
-                  <td style={{ padding: "10px", fontSize: 13 }}>{note.createdAt || "-"}</td>
-                  <td style={{ padding: "10px", whiteSpace: "nowrap" }}>
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/note-details?id=${note.id}`)}
-                      style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer", marginRight: 4 }}
-                    >
-                      View
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/edit-note?id=${note.id}`)}
-                      style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer", marginRight: 4 }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(note.id)}
-                      style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #fecaca", background: "#fff", color: "#dc2626", cursor: "pointer" }}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody id="notesTableBody">
+              {loading ? (
+                <tr><td colSpan={6} className="text-center py-8 text-gray-400 text-sm">Loading notes...</td></tr>
+              ) : filteredNotes.length === 0 ? (
+                <tr><td colSpan={6} className="text-center py-8 text-gray-400 text-sm">No notes found.</td></tr>
+              ) : (
+                filteredNotes.map((note) => (
+                  <tr key={note.id} className="hover:bg-gray-50 transition-colors">
+                    <td className={tdCls}>{note.id}</td>
+                    <td className={tdCls}>
+                      <span className="font-semibold text-gray-800">{leadNameMap[String(note.leadId)] || "Unknown Lead"}</span>
+                      <br />
+                      <span className="text-xs text-gray-400">ID: {note.leadId}</span>
+                    </td>
+                    <td className={tdCls}>
+                      <span className="font-semibold text-gray-800">{userNameMap[String(note.userId)] || "Unknown User"}</span>
+                      <br />
+                      <span className="text-xs text-gray-400">ID: {note.userId}</span>
+                    </td>
+                    <td className={`${tdCls} max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap`}>{note.note || "-"}</td>
+                    <td className={`${tdCls} text-xs`}>{note.createdAt || "-"}</td>
+                    <td className={`${tdCls} whitespace-nowrap`}>
+                      <button type="button" onClick={() => router.push(`/note-details?id=${note.id}`)}
+                        className="text-xs px-2.5 py-1 border border-gray-200 rounded hover:bg-gray-50 transition-colors mr-1">View</button>
+                      <button type="button" onClick={() => router.push(`/edit-note?id=${note.id}`)}
+                        className="text-xs px-2.5 py-1 border border-gray-200 rounded hover:bg-gray-50 transition-colors mr-1">Edit</button>
+                      <button type="button" onClick={() => handleDelete(note.id)}
+                        className="text-xs px-2.5 py-1 border border-red-200 text-red-600 rounded hover:bg-red-50 transition-colors">Delete</button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </DashboardLayout>
   );

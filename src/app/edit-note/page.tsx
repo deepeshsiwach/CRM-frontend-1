@@ -110,96 +110,104 @@ function EditNoteContent() {
   if (loading) {
     return (
       <DashboardLayout activeMenu="notes" title="Edit Note">
-        <p style={{ padding: 20 }}>Loading note...</p>
+        <div className="p-8 text-center text-gray-400">Loading note...</div>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout activeMenu="notes">
-      <div className="content-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div>
-          <h2 style={{ margin: 0 }}>Edit Note #{noteId}</h2>
-          <p style={{ margin: "4px 0 0", color: "#6b7280" }}>Update note details</p>
+      <div className="space-y-6 max-w-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Edit Note #{noteId}</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Update note content or linked record associations.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push(`/note-details?id=${noteId}`)}
+            className="self-start sm:self-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            &larr; Cancel
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => router.push(`/note-details?id=${noteId}`)}
-          style={{ padding: "8px 14px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer" }}
-        >
-          ← Cancel
-        </button>
-      </div>
 
-      <div className="form-card" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: 24, maxWidth: 700 }}>
-        <form id="editNoteForm" onSubmit={handleSubmit}>
-          <div className="form-group" style={{ marginBottom: 15 }}>
-            <label htmlFor="leadId" style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Lead ID</label>
-            <input
-              type="number"
-              id="leadId"
-              required
-              value={leadId}
-              onChange={(e) => setLeadId(e.target.value)}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
-            />
+        {message && (
+          <div
+            className={`p-3 rounded-lg text-sm font-medium border ${
+              message.isError
+                ? "bg-red-50 text-red-700 border-red-200"
+                : "bg-green-50 text-green-700 border-green-200"
+            }`}
+          >
+            {message.text}
           </div>
+        )}
 
-          <div className="form-group" style={{ marginBottom: 15 }}>
-            <label htmlFor="userId" style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>User ID</label>
-            <input
-              type="number"
-              id="userId"
-              required
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
-            />
-          </div>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <form id="editNoteForm" onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="leadId" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Lead ID *
+                </label>
+                <input
+                  type="number"
+                  id="leadId"
+                  required
+                  value={leadId}
+                  onChange={(e) => setLeadId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
-          <div className="form-group" style={{ marginBottom: 20 }}>
-            <label htmlFor="note" style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Note Content *</label>
-            <textarea
-              id="note"
-              rows={4}
-              required
-              value={noteText}
-              onChange={(e) => setNoteText(e.target.value)}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
-            />
-          </div>
+              <div>
+                <label htmlFor="userId" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  User ID *
+                </label>
+                <input
+                  type="number"
+                  id="userId"
+                  required
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
 
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="primary-button"
-              style={{ padding: "9px 18px", background: "#2563eb", color: "#fff", borderRadius: 6, fontWeight: 600 }}
-            >
-              {submitting ? "Saving..." : "Save Changes"}
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push(`/note-details?id=${noteId}`)}
-              style={{ padding: "9px 18px", background: "#f3f4f6", color: "#374151", border: "1px solid #d1d5db", borderRadius: 6, cursor: "pointer" }}
-            >
-              Cancel
-            </button>
+            <div>
+              <label htmlFor="note" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Note Content *
+              </label>
+              <textarea
+                id="note"
+                rows={4}
+                required
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
 
-            {message && (
-              <span
-                id="message"
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: message.isError ? "#dc2626" : "#15803d",
-                }}
+            <div className="flex items-center gap-3 pt-3">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
               >
-                {message.text}
-              </span>
-            )}
-          </div>
-        </form>
+                {submitting ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push(`/note-details?id=${noteId}`)}
+                className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </DashboardLayout>
   );
@@ -207,7 +215,7 @@ function EditNoteContent() {
 
 export default function EditNotePage() {
   return (
-    <Suspense fallback={<p style={{ padding: 20 }}>Loading...</p>}>
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}>
       <EditNoteContent />
     </Suspense>
   );

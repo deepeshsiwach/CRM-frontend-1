@@ -520,295 +520,193 @@ export default function DashboardPage() {
 
   const isManagement = userRole === "ADMIN" || userRole === "MANAGER";
 
+  // Reusable stat card component (inline)
+  const StatCard = ({ icon, label, value, sublabel, id }: { icon: string; label: string; value: number; sublabel: string; id?: string }) => (
+    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200" id={id}>
+      <div className="text-3xl mb-3">{icon}</div>
+      <div className="text-sm font-medium text-gray-500 mb-1">{label}</div>
+      <div className="text-3xl font-bold text-blue-600 mb-1">{value}</div>
+      <div className="text-xs text-gray-400">{sublabel}</div>
+    </div>
+  );
+
+  const AnalyticsCard = ({ title, subtitle, children, large }: { title: string; subtitle: string; children: React.ReactNode; large?: boolean }) => (
+    <div className={`bg-white rounded-xl p-6 shadow-sm border border-gray-100 ${large ? "col-span-2" : ""}`}>
+      <div className="mb-4">
+        <h3 className="text-base font-bold text-gray-800">{title}</h3>
+        <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
+      </div>
+      {children}
+    </div>
+  );
+
+  const tableHeadClass = "text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50";
+  const tableCellClass = "px-4 py-3 text-sm text-gray-700 border-t border-gray-100";
+  const tableCellCenterClass = "px-4 py-3 text-sm text-gray-700 border-t border-gray-100 text-center";
+
   return (
     <DashboardLayout activeMenu="dashboard">
       {/* =====================================================
-          ADD LEAD BUTTON
+          HEADER ROW
           ===================================================== */}
-      <button
-        type="button"
-        className="add-lead-button"
-        onClick={() => router.push("/add-lead")}
-      >
-        + Add Lead
-      </button>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
+        <button
+          type="button"
+          onClick={() => router.push("/add-lead")}
+          className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors duration-200 shadow-sm"
+        >
+          + Add Lead
+        </button>
+      </div>
 
       {/* =====================================================
           DASHBOARD CARDS
           ===================================================== */}
-      <div className="dashboard-cards">
-
-        {/* TOTAL LEADS */}
-        <div className="dashboard-card">
-          <div className="card-icon">👥</div>
-          <h3>Total Leads</h3>
-          <p id="totalLeads">{totalLeads}</p>
-          <span className="card-label">Currently assigned</span>
-        </div>
-
-        {/* ATTENDED LEADS */}
-        <div className="dashboard-card" id="attendedLeadsCard">
-          <div className="card-icon">☎️</div>
-          <h3>Attended Leads</h3>
-          <p id="attendedLeads">{attendedLeads}</p>
-          <span className="card-label">Leads worked today</span>
-        </div>
-
-        {/* REMAINING LEADS */}
-        <div className="dashboard-card" id="remainingLeadsCard">
-          <div className="card-icon">⏳</div>
-          <h3>Remaining Leads</h3>
-          <p id="remainingLeads">{remainingLeads}</p>
-          <span className="card-label">Yet to be worked</span>
-        </div>
-
-        {/* FOLLOW-UPS */}
-        <div className="dashboard-card">
-          <div className="card-icon">📅</div>
-          <h3>Follow-ups</h3>
-          <p id="totalFollowUps">{totalFollowUps}</p>
-          <span className="card-label">Scheduled activities</span>
-        </div>
-
-        {/* CALL LOGS */}
-        <div className="dashboard-card">
-          <div className="card-icon">📞</div>
-          <h3>Call Logs</h3>
-          <p id="totalCalls">{totalCalls}</p>
-          <span className="card-label">Recorded calls</span>
-        </div>
-
-        {/* PENDING FOLLOW-UPS */}
-        <div className="dashboard-card">
-          <div className="card-icon">⏳</div>
-          <h3>Pending Follow-ups</h3>
-          <p id="pendingFollowUps">{pendingFollowUps}</p>
-          <span className="card-label">Waiting for action</span>
-        </div>
-
-        {/* COMPLETED FOLLOW-UPS */}
-        <div className="dashboard-card">
-          <div className="card-icon">✅</div>
-          <h3>Completed Follow-ups</h3>
-          <p id="completedFollowUps">{completedFollowUps}</p>
-          <span className="card-label">Successfully completed</span>
-        </div>
-
-        {/* MISSED FOLLOW-UPS */}
-        <div className="dashboard-card">
-          <div className="card-icon">⚠️</div>
-          <h3>Missed Follow-ups</h3>
-          <p id="missedFollowUps">{missedFollowUps}</p>
-          <span className="card-label">Require attention</span>
-        </div>
-
-        {/* CANCELLED FOLLOW-UPS */}
-        <div className="dashboard-card">
-          <div className="card-icon">❌</div>
-          <h3>Cancelled Follow-ups</h3>
-          <p id="cancelledFollowUps">{cancelledFollowUps}</p>
-          <span className="card-label">Cancelled activities</span>
-        </div>
-
-        {/* TODAY'S FOLLOW-UPS */}
-        <div className="dashboard-card">
-          <div className="card-icon">📆</div>
-          <h3>Today&apos;s Follow-ups</h3>
-          <p id="todayFollowUps">{todayFollowUps}</p>
-          <span className="card-label">Due today</span>
-        </div>
-
-        {/* UNASSIGNED LEADS - MANAGEMENT ONLY */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
+        <StatCard icon="👥" label="Total Leads"            value={totalLeads}          sublabel="Currently assigned"        id="totalLeads" />
+        <StatCard icon="☎️" label="Attended Leads"          value={attendedLeads}        sublabel="Leads worked today"         id="attendedLeadsCard" />
+        <StatCard icon="⏳" label="Remaining Leads"         value={remainingLeads}       sublabel="Yet to be worked"           id="remainingLeadsCard" />
+        <StatCard icon="📅" label="Follow-ups"              value={totalFollowUps}       sublabel="Scheduled activities" />
+        <StatCard icon="📞" label="Call Logs"               value={totalCalls}           sublabel="Recorded calls" />
+        <StatCard icon="⏳" label="Pending Follow-ups"      value={pendingFollowUps}     sublabel="Waiting for action" />
+        <StatCard icon="✅" label="Completed Follow-ups"    value={completedFollowUps}   sublabel="Successfully completed" />
+        <StatCard icon="⚠️" label="Missed Follow-ups"       value={missedFollowUps}      sublabel="Require attention" />
+        <StatCard icon="❌" label="Cancelled Follow-ups"    value={cancelledFollowUps}   sublabel="Cancelled activities" />
+        <StatCard icon="📆" label="Today's Follow-ups"      value={todayFollowUps}       sublabel="Due today" />
         {isManagement && (
-          <div className="dashboard-card management-only" id="unassignedLeadsCard">
-            <div className="card-icon">📥</div>
-            <h3>Unassigned Leads</h3>
-            <p id="unassignedLeads">{unassignedLeads}</p>
-            <span className="card-label">Open leads awaiting assignment</span>
-          </div>
+          <StatCard icon="📥" label="Unassigned Leads" value={unassignedLeads} sublabel="Awaiting assignment" id="unassignedLeadsCard" />
         )}
-
       </div>
 
       {/* =====================================================
           ANALYTICS AREA
           ===================================================== */}
-      <div className="dashboard-analytics">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {/* LEAD OVERVIEW */}
-        <div className="analytics-card analytics-large">
-          <div className="analytics-header">
-            <div>
-              <h3>Lead Overview</h3>
-              <p>Current lead distribution</p>
-            </div>
-          </div>
-          <div className="chart-container">
+        <AnalyticsCard title="Lead Overview" subtitle="Current lead distribution" large>
+          <div className="h-64">
             <canvas id="leadOverviewChart" ref={leadOverviewCanvasRef}></canvas>
           </div>
-        </div>
+        </AnalyticsCard>
 
         {/* CRM ACTIVITY */}
-        <div className="analytics-card">
-          <div className="analytics-header">
-            <div>
-              <h3>CRM Activity</h3>
-              <p>Current activity summary</p>
-            </div>
-          </div>
-          <div className="chart-container">
+        <AnalyticsCard title="CRM Activity" subtitle="Current activity summary">
+          <div className="h-64">
             <canvas id="crmActivityChart" ref={crmActivityCanvasRef}></canvas>
           </div>
-        </div>
+        </AnalyticsCard>
 
         {/* AGENT LEAD DISTRIBUTION - MANAGEMENT ONLY */}
         {isManagement && (
-          <div className="analytics-card analytics-large management-only">
-            <div className="analytics-header">
-              <div>
-                <h3>Agent Lead Distribution</h3>
-                <p>Currently assigned leads by agent</p>
-              </div>
-            </div>
-            <div className="chart-container">
+          <AnalyticsCard title="Agent Lead Distribution" subtitle="Currently assigned leads by agent" large>
+            <div className="h-64">
               <canvas id="agentLeadDistributionChart" ref={agentLeadDistCanvasRef}></canvas>
             </div>
-          </div>
+          </AnalyticsCard>
         )}
 
         {/* AGENT PERFORMANCE - MANAGEMENT ONLY */}
         {isManagement && (
-          <div className="analytics-card analytics-large management-only">
-            <div className="analytics-header">
-              <div>
-                <h3>Agent Performance</h3>
-                <p>Current agent activity and conversion</p>
-              </div>
-            </div>
-            <div style={{ overflowX: "auto" }}>
-              <table
-                id="agentPerformanceTable"
-                style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}
-              >
+          <AnalyticsCard title="Agent Performance" subtitle="Current agent activity and conversion" large>
+            <div className="overflow-x-auto">
+              <table id="agentPerformanceTable" className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th style={{ textAlign: "left", padding: "12px" }}>Agent</th>
-                    <th style={{ textAlign: "center", padding: "12px" }}>Active Leads</th>
-                    <th style={{ textAlign: "center", padding: "12px" }}>Total Calls</th>
-                    <th style={{ textAlign: "center", padding: "12px" }}>Enrolled</th>
+                    <th className={tableHeadClass}>Agent</th>
+                    <th className={`${tableHeadClass} text-center`}>Active Leads</th>
+                    <th className={`${tableHeadClass} text-center`}>Total Calls</th>
+                    <th className={`${tableHeadClass} text-center`}>Enrolled</th>
                   </tr>
                 </thead>
                 <tbody id="agentPerformanceTableBody">
                   {agentPerformanceData.length === 0 ? (
                     <tr>
-                      <td colSpan={4} style={{ textAlign: "center", padding: "20px" }}>
-                        Loading...
-                      </td>
+                      <td colSpan={4} className="text-center py-5 text-gray-400 text-sm border-t border-gray-100">Loading...</td>
                     </tr>
                   ) : (
                     agentPerformanceData.map((agent, i) => (
-                      <tr key={i}>
-                        <td style={{ padding: "12px" }}>{agent.agentName}</td>
-                        <td style={{ textAlign: "center", padding: "12px" }}>{agent.activeLeads}</td>
-                        <td style={{ textAlign: "center", padding: "12px" }}>{agent.totalCalls}</td>
-                        <td style={{ textAlign: "center", padding: "12px" }}>{agent.enrolled}</td>
+                      <tr key={i} className="hover:bg-gray-50 transition-colors">
+                        <td className={tableCellClass}>{agent.agentName}</td>
+                        <td className={tableCellCenterClass}>{agent.activeLeads}</td>
+                        <td className={tableCellCenterClass}>{agent.totalCalls}</td>
+                        <td className={tableCellCenterClass}>{agent.enrolled}</td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
             </div>
-          </div>
+          </AnalyticsCard>
         )}
 
         {/* CAMPAIGN PERFORMANCE - MANAGEMENT ONLY */}
         {isManagement && (
-          <div className="analytics-card analytics-large management-only">
-            <div className="analytics-header">
-              <div>
-                <h3>Campaign Performance</h3>
-                <p>Leads and enrollments by campaign</p>
-              </div>
-            </div>
-            <div style={{ overflowX: "auto" }}>
-              <table
-                id="campaignPerformanceTable"
-                style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}
-              >
+          <AnalyticsCard title="Campaign Performance" subtitle="Leads and enrollments by campaign" large>
+            <div className="overflow-x-auto">
+              <table id="campaignPerformanceTable" className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th style={{ textAlign: "left", padding: "12px" }}>Campaign</th>
-                    <th style={{ textAlign: "left", padding: "12px" }}>Source</th>
-                    <th style={{ textAlign: "center", padding: "12px" }}>Status</th>
-                    <th style={{ textAlign: "center", padding: "12px" }}>Total Leads</th>
-                    <th style={{ textAlign: "center", padding: "12px" }}>Enrolled</th>
+                    <th className={tableHeadClass}>Campaign</th>
+                    <th className={tableHeadClass}>Source</th>
+                    <th className={`${tableHeadClass} text-center`}>Status</th>
+                    <th className={`${tableHeadClass} text-center`}>Total Leads</th>
+                    <th className={`${tableHeadClass} text-center`}>Enrolled</th>
                   </tr>
                 </thead>
                 <tbody id="campaignPerformanceTableBody">
                   {campaignPerformanceData.length === 0 ? (
                     <tr>
-                      <td colSpan={5} style={{ textAlign: "center", padding: "20px" }}>
-                        Loading...
-                      </td>
+                      <td colSpan={5} className="text-center py-5 text-gray-400 text-sm border-t border-gray-100">Loading...</td>
                     </tr>
                   ) : (
                     campaignPerformanceData.map((c, i) => (
-                      <tr key={i}>
-                        <td style={{ padding: "12px" }}>{c.campaignName}</td>
-                        <td style={{ padding: "12px" }}>{c.source}</td>
-                        <td style={{ textAlign: "center", padding: "12px" }}>{c.status}</td>
-                        <td style={{ textAlign: "center", padding: "12px" }}>{c.totalLeads}</td>
-                        <td style={{ textAlign: "center", padding: "12px" }}>{c.enrolled}</td>
+                      <tr key={i} className="hover:bg-gray-50 transition-colors">
+                        <td className={tableCellClass}>{c.campaignName}</td>
+                        <td className={tableCellClass}>{c.source}</td>
+                        <td className={tableCellCenterClass}>{c.status}</td>
+                        <td className={tableCellCenterClass}>{c.totalLeads}</td>
+                        <td className={tableCellCenterClass}>{c.enrolled}</td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
             </div>
-          </div>
+          </AnalyticsCard>
         )}
 
         {/* LEAD SOURCE PERFORMANCE - MANAGEMENT ONLY */}
         {isManagement && (
-          <div className="analytics-card analytics-large management-only">
-            <div className="analytics-header">
-              <div>
-                <h3>Lead Source Performance</h3>
-                <p>Leads and enrollments by source</p>
-              </div>
-            </div>
-            <div style={{ overflowX: "auto" }}>
-              <table
-                id="leadSourcePerformanceTable"
-                style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}
-              >
+          <AnalyticsCard title="Lead Source Performance" subtitle="Leads and enrollments by source" large>
+            <div className="overflow-x-auto">
+              <table id="leadSourcePerformanceTable" className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th style={{ textAlign: "left", padding: "12px" }}>Source</th>
-                    <th style={{ textAlign: "center", padding: "12px" }}>Total Leads</th>
-                    <th style={{ textAlign: "center", padding: "12px" }}>Enrolled</th>
+                    <th className={tableHeadClass}>Source</th>
+                    <th className={`${tableHeadClass} text-center`}>Total Leads</th>
+                    <th className={`${tableHeadClass} text-center`}>Enrolled</th>
                   </tr>
                 </thead>
                 <tbody>
                   {leadSourceData.length === 0 ? (
                     <tr>
-                      <td colSpan={3} style={{ textAlign: "center", padding: "20px" }}>
-                        Loading...
-                      </td>
+                      <td colSpan={3} className="text-center py-5 text-gray-400 text-sm border-t border-gray-100">Loading...</td>
                     </tr>
                   ) : (
                     leadSourceData.map((src, i) => (
-                      <tr key={i}>
-                        <td style={{ padding: "12px" }}>{src.source}</td>
-                        <td style={{ textAlign: "center", padding: "12px" }}>{src.count}</td>
-                        <td style={{ textAlign: "center", padding: "12px" }}>{src.enrolled}</td>
+                      <tr key={i} className="hover:bg-gray-50 transition-colors">
+                        <td className={tableCellClass}>{src.source}</td>
+                        <td className={tableCellCenterClass}>{src.count}</td>
+                        <td className={tableCellCenterClass}>{src.enrolled}</td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
             </div>
-          </div>
+          </AnalyticsCard>
         )}
 
       </div>

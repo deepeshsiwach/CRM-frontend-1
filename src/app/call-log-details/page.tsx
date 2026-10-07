@@ -7,6 +7,7 @@
 
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken } from "@/lib/auth";
@@ -66,92 +67,104 @@ function CallLogDetailsContent() {
   if (loading) {
     return (
       <DashboardLayout activeMenu="call-logs" title="Call Log Details">
-        <p style={{ padding: 20 }}>Loading call log details...</p>
+        <div className="p-8 text-center text-gray-400">Loading call log details...</div>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout activeMenu="call-logs">
-      <div className="content-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div>
-          <h2 style={{ margin: 0 }}>Call Log Details</h2>
-          <p style={{ margin: "4px 0 0", color: "#6b7280" }}>Viewing call log #{callLogId}</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => router.push("/call-logs")}
-          style={{ padding: "8px 14px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer" }}
-        >
-          ← Back to Call Logs
-        </button>
-      </div>
-
-      {error ? (
-        <p style={{ color: "red" }}>{error}</p>
-      ) : callLog ? (
-        <div className="form-card" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: 24, maxWidth: 700 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-              <strong style={{ color: "#4b5563" }}>Call Log ID:</strong>
-              <span id="callLogId">{callLog.id}</span>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-              <strong style={{ color: "#4b5563" }}>Lead ID:</strong>
-              <span id="leadId">
-                <a href={`/lead-details?id=${callLog.leadId}`} style={{ color: "#2563eb", textDecoration: "underline" }}>
-                  {callLog.leadId}
-                </a>
-              </span>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-              <strong style={{ color: "#4b5563" }}>Agent ID:</strong>
-              <span id="agentId">{callLog.agentId}</span>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-              <strong style={{ color: "#4b5563" }}>Start Time:</strong>
-              <span id="startTime">{callLog.callStartTime || "-"}</span>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-              <strong style={{ color: "#4b5563" }}>End Time:</strong>
-              <span id="endTime">{callLog.callEndTime || "-"}</span>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-              <strong style={{ color: "#4b5563" }}>Duration:</strong>
-              <span id="duration">{callLog.durationSeconds != null ? `${callLog.durationSeconds} seconds` : "-"}</span>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-              <strong style={{ color: "#4b5563" }}>Status:</strong>
-              <span id="callStatus" style={{ padding: "3px 8px", borderRadius: 12, fontSize: 12, background: "#eff6ff", color: "#1d4ed8", fontWeight: 600 }}>
-                {callLog.callStatus || "-"}
-              </span>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-              <strong style={{ color: "#4b5563" }}>Outcome:</strong>
-              <span id="outcome">{callLog.callOutcome || "-"}</span>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0" }}>
-              <strong style={{ color: "#4b5563" }}>Remarks:</strong>
-              <span id="remarks">{callLog.remarks || "-"}</span>
-            </div>
+      <div className="space-y-6 max-w-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Call Log Details</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Viewing call log #{callLogId}</p>
           </div>
+          <button
+            type="button"
+            onClick={() => router.push("/call-logs")}
+            className="self-start sm:self-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            &larr; Back to Call Logs
+          </button>
         </div>
-      ) : null}
+
+        {error ? (
+          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm font-medium">
+            {error}
+          </div>
+        ) : callLog ? (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+            <dl className="divide-y divide-gray-100 text-sm">
+              <div className="flex justify-between py-2.5">
+                <dt className="text-gray-500 font-medium">Call Log ID</dt>
+                <dd className="font-semibold text-gray-900">{callLog.id}</dd>
+              </div>
+
+              <div className="flex justify-between py-2.5">
+                <dt className="text-gray-500 font-medium">Lead ID</dt>
+                <dd className="font-semibold">
+                  <Link href={`/lead-details?id=${callLog.leadId}`} className="text-blue-600 hover:underline">
+                    #{callLog.leadId}
+                  </Link>
+                </dd>
+              </div>
+
+              <div className="flex justify-between py-2.5">
+                <dt className="text-gray-500 font-medium">Agent ID</dt>
+                <dd className="font-semibold text-gray-900">{callLog.agentId}</dd>
+              </div>
+
+              <div className="flex justify-between py-2.5">
+                <dt className="text-gray-500 font-medium">Start Time</dt>
+                <dd className="text-gray-700 whitespace-nowrap">{callLog.callStartTime || "-"}</dd>
+              </div>
+
+              <div className="flex justify-between py-2.5">
+                <dt className="text-gray-500 font-medium">End Time</dt>
+                <dd className="text-gray-700 whitespace-nowrap">{callLog.callEndTime || "-"}</dd>
+              </div>
+
+              <div className="flex justify-between py-2.5">
+                <dt className="text-gray-500 font-medium">Duration</dt>
+                <dd className="text-gray-900 font-medium">
+                  {callLog.durationSeconds != null ? `${callLog.durationSeconds} seconds` : "-"}
+                </dd>
+              </div>
+
+              <div className="flex justify-between py-2.5 items-center">
+                <dt className="text-gray-500 font-medium">Status</dt>
+                <dd>
+                  <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                    {callLog.callStatus || "-"}
+                  </span>
+                </dd>
+              </div>
+
+              <div className="flex justify-between py-2.5 items-center">
+                <dt className="text-gray-500 font-medium">Outcome</dt>
+                <dd>
+                  <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                    {callLog.callOutcome || "-"}
+                  </span>
+                </dd>
+              </div>
+
+              <div className="flex justify-between py-2.5">
+                <dt className="text-gray-500 font-medium">Remarks</dt>
+                <dd className="text-gray-800 max-w-xs text-right">{callLog.remarks || "-"}</dd>
+              </div>
+            </dl>
+          </div>
+        ) : null}
+      </div>
     </DashboardLayout>
   );
 }
 
 export default function CallLogDetailsPage() {
   return (
-    <Suspense fallback={<p style={{ padding: 20 }}>Loading...</p>}>
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}>
       <CallLogDetailsContent />
     </Suspense>
   );

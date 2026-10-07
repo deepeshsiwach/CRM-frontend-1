@@ -272,21 +272,25 @@ function CampaignDetailsContent() {
   }, [campaignId, router]);
 
   return (
-    <div className="campaign-details-page">
-      <div className="page-header">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2>Campaign Details</h2>
-          <p>View complete campaign information.</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Campaign Details</h1>
+          <p className="text-sm text-gray-500 mt-0.5">View analytics and configuration for this campaign.</p>
         </div>
-        <div className="page-header-actions">
-          <button type="button" onClick={() => router.push("/campaigns")}>
-            ← Back to Campaigns
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.push("/campaigns")}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            &larr; Back to Campaigns
           </button>
           <button
             type="button"
             id="editCampaignButton"
-            className="primary-button"
             onClick={() => router.push(`/edit-campaign?id=${campaignId}`)}
+            className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
           >
             Edit Campaign
           </button>
@@ -294,156 +298,159 @@ function CampaignDetailsContent() {
       </div>
 
       {message && (
-        <div id="message" style={{ color: message.isError ? "red" : "green", marginBottom: "16px" }}>
+        <div
+          className={`p-3 rounded-lg text-sm font-medium border ${
+            message.isError
+              ? "bg-red-50 text-red-700 border-red-200"
+              : "bg-green-50 text-green-700 border-green-200"
+          }`}
+        >
           {message.text}
         </div>
       )}
 
-      <div className="details-card">
-        {/* Campaign Analytics */}
-        <div className="campaign-analytics">
-          <div className="analytics-header">
-            <div>
-              <h2>Campaign Analytics</h2>
-              <p>Performance overview for this campaign</p>
+      {/* Campaign Analytics */}
+      <div className="space-y-6">
+        {/* Lead KPI Cards */}
+        <div>
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Lead Metrics</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Leads</span>
+              <div className="text-2xl font-bold text-gray-900 mt-1">{totalLeads}</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">New Leads</span>
+              <div className="text-2xl font-bold text-blue-600 mt-1">{newLeads}</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Interested</span>
+              <div className="text-2xl font-bold text-amber-600 mt-1">{interestedLeads}</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <span className="text-xs font-semibold text-green-600 uppercase tracking-wider">Enrolled</span>
+              <div className="text-2xl font-bold text-green-600 mt-1">{enrolledLeads}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Call KPI Cards */}
+        <div>
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Call Metrics</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Calls</span>
+              <div className="text-2xl font-bold text-gray-900 mt-1">{totalCalls}</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <span className="text-xs font-semibold text-green-600 uppercase tracking-wider">Answered Calls</span>
+              <div className="text-2xl font-bold text-green-600 mt-1">{answeredCalls}</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <span className="text-xs font-semibold text-red-600 uppercase tracking-wider">Not Answered</span>
+              <div className="text-2xl font-bold text-red-600 mt-1">{notAnsweredCalls}</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider">Avg Duration</span>
+              <div className="text-2xl font-bold text-purple-600 mt-1">{averageCallDuration} sec</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Lead Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+            <h3 className="text-sm font-semibold text-gray-800 mb-4">Lead Status Distribution</h3>
+            <div className="relative h-64 w-full">
+              <canvas ref={leadStatusCanvasRef} />
             </div>
           </div>
 
-          {/* Lead KPI Cards */}
-          <div className="analytics-kpi-grid">
-            <div className="analytics-kpi-card">
-              <span>Total Leads</span>
-              <strong id="analyticsTotalLeads">{totalLeads}</strong>
-            </div>
-            <div className="analytics-kpi-card">
-              <span>New Leads</span>
-              <strong id="analyticsNewLeads">{newLeads}</strong>
-            </div>
-            <div className="analytics-kpi-card">
-              <span>Interested</span>
-              <strong id="analyticsInterestedLeads">{interestedLeads}</strong>
-            </div>
-            <div className="analytics-kpi-card">
-              <span>Enrolled</span>
-              <strong id="analyticsEnrolledLeads">{enrolledLeads}</strong>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+            <h3 className="text-sm font-semibold text-gray-800 mb-4">Leads by City</h3>
+            <div className="relative h-64 w-full">
+              <canvas ref={cityCanvasRef} />
             </div>
           </div>
+        </div>
 
-          {/* Call KPI Cards */}
-          <div className="analytics-kpi-grid">
-            <div className="analytics-kpi-card">
-              <span>Total Calls</span>
-              <strong id="analyticsTotalCalls">{totalCalls}</strong>
-            </div>
-            <div className="analytics-kpi-card">
-              <span>Answered Calls</span>
-              <strong id="analyticsAnsweredCalls">{answeredCalls}</strong>
-            </div>
-            <div className="analytics-kpi-card">
-              <span>Not Answered</span>
-              <strong id="analyticsNotAnsweredCalls">{notAnsweredCalls}</strong>
-            </div>
-            <div className="analytics-kpi-card">
-              <span>Avg. Call Duration</span>
-              <strong id="analyticsAverageCallDuration">{averageCallDuration} sec</strong>
-            </div>
-          </div>
-
-          {/* Lead Charts */}
-          <div className="analytics-chart-grid">
-            <div className="analytics-chart-card">
-              <h3>Lead Status Distribution</h3>
-              <div style={{ position: "relative", height: "250px" }}>
-                <canvas ref={leadStatusCanvasRef} id="campaignLeadStatusChart"></canvas>
+        {/* Call Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+            <h3 className="text-sm font-semibold text-gray-800 mb-4">Call Status Distribution</h3>
+            {!hasCallStatusData && (
+              <div className="p-8 text-center text-sm text-gray-400 my-auto">
+                No call activity yet
               </div>
-            </div>
-
-            <div className="analytics-chart-card">
-              <h3>Leads by City</h3>
-              <div style={{ position: "relative", height: "250px" }}>
-                <canvas ref={cityCanvasRef} id="campaignCityChart"></canvas>
-              </div>
+            )}
+            <div className="relative h-64 w-full" style={{ display: hasCallStatusData ? "block" : "none" }}>
+              <canvas ref={callStatusCanvasRef} />
             </div>
           </div>
 
-          {/* Call Charts */}
-          <div className="analytics-chart-grid">
-            <div className="analytics-chart-card">
-              <h3>Call Status Distribution</h3>
-              {!hasCallStatusData && (
-                <div id="campaignCallStatusEmpty" className="analytics-empty-state">
-                  No call activity yet
-                </div>
-              )}
-              <div style={{ position: "relative", height: "250px", display: hasCallStatusData ? "block" : "none" }}>
-                <canvas ref={callStatusCanvasRef} id="campaignCallStatusChart"></canvas>
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+            <h3 className="text-sm font-semibold text-gray-800 mb-4">Call Outcome Distribution</h3>
+            {!hasCallOutcomeData && (
+              <div className="p-8 text-center text-sm text-gray-400 my-auto">
+                No call activity yet
               </div>
-            </div>
-
-            <div className="analytics-chart-card">
-              <h3>Call Outcome Distribution</h3>
-              {!hasCallOutcomeData && (
-                <div id="campaignCallOutcomeEmpty" className="analytics-empty-state">
-                  No call activity yet
-                </div>
-              )}
-              <div style={{ position: "relative", height: "250px", display: hasCallOutcomeData ? "block" : "none" }}>
-                <canvas ref={callOutcomeCanvasRef} id="campaignCallOutcomeChart"></canvas>
-              </div>
+            )}
+            <div className="relative h-64 w-full" style={{ display: hasCallOutcomeData ? "block" : "none" }}>
+              <canvas ref={callOutcomeCanvasRef} />
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Campaign Info Fields */}
-        <div className="detail-row">
-          <span className="detail-label">Campaign ID</span>
-          <span className="detail-value" id="campaignId">{campaign?.id ?? "-"}</span>
-        </div>
-
-        <div className="detail-row">
-          <span className="detail-label">Campaign Name</span>
-          <span className="detail-value" id="campaignName">{campaign?.campaignName ?? "-"}</span>
-        </div>
-
-        <div className="detail-row">
-          <span className="detail-label">Description</span>
-          <span className="detail-value" id="description">{campaign?.description ?? "-"}</span>
-        </div>
-
-        <div className="detail-row">
-          <span className="detail-label">Source</span>
-          <span className="detail-value" id="source">{campaign?.source ?? "-"}</span>
-        </div>
-
-        <div className="detail-row">
-          <span className="detail-label">Course ID</span>
-          <span className="detail-value" id="courseId">{campaign?.courseId ?? "-"}</span>
-        </div>
-
-        <div className="detail-row">
-          <span className="detail-label">Start Date</span>
-          <span className="detail-value" id="startDate">{campaign?.startDate ?? "-"}</span>
-        </div>
-
-        <div className="detail-row">
-          <span className="detail-label">End Date</span>
-          <span className="detail-value" id="endDate">{campaign?.endDate ?? "-"}</span>
-        </div>
-
-        <div className="detail-row">
-          <span className="detail-label">Status</span>
-          <span className="detail-value" id="status">{campaign?.status ?? "-"}</span>
-        </div>
-
-        <div className="detail-row">
-          <span className="detail-label">Created At</span>
-          <span className="detail-value" id="createdAt">{campaign?.createdAt ?? "-"}</span>
-        </div>
-
-        <div className="detail-row">
-          <span className="detail-label">Updated At</span>
-          <span className="detail-value" id="updatedAt">{campaign?.updatedAt ?? "-"}</span>
-        </div>
+      {/* Campaign Info Fields */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+        <h3 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-3">Campaign Information</h3>
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Campaign ID</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{campaign?.id ?? "-"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Campaign Name</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{campaign?.campaignName ?? "-"}</dd>
+          </div>
+          <div className="sm:col-span-2">
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{campaign?.description ?? "-"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Source</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{campaign?.source ?? "-"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Course ID</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{campaign?.courseId ?? "-"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Start Date</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{campaign?.startDate ?? "-"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">End Date</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{campaign?.endDate ?? "-"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</dt>
+            <dd className="mt-1">
+              <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold status-${(campaign?.status || "active").toLowerCase()}`}>
+                {campaign?.status ?? "-"}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Created At</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{campaign?.createdAt ?? "-"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Updated At</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{campaign?.updatedAt ?? "-"}</dd>
+          </div>
+        </dl>
       </div>
     </div>
   );
@@ -452,7 +459,7 @@ function CampaignDetailsContent() {
 export default function CampaignDetailsPage() {
   return (
     <DashboardLayout activePage="campaigns">
-      <Suspense fallback={<div>Loading campaign details...</div>}>
+      <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading campaign details...</div>}>
         <CampaignDetailsContent />
       </Suspense>
     </DashboardLayout>

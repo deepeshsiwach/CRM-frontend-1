@@ -5,7 +5,7 @@
 // Ported from lead-assignments.html + lead-assignments.js
 // ============================================================
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import { API_BASE_URL } from "@/lib/config";
@@ -251,261 +251,270 @@ export default function LeadAssignmentsPage() {
 
   return (
     <DashboardLayout activeMenu="lead-assignments" title="Lead Assignments">
-      {/* BULK ASSIGNMENT SECTION */}
-      <div className="form-card" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: 20, marginBottom: 25 }}>
-        <h3 style={{ margin: "0 0 14px", fontSize: 18 }}>Bulk Lead Assignment</h3>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 15, marginBottom: 15 }}>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-              Select Agent
-            </label>
-            <select
-              id="bulkAgentSelect"
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
-              value={selectedAgentId}
-              onChange={(e) => setSelectedAgentId(e.target.value)}
-            >
-              <option value="">Select Agent</option>
-              {activeAgents.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.fullName} (ID: {a.id})
-                </option>
-              ))}
-            </select>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Lead Assignments</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Distribute and monitor lead allocations to agents and teams.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="self-start sm:self-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            &larr; Dashboard
+          </button>
+        </div>
+
+        {/* BULK ASSIGNMENT SECTION */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 sm:p-6 space-y-5">
+          <div className="border-b border-gray-100 pb-3">
+            <h2 className="text-lg font-bold text-gray-900">Bulk Lead Assignment</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Select an agent, optional team, and leads to assign in bulk.</p>
           </div>
 
-          <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-              Select Team
-            </label>
-            <select
-              id="bulkTeamSelect"
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
-              value={selectedTeamId}
-              onChange={(e) => setSelectedTeamId(e.target.value)}
-            >
-              <option value="">No Team</option>
-              {activeTeams.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.teamName} (ID: {t.id})
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Select Agent
+              </label>
+              <select
+                id="bulkAgentSelect"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedAgentId}
+                onChange={(e) => setSelectedAgentId(e.target.value)}
+              >
+                <option value="">Select Agent</option>
+                {activeAgents.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.fullName} (ID: {a.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Select Team
+              </label>
+              <select
+                id="bulkTeamSelect"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedTeamId}
+                onChange={(e) => setSelectedTeamId(e.target.value)}
+              >
+                <option value="">No Team</option>
+                {activeTeams.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.teamName} (ID: {t.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Select Quantity
+              </label>
+              <select
+                id="bulkQuantitySelect"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={quantitySelect}
+                onChange={(e) => handleQuantityChange(e.target.value)}
+              >
+                <option value="">Manual Selection</option>
+                <option value="5">First 5 Leads</option>
+                <option value="10">First 10 Leads</option>
+                <option value="25">First 25 Leads</option>
+                <option value="50">First 50 Leads</option>
+                <option value="100">First 100 Leads</option>
+                <option value="custom">Custom Quantity</option>
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-              Select Quantity
+          {quantitySelect === "custom" && (
+            <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+              <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                Enter Quantity:
+              </label>
+              <input
+                type="number"
+                id="bulkCustomQuantity"
+                min={1}
+                className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={customQuantity}
+                onChange={(e) => handleCustomQuantity(e.target.value)}
+              />
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-gray-100">
+            <label className="text-xs font-medium text-gray-700 flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                id="selectAllBulkLeads"
+                checked={unassignedLeads.length > 0 && selectedLeadIds.length === unassignedLeads.length}
+                onChange={(e) => handleSelectAll(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              />
+              Select All Unassigned Leads ({unassignedLeads.length})
             </label>
-            <select
-              id="bulkQuantitySelect"
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
-              value={quantitySelect}
-              onChange={(e) => handleQuantityChange(e.target.value)}
+
+            <span className="text-xs font-semibold text-blue-600">
+              Selected Leads: {selectedLeadIds.length}
+            </span>
+          </div>
+
+          {/* BULK LEADS CONTAINER */}
+          <div
+            id="bulkLeadSelection"
+            className="max-h-56 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100 bg-gray-50/50"
+          >
+            {unassignedLeads.length === 0 ? (
+              <p className="p-4 text-center text-xs text-gray-400">No unassigned leads available.</p>
+            ) : (
+              unassignedLeads.map((lead) => (
+                <label
+                  key={lead.id}
+                  className="flex items-center gap-3 px-3.5 py-2.5 hover:bg-white transition-colors cursor-pointer text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedLeadIds.includes(lead.id)}
+                    onChange={() => handleToggleLead(lead.id)}
+                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  />
+                  <div className="flex flex-wrap items-center gap-3 flex-1">
+                    <span className="font-semibold text-gray-900">
+                      {lead.fullName || "Unnamed Lead"}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      ID: {lead.id}
+                    </span>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium status-${(lead.status || "new").toLowerCase()}`}>
+                      {lead.status || "NEW"}
+                    </span>
+                  </div>
+                </label>
+              ))
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <button
+              type="button"
+              id="bulkAssignButton"
+              disabled={bulkAssigning}
+              onClick={handleBulkAssign}
+              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
             >
-              <option value="">Manual Selection</option>
-              <option value="5">First 5 Leads</option>
-              <option value="10">First 10 Leads</option>
-              <option value="25">First 25 Leads</option>
-              <option value="50">First 50 Leads</option>
-              <option value="100">First 100 Leads</option>
-              <option value="custom">Custom Quantity</option>
-            </select>
+              {bulkAssigning
+                ? "Assigning..."
+                : selectedLeadIds.length > 0
+                ? `Assign ${selectedLeadIds.length} Leads`
+                : "Assign Selected Leads"}
+            </button>
+
+            {bulkMessage && (
+              <span
+                className={`text-xs font-semibold ${
+                  bulkMessage.includes("success") ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {bulkMessage}
+              </span>
+            )}
           </div>
         </div>
 
-        {quantitySelect === "custom" && (
-          <div id="customQuantityContainer" style={{ marginBottom: 15, display: "flex", gap: 10, alignItems: "center" }}>
-            <label style={{ fontSize: 13, fontWeight: 600 }}>Enter Quantity:</label>
-            <input
-              type="number"
-              id="bulkCustomQuantity"
-              min={1}
-              style={{ width: 120, padding: "7px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
-              value={customQuantity}
-              onChange={(e) => handleCustomQuantity(e.target.value)}
-            />
+        {/* ASSIGNMENTS TABLE TOOLBAR */}
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <input
+            type="text"
+            id="searchAssignment"
+            placeholder="Search assignments..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="w-full sm:w-80 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          />
+
+          <button
+            type="button"
+            id="refreshAssignments"
+            onClick={loadData}
+            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
+
+        {assignmentMessage && (
+          <div className="p-3 rounded-lg text-sm font-medium border bg-red-50 text-red-700 border-red-200">
+            {assignmentMessage}
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-            <input
-              type="checkbox"
-              id="selectAllBulkLeads"
-              checked={unassignedLeads.length > 0 && selectedLeadIds.length === unassignedLeads.length}
-              onChange={(e) => handleSelectAll(e.target.checked)}
-            />
-            Select All Unassigned Leads ({unassignedLeads.length})
-          </label>
-
-          <span id="bulkSelectedCount" style={{ fontSize: 13, fontWeight: 600, color: "#2563eb" }}>
-            Selected Leads: {selectedLeadIds.length}
-          </span>
-        </div>
-
-        {/* BULK LEADS CONTAINER */}
-        <div
-          id="bulkLeadSelection"
-          style={{
-            maxHeight: 200,
-            overflowY: "auto",
-            border: "1px solid #e5e7eb",
-            borderRadius: 6,
-            padding: 10,
-            marginBottom: 15,
-            background: "#fafafa",
-          }}
-        >
-          {unassignedLeads.length === 0 ? (
-            <p style={{ margin: 0, color: "#6b7280", fontSize: 13 }}>No unassigned leads available.</p>
-          ) : (
-            unassignedLeads.map((lead) => (
-              <label
-                key={lead.id}
-                className="bulk-lead-row"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "6px 8px",
-                  borderBottom: "1px solid #f3f4f6",
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  className="bulk-lead-checkbox"
-                  checked={selectedLeadIds.includes(lead.id)}
-                  onChange={() => handleToggleLead(lead.id)}
-                />
-                <div className="bulk-lead-info" style={{ display: "flex", gap: 15, fontSize: 13 }}>
-                  <span className="bulk-lead-name" style={{ fontWeight: 600 }}>
-                    {lead.fullName || "Unnamed Lead"}
-                  </span>
-                  <span className="bulk-lead-id" style={{ color: "#6b7280" }}>
-                    Lead ID: {lead.id}
-                  </span>
-                  <span className="bulk-lead-status" style={{ color: "#2563eb" }}>
-                    {lead.status || "NEW"}
-                  </span>
-                </div>
-              </label>
-            ))
-          )}
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
-          <button
-            type="button"
-            id="bulkAssignButton"
-            className="primary-button"
-            disabled={bulkAssigning}
-            onClick={handleBulkAssign}
-            style={{ padding: "8px 16px", background: "#2563eb", color: "#fff", borderRadius: 6, fontWeight: 600 }}
-          >
-            {bulkAssigning
-              ? "Assigning..."
-              : selectedLeadIds.length > 0
-              ? `Assign ${selectedLeadIds.length} Leads`
-              : "Assign Selected Leads"}
-          </button>
-
-          <span
-            id="bulkAssignmentMessage"
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: bulkMessage.includes("success") ? "#15803d" : "#dc2626",
-            }}
-          >
-            {bulkMessage}
-          </span>
-        </div>
-      </div>
-
-      {/* ASSIGNMENTS TABLE TOOLBAR */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15, gap: 15 }}>
-        <input
-          type="text"
-          id="searchAssignment"
-          placeholder="Search assignments..."
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          style={{ maxWidth: 300, width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid #d1d5db" }}
-        />
-
-        <button
-          type="button"
-          id="refreshAssignments"
-          onClick={loadData}
-          style={{ padding: "8px 14px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer" }}
-        >
-          Refresh
-        </button>
-      </div>
-
-      {assignmentMessage && <p style={{ color: "red" }}>{assignmentMessage}</p>}
-
-      {/* ASSIGNMENTS TABLE */}
-      <div className="table-container" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, overflowX: "auto" }}>
-        <table className="leads-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ background: "#111827", color: "#fff" }}>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Assignment ID</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Lead ID</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Agent</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Team ID</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Assigned At</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Status</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Action</th>
-            </tr>
-          </thead>
-          <tbody id="assignmentsTableBody">
-            {filteredAssignments.length === 0 ? (
-              <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: 24, color: "#6b7280" }}>
-                  No assignments found.
-                </td>
-              </tr>
-            ) : (
-              filteredAssignments.map((a) => (
-                <tr key={a.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                  <td style={{ padding: "10px" }}>{a.id}</td>
-                  <td style={{ padding: "10px" }}>{a.leadId}</td>
-                  <td style={{ padding: "10px" }}>{getAgentDisplayName(a.agentId)}</td>
-                  <td style={{ padding: "10px" }}>{a.teamId || "-"}</td>
-                  <td style={{ padding: "10px" }}>{a.assignedAt || "-"}</td>
-                  <td style={{ padding: "10px" }}>
-                    <span
-                      style={{
-                        padding: "3px 8px",
-                        borderRadius: 12,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        background: a.status === "ACTIVE" ? "#dcfce7" : "#f3f4f6",
-                        color: a.status === "ACTIVE" ? "#166534" : "#4b5563",
-                      }}
-                    >
-                      {a.status || "-"}
-                    </span>
-                  </td>
-                  <td style={{ padding: "10px" }}>
-                    <button
-                      type="button"
-                      className="view-lead-button"
-                      onClick={() => router.push(`/lead-assignment-details?id=${a.id}`)}
-                      style={{ padding: "4px 10px", borderRadius: 4, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer" }}
-                    >
-                      View
-                    </button>
-                  </td>
+        {/* ASSIGNMENTS TABLE */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-900 text-white text-xs uppercase tracking-wider">
+                  <th className="px-4 py-3 font-semibold">Assignment ID</th>
+                  <th className="px-4 py-3 font-semibold">Lead ID</th>
+                  <th className="px-4 py-3 font-semibold">Agent</th>
+                  <th className="px-4 py-3 font-semibold">Team ID</th>
+                  <th className="px-4 py-3 font-semibold">Assigned At</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold text-center sticky right-0 bg-gray-900 z-10 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.1)]">
+                    Action
+                  </th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                {filteredAssignments.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                      No assignments found.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredAssignments.map((a) => (
+                    <tr key={a.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-gray-900">{a.id}</td>
+                      <td className="px-4 py-3 font-medium text-blue-600">{a.leadId}</td>
+                      <td className="px-4 py-3 font-medium text-gray-800">{getAgentDisplayName(a.agentId)}</td>
+                      <td className="px-4 py-3 text-gray-500">{a.teamId || "-"}</td>
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{a.assignedAt || "-"}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
+                            a.status === "ACTIVE"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {a.status || "-"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 sticky right-0 bg-white z-10 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] text-center whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/lead-assignment-details?id=${a.id}`)}
+                          className="text-xs px-2.5 py-1 border border-gray-200 rounded hover:bg-gray-50 text-gray-700 font-medium transition-colors"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

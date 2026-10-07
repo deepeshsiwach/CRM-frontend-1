@@ -380,500 +380,493 @@ function LeadDetailsContent() {
   if (loading) {
     return (
       <DashboardLayout activeMenu="leads" title="Lead Details">
-        <p style={{ padding: 20 }}>Loading lead details...</p>
+        <div className="p-8 text-center text-gray-400">Loading lead details...</div>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout activeMenu="leads">
-      {/* PAGE HEADER */}
-      <div className="lead-details-header">
-        <div>
-          <h2>Lead Details</h2>
-          <p>View and update complete information about this lead.</p>
-        </div>
-
-        <div className="lead-header-actions" style={{ display: "flex", gap: 10 }}>
-          <button
-            type="button"
-            className="primary-button transfer-lead-button"
-            onClick={openTransferModal}
-            style={{ background: "#f59e0b", color: "#fff", fontWeight: 700 }}
-          >
-            ⇄ Transfer Lead
-          </button>
-
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => router.push("/leads")}
-          >
-            ← Back to Leads
-          </button>
-        </div>
-      </div>
-
-      {/* TWO COLUMN LAYOUT */}
-      <div className="lead-page-grid" style={{ display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 20, marginTop: 20 }}>
-        {/* LEFT COLUMN: EDITABLE DETAILS + CALL HISTORY */}
-        <div className="lead-left-column" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* LEAD DETAILS CARD */}
-          <div className="lead-details-card" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, overflow: "hidden" }}>
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Lead ID</strong>
-              <span>{lead?.id ?? "-"}</span>
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Full Name</strong>
-              <input
-                type="text"
-                className="lead-edit-input"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-              />
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Email</strong>
-              <input
-                type="email"
-                className="lead-edit-input"
-                value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
-              />
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Phone</strong>
-              <input
-                type="text"
-                className="lead-edit-input"
-                value={editPhone}
-                onChange={(e) => setEditPhone(e.target.value)}
-              />
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Age</strong>
-              <input
-                type="number"
-                className="lead-edit-input"
-                value={editAge}
-                min={1}
-                max={120}
-                onChange={(e) => setEditAge(e.target.value)}
-              />
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Course (Protected)</strong>
-              <span>
-                {lead?.courseInterested || "-"}{" "}
-                <span className="lead-protected-badge" style={{ fontSize: 10, background: "#f3f4f6", padding: "2px 6px", borderRadius: 4, color: "#6b7280" }}>Protected</span>
-              </span>
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Lead Source (Protected)</strong>
-              <span>
-                {lead?.leadSource || "-"}{" "}
-                <span className="lead-protected-badge" style={{ fontSize: 10, background: "#f3f4f6", padding: "2px 6px", borderRadius: 4, color: "#6b7280" }}>Protected</span>
-              </span>
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Status</strong>
-              <select
-                className="lead-edit-select"
-                value={editStatus}
-                onChange={(e) => setEditStatus(e.target.value)}
-              >
-                <option value="NEW">NEW</option>
-                <option value="CONTACTED">CONTACTED</option>
-                <option value="INTERESTED">INTERESTED</option>
-                <option value="FOLLOW_UP">FOLLOW_UP</option>
-                <option value="COUNSELLING">COUNSELLING</option>
-                <option value="ENROLLED">ENROLLED</option>
-                <option value="NOT_INTERESTED">NOT_INTERESTED</option>
-                <option value="WRONG_NUMBER">WRONG_NUMBER</option>
-                <option value="NO_RESPONSE">NO_RESPONSE</option>
-                <option value="LOST">LOST</option>
-              </select>
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Priority</strong>
-              <select
-                className="lead-edit-select"
-                value={editPriority}
-                onChange={(e) => setEditPriority(e.target.value)}
-              >
-                <option value="">Select Priority</option>
-                <option value="LOW">LOW</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HIGH">HIGH</option>
-              </select>
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>City</strong>
-              <input
-                type="text"
-                className="lead-edit-input"
-                value={editCity}
-                onChange={(e) => setEditCity(e.target.value)}
-              />
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Education</strong>
-              <input
-                type="text"
-                className="lead-edit-input"
-                value={editEducation}
-                onChange={(e) => setEditEducation(e.target.value)}
-              />
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Current Profession</strong>
-              <input
-                type="text"
-                className="lead-edit-input"
-                value={editCurrentProfession}
-                onChange={(e) => setEditCurrentProfession(e.target.value)}
-              />
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Primary Objective</strong>
-              <input
-                type="text"
-                className="lead-edit-input"
-                value={editPrimaryObjective}
-                onChange={(e) => setEditPrimaryObjective(e.target.value)}
-              />
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Trading Experience</strong>
-              <input
-                type="text"
-                className="lead-edit-input"
-                value={editTradingExperience}
-                onChange={(e) => setEditTradingExperience(e.target.value)}
-              />
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Customer Looking For</strong>
-              <input
-                type="text"
-                className="lead-edit-input"
-                value={editCustomerLookingFor}
-                onChange={(e) => setEditCustomerLookingFor(e.target.value)}
-              />
-            </div>
-
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center" }}>
-              <strong style={{ fontSize: 13, color: "#4b5563" }}>Interested Area</strong>
-              <input
-                type="text"
-                className="lead-edit-input"
-                value={editInterestedArea}
-                onChange={(e) => setEditInterestedArea(e.target.value)}
-              />
-            </div>
-
-            {/* SAVE BUTTON */}
-            <div className="lead-save-section" style={{ padding: 16, background: "#fafafa", display: "flex", alignItems: "center", gap: 12 }}>
-              <button
-                type="button"
-                className="primary-button save-lead-details-button"
-                disabled={saving}
-                onClick={handleSaveDetails}
-                style={{ background: "#2563eb", color: "#fff", padding: "9px 16px", borderRadius: 6, fontWeight: 600 }}
-              >
-                {saving ? "Saving..." : "Save Lead Details"}
-              </button>
-
-              {saveMessage && (
-                <span style={{ fontSize: 13, color: saveMessage.isError ? "#dc2626" : "#15803d", fontWeight: "bold" }}>
-                  {saveMessage.text}
-                </span>
-              )}
-            </div>
+      <div className="space-y-6">
+        {/* PAGE HEADER */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Lead #{lead?.id} Details</h1>
+            <p className="text-sm text-gray-500 mt-0.5">View and update complete information about this lead.</p>
           </div>
 
-          {/* CALL HISTORY */}
-          <div className="lead-activity-section" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
-            <div className="lead-activity-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 17 }}>Call History</h3>
-                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>All calls related to this lead.</p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={openTransferModal}
+              className="px-4 py-2 text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded-lg shadow-sm transition-colors"
+            >
+              &#8644; Transfer Lead
+            </button>
+
+            <button
+              type="button"
+              onClick={() => router.push("/leads")}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              &larr; Back to Leads
+            </button>
+          </div>
+        </div>
+
+        {/* TWO COLUMN LAYOUT */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* LEFT COLUMN: EDITABLE DETAILS + CALL HISTORY */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* LEAD DETAILS CARD */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Lead Profile</h3>
               </div>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => router.push(`/add-call-log?leadId=${leadId}`)}
-                style={{ fontSize: 12, padding: "7px 12px" }}
-              >
-                + Add Call
-              </button>
+
+              <div className="divide-y divide-gray-100 text-sm">
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Lead ID</span>
+                  <span className="sm:col-span-2 font-bold text-gray-900">{lead?.id ?? "-"}</span>
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Full Name</span>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Email</span>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Phone</span>
+                  <input
+                    type="text"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Age</span>
+                  <input
+                    type="number"
+                    value={editAge}
+                    min={1}
+                    max={120}
+                    onChange={(e) => setEditAge(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Course</span>
+                  <span className="sm:col-span-2 text-gray-800 flex items-center gap-2">
+                    {lead?.courseInterested || "-"}
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-gray-100 text-gray-500">Protected</span>
+                  </span>
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Lead Source</span>
+                  <span className="sm:col-span-2 text-gray-800 flex items-center gap-2">
+                    {lead?.leadSource || "-"}
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-gray-100 text-gray-500">Protected</span>
+                  </span>
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Status</span>
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                  >
+                    <option value="NEW">NEW</option>
+                    <option value="CONTACTED">CONTACTED</option>
+                    <option value="INTERESTED">INTERESTED</option>
+                    <option value="FOLLOW_UP">FOLLOW_UP</option>
+                    <option value="COUNSELLING">COUNSELLING</option>
+                    <option value="ENROLLED">ENROLLED</option>
+                    <option value="NOT_INTERESTED">NOT_INTERESTED</option>
+                    <option value="WRONG_NUMBER">WRONG_NUMBER</option>
+                    <option value="NO_RESPONSE">NO_RESPONSE</option>
+                    <option value="LOST">LOST</option>
+                  </select>
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Priority</span>
+                  <select
+                    value={editPriority}
+                    onChange={(e) => setEditPriority(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Priority</option>
+                    <option value="LOW">LOW</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="HIGH">HIGH</option>
+                  </select>
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">City</span>
+                  <input
+                    type="text"
+                    value={editCity}
+                    onChange={(e) => setEditCity(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Education</span>
+                  <input
+                    type="text"
+                    value={editEducation}
+                    onChange={(e) => setEditEducation(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Current Profession</span>
+                  <input
+                    type="text"
+                    value={editCurrentProfession}
+                    onChange={(e) => setEditCurrentProfession(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Primary Objective</span>
+                  <input
+                    type="text"
+                    value={editPrimaryObjective}
+                    onChange={(e) => setEditPrimaryObjective(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Trading Experience</span>
+                  <input
+                    type="text"
+                    value={editTradingExperience}
+                    onChange={(e) => setEditTradingExperience(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Customer Looking For</span>
+                  <input
+                    type="text"
+                    value={editCustomerLookingFor}
+                    onChange={(e) => setEditCustomerLookingFor(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                  <span className="font-semibold text-gray-600">Interested Area</span>
+                  <input
+                    type="text"
+                    value={editInterestedArea}
+                    onChange={(e) => setEditInterestedArea(e.target.value)}
+                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* SAVE BUTTON */}
+              <div className="p-4 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={handleSaveDetails}
+                  className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
+                >
+                  {saving ? "Saving..." : "Save Lead Details"}
+                </button>
+
+                {saveMessage && (
+                  <span className={`text-xs font-semibold ${saveMessage.isError ? "text-red-600" : "text-green-600"}`}>
+                    {saveMessage.text}
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div id="leadCallLogs">
-              {callLogsLoading ? (
-                <div className="activity-empty" style={{ padding: 16, color: "#9ca3af" }}>Loading call history...</div>
-              ) : callLogs.length === 0 ? (
-                <div className="activity-empty" style={{ padding: 16, color: "#9ca3af" }}>No call history available for this lead.</div>
-              ) : (
-                callLogs.map((call) => (
-                  <div key={call.id} className="lead-activity-card" style={{ border: "1px solid #f3f4f6", borderRadius: 6, padding: 10, marginBottom: 8, background: "#fafafa" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                      <strong>Call ID:</strong> <span>{call.id}</span>
+            {/* CALL HISTORY */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Call History</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">All calls logged for this lead.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/add-call-log?leadId=${leadId}`)}
+                  className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm transition-colors"
+                >
+                  + Add Call
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {callLogsLoading ? (
+                  <p className="text-sm text-gray-400 py-4 text-center">Loading call history...</p>
+                ) : callLogs.length === 0 ? (
+                  <p className="text-sm text-gray-400 py-4 text-center">No call history available for this lead.</p>
+                ) : (
+                  callLogs.map((call) => (
+                    <div key={call.id} className="p-3.5 bg-gray-50 rounded-lg border border-gray-100 text-xs space-y-1.5">
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-600">Call ID:</span>
+                        <span className="font-bold text-gray-900">#{call.id}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-600">Agent ID:</span>
+                        <span className="text-gray-800">{call.agentId ?? "-"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-600">Status:</span>
+                        <span className="font-medium text-blue-600">{call.callStatus ?? "-"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-600">Outcome:</span>
+                        <span className="font-medium text-emerald-600">{call.outcome ?? "-"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-600">Duration:</span>
+                        <span className="text-gray-800">{call.duration ?? "-"} sec</span>
+                      </div>
+                      {call.remarks && (
+                        <div className="pt-1 border-t border-gray-200/60 mt-1">
+                          <span className="font-semibold text-gray-600">Remarks:</span>
+                          <p className="text-gray-800 mt-0.5">{call.remarks}</p>
+                        </div>
+                      )}
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                      <strong>Agent ID:</strong> <span>{call.agentId ?? "-"}</span>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: FOLLOW-UPS + NOTES */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* FOLLOW-UP HISTORY */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Follow-up History</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Scheduled follow-up interactions.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/add-follow-up?leadId=${leadId}`)}
+                  className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm transition-colors"
+                >
+                  + Add Follow-up
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {followUpsLoading ? (
+                  <p className="text-sm text-gray-400 py-4 text-center">Loading follow-ups...</p>
+                ) : followUps.length === 0 ? (
+                  <p className="text-sm text-gray-400 py-4 text-center">No follow-ups scheduled for this lead.</p>
+                ) : (
+                  followUps.map((fu) => (
+                    <div key={fu.id} className="p-3.5 bg-gray-50 rounded-lg border border-gray-100 text-xs space-y-1.5">
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-600">Follow-up ID:</span>
+                        <span className="font-bold text-gray-900">#{fu.id}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-600">Date:</span>
+                        <span className="font-medium text-gray-800">{fu.followUpDate ?? "-"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-600">Purpose:</span>
+                        <span className="text-gray-800">{fu.purpose ?? "-"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-600">Status:</span>
+                        <span className={`font-semibold px-2 py-0.5 rounded-full ${
+                          fu.status === "COMPLETED" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                        }`}>
+                          {fu.status ?? "-"}
+                        </span>
+                      </div>
+                      {fu.remarks && (
+                        <div className="pt-1 border-t border-gray-200/60 mt-1">
+                          <span className="font-semibold text-gray-600">Remarks:</span>
+                          <p className="text-gray-800 mt-0.5">{fu.remarks}</p>
+                        </div>
+                      )}
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                      <strong>Status:</strong> <span>{call.callStatus ?? "-"}</span>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* NOTES */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Notes</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Team notes and remarks on this lead.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/add-note?leadId=${leadId}`)}
+                  className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm transition-colors"
+                >
+                  + Add Note
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {notesLoading ? (
+                  <p className="text-sm text-gray-400 py-4 text-center">Loading notes...</p>
+                ) : notes.length === 0 ? (
+                  <p className="text-sm text-gray-400 py-4 text-center">No notes available for this lead.</p>
+                ) : (
+                  notes.map((n) => (
+                    <div key={n.id} className="p-3.5 bg-gray-50 rounded-lg border border-gray-100 text-xs space-y-1.5">
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-600">Note ID: #{n.id}</span>
+                        <span className="text-gray-400">User ID: {n.userId ?? "-"}</span>
+                      </div>
+                      <p className="text-gray-800 text-sm whitespace-pre-wrap mt-1">{n.note ?? "-"}</p>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                      <strong>Outcome:</strong> <span>{call.outcome ?? "-"}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                      <strong>Duration:</strong> <span>{call.duration ?? "-"} sec</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                      <strong>Remarks:</strong> <span>{call.remarks ?? "-"}</span>
-                    </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: FOLLOW-UPS + NOTES */}
-        <div className="lead-right-column" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* FOLLOW-UP HISTORY */}
-          <div className="lead-activity-section" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
-            <div className="lead-activity-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 17 }}>Follow-up History</h3>
-                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>All follow-ups scheduled for this lead.</p>
-              </div>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => router.push(`/add-follow-up?leadId=${leadId}`)}
-                style={{ fontSize: 12, padding: "7px 12px" }}
-              >
-                + Add Follow-up
-              </button>
-            </div>
-
-            <div id="leadFollowUps">
-              {followUpsLoading ? (
-                <div className="activity-empty" style={{ padding: 16, color: "#9ca3af" }}>Loading follow-ups...</div>
-              ) : followUps.length === 0 ? (
-                <div className="activity-empty" style={{ padding: 16, color: "#9ca3af" }}>No follow-ups available for this lead.</div>
-              ) : (
-                followUps.map((fu) => (
-                  <div key={fu.id} className="lead-activity-card" style={{ border: "1px solid #f3f4f6", borderRadius: 6, padding: 10, marginBottom: 8, background: "#fafafa" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                      <strong>Follow-up ID:</strong> <span>{fu.id}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                      <strong>Agent ID:</strong> <span>{fu.agentId ?? "-"}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                      <strong>Date:</strong> <span>{fu.followUpDate ?? "-"}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                      <strong>Purpose:</strong> <span>{fu.purpose ?? "-"}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                      <strong>Status:</strong> <span>{fu.status ?? "-"}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                      <strong>Remarks:</strong> <span>{fu.remarks ?? "-"}</span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* NOTES */}
-          <div className="lead-activity-section" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: 16 }}>
-            <div className="lead-activity-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 17 }}>Notes</h3>
-                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>All notes related to this lead.</p>
-              </div>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => router.push(`/add-note?leadId=${leadId}`)}
-                style={{ fontSize: 12, padding: "7px 12px" }}
-              >
-                + Add Note
-              </button>
-            </div>
-
-            <div id="leadNotes">
-              {notesLoading ? (
-                <div className="activity-empty" style={{ padding: 16, color: "#9ca3af" }}>Loading notes...</div>
-              ) : notes.length === 0 ? (
-                <div className="activity-empty" style={{ padding: 16, color: "#9ca3af" }}>No notes available for this lead.</div>
-              ) : (
-                notes.map((n) => (
-                  <div key={n.id} className="lead-activity-card" style={{ border: "1px solid #f3f4f6", borderRadius: 6, padding: 10, marginBottom: 8, background: "#fafafa" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                      <strong>Note ID:</strong> <span>{n.id}</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                      <strong>User ID:</strong> <span>{n.userId ?? "-"}</span>
-                    </div>
-                    <div style={{ fontSize: 13, marginTop: 4 }}>
-                      <strong>Note:</strong> <p style={{ margin: "4px 0 0", color: "#374151" }}>{n.note ?? "-"}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* TRANSFER MODAL */}
-      {transferOpen && (
-        <div
-          className="transfer-modal-overlay show"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "rgba(0,0,0,0.55)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setTransferOpen(false);
-          }}
-        >
+        {/* TRANSFER MODAL */}
+        {transferOpen && (
           <div
-            className="transfer-modal"
-            style={{
-              background: "#fff",
-              borderRadius: 12,
-              padding: 24,
-              maxWidth: 500,
-              width: "100%",
-              boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+            className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setTransferOpen(false);
             }}
           >
-            <h3 style={{ margin: "0 0 6px" }}>Transfer Lead</h3>
-            <p style={{ color: "#666", fontSize: 13, margin: "0 0 16px" }}>
-              Transfer this lead to another product team and agent.
-            </p>
-
-            <div style={{ background: "#f5f7fa", borderRadius: 8, padding: 12, marginBottom: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                <strong style={{ color: "#555" }}>Lead ID:</strong>
-                <span style={{ fontWeight: 600 }}>{leadId}</span>
+            <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Transfer Lead</h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Transfer this lead to another product team and agent.
+                </p>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                <strong style={{ color: "#555" }}>Lead Name:</strong>
-                <span style={{ fontWeight: 600 }}>{lead?.fullName || "-"}</span>
+
+              <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Lead ID:</span>
+                  <span className="font-bold text-gray-900">#{leadId}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Lead Name:</span>
+                  <span className="font-bold text-gray-900">{lead?.fullName || "-"}</span>
+                </div>
               </div>
-            </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-                Transfer To Team
-              </label>
-              <select
-                style={{ width: "100%", padding: "9px 11px", borderRadius: 6, border: "1px solid #d1d5db" }}
-                value={selectedTeamId}
-                onChange={(e) => handleTeamChange(e.target.value)}
-              >
-                <option value="">Select team</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name || t.teamName || t.title || `Team ${t.id}`} (ID: {t.id})
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Transfer To Team *
+                  </label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={selectedTeamId}
+                    onChange={(e) => handleTeamChange(e.target.value)}
+                  >
+                    <option value="">Select team</option>
+                    {teams.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name || t.teamName || t.title || `Team ${t.id}`} (ID: {t.id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-                Transfer To Agent
-              </label>
-              <select
-                style={{ width: "100%", padding: "9px 11px", borderRadius: 6, border: "1px solid #d1d5db" }}
-                value={selectedAgentId}
-                onChange={(e) => setSelectedAgentId(e.target.value)}
-              >
-                <option value="">{selectedTeamId ? "Select agent" : "Select team first"}</option>
-                {agents.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.fullName || a.name || a.username || `Agent ${a.id}`} (ID: {a.id})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {transferMessage && (
-              <div
-                style={{
-                  fontSize: 13,
-                  marginBottom: 10,
-                  color: transferMessage.isError ? "#dc2626" : "#15803d",
-                  fontWeight: 600,
-                }}
-              >
-                {transferMessage.text}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Transfer To Agent *
+                  </label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={selectedAgentId}
+                    onChange={(e) => setSelectedAgentId(e.target.value)}
+                  >
+                    <option value="">{selectedTeamId ? "Select agent" : "Select team first"}</option>
+                    {agents.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.fullName || a.name || a.username || `Agent ${a.id}`} (ID: {a.id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            )}
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setTransferOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="primary-button"
-                disabled={transferring}
-                onClick={confirmTransfer}
-                style={{ background: "#2563eb", color: "#fff" }}
-              >
-                {transferring ? "Transferring..." : "Transfer Lead"}
-              </button>
+              {transferMessage && (
+                <div
+                  className={`text-xs font-semibold ${
+                    transferMessage.isError ? "text-red-600" : "text-green-600"
+                  }`}
+                >
+                  {transferMessage.text}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setTransferOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={transferring}
+                  onClick={confirmTransfer}
+                  className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
+                >
+                  {transferring ? "Transferring..." : "Transfer Lead"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </DashboardLayout>
   );
 }
 
 export default function LeadDetailsPage() {
   return (
-    <Suspense fallback={<p style={{ padding: 20 }}>Loading...</p>}>
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading lead details...</div>}>
       <LeadDetailsContent />
     </Suspense>
   );

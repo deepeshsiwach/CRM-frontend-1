@@ -66,48 +66,69 @@ function TeamDetailsContent() {
   }, [teamId, router]);
 
   return (
-    <div className="team-details-page">
-      <div className="team-details-page-header">
+    <div className="space-y-6 max-w-2xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2>Team Details</h2>
-          <p>View CRM team information.</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Team Details</h1>
+          <p className="text-sm text-gray-500 mt-0.5">View CRM team information and members.</p>
         </div>
-        <button type="button" onClick={() => router.push("/teams")}>
-          ← Back to Teams
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.push("/teams")}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            &larr; Back to Teams
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push(`/edit-team?id=${teamId}`)}
+            className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
+          >
+            Edit Team
+          </button>
+        </div>
       </div>
 
       {message && (
-        <div id="message" style={{ color: message.isError ? "red" : "green", marginBottom: "16px" }}>
+        <div
+          className={`p-3 rounded-lg text-sm font-medium border ${
+            message.isError
+              ? "bg-red-50 text-red-700 border-red-200"
+              : "bg-green-50 text-green-700 border-green-200"
+          }`}
+        >
           {message.text}
         </div>
       )}
 
-      <div className="team-details-card">
-        <div className="detail-row">
-          <div className="detail-label">Team ID</div>
-          <div className="detail-value" id="teamId">{team?.id ?? "-"}</div>
-        </div>
-
-        <div className="detail-row">
-          <div className="detail-label">Team Name</div>
-          <div className="detail-value" id="teamName">{team?.teamName ?? "-"}</div>
-        </div>
-
-        <div className="detail-row">
-          <div className="detail-label">Description</div>
-          <div className="detail-value" id="description">{team?.description ?? "-"}</div>
-        </div>
-
-        <div className="detail-row">
-          <div className="detail-label">Status</div>
-          <div className="detail-value" id="status">{team?.status ?? "-"}</div>
-        </div>
-
-        <div className="detail-row">
-          <div className="detail-label">Created At</div>
-          <div className="detail-value" id="createdAt">{team?.createdAt ?? "-"}</div>
-        </div>
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Team ID</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{team?.id ?? "-"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Team Name</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{team?.teamName ?? "-"}</dd>
+          </div>
+          <div className="sm:col-span-2">
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{team?.description ?? "-"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</dt>
+            <dd className="mt-1">
+              <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold status-${(team?.status || "active").toLowerCase()}`}>
+                {team?.status ?? "-"}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Created At</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{team?.createdAt ?? "-"}</dd>
+          </div>
+        </dl>
       </div>
     </div>
   );
@@ -116,7 +137,7 @@ function TeamDetailsContent() {
 export default function TeamDetailsPage() {
   return (
     <DashboardLayout activePage="teams">
-      <Suspense fallback={<div>Loading team details...</div>}>
+      <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading team details...</div>}>
         <TeamDetailsContent />
       </Suspense>
     </DashboardLayout>

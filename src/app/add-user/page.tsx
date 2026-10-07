@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -98,27 +99,39 @@ export default function AddUserPage() {
 
   return (
     <DashboardLayout activePage="users">
-      <div className="add-user-page">
-        <div className="add-user-page-header">
+      <div className="space-y-6 max-w-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2>Add User</h2>
-            <p>Create a new CRM user account.</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add User</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Create a new CRM user account and set their role.</p>
           </div>
-          <button type="button" onClick={() => router.push("/users")}>
-            ← Back to Users
+          <button
+            type="button"
+            onClick={() => router.push("/users")}
+            className="self-start sm:self-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            &larr; Back to Users
           </button>
         </div>
 
         {message && (
-          <div id="message" style={{ color: message.isError ? "red" : "green", marginBottom: "16px" }}>
+          <div
+            className={`p-3 rounded-lg text-sm font-medium border ${
+              message.isError
+                ? "bg-red-50 text-red-700 border-red-200"
+                : "bg-green-50 text-green-700 border-green-200"
+            }`}
+          >
             {message.text}
           </div>
         )}
 
-        <div className="form-container">
-          <form id="addUserForm" onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="fullName">Full Name</label>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <form id="addUserForm" onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="fullName" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Full Name *
+              </label>
               <input
                 type="text"
                 id="fullName"
@@ -127,11 +140,14 @@ export default function AddUserPage() {
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
+            <div>
+              <label htmlFor="email" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Email Address *
+              </label>
               <input
                 type="email"
                 id="email"
@@ -140,11 +156,14 @@ export default function AddUserPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
+            <div>
+              <label htmlFor="password" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Password *
+              </label>
               <input
                 type="password"
                 id="password"
@@ -153,45 +172,63 @@ export default function AddUserPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="role">Role</label>
-              <select
-                id="role"
-                name="role"
-                required
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <option value="">Select Role</option>
-                <option value="ADMIN">ADMIN</option>
-                <option value="MANAGER">MANAGER</option>
-                <option value="AGENT">AGENT</option>
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="role" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Role *
+                </label>
+                <select
+                  id="role"
+                  name="role"
+                  required
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Role</option>
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="MANAGER">MANAGER</option>
+                  <option value="AGENT">AGENT</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="status" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Status *
+                </label>
+                <select
+                  id="status"
+                  name="status"
+                  required
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="INACTIVE">INACTIVE</option>
+                </select>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="status">Status</label>
-              <select
-                id="status"
-                name="status"
-                required
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
+            <div className="flex items-center gap-3 pt-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
               >
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="INACTIVE">INACTIVE</option>
-              </select>
-            </div>
-
-            <div className="form-actions">
-              <button type="button" onClick={() => router.push("/users")} disabled={loading}>
-                Cancel
-              </button>
-              <button type="submit" disabled={loading}>
                 {loading ? "Creating..." : "Create User"}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/users")}
+                disabled={loading}
+                className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors"
+              >
+                Cancel
               </button>
             </div>
           </form>

@@ -124,24 +124,26 @@ export default function CallLogsPage() {
     setFilteredCallLogs(filtered);
   }, [searchText, allCallLogs, leadNameMap, userNameMap]);
 
+  const thCls = "px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider";
+  const tdCls = "px-3 py-3 text-sm text-gray-700 border-t border-gray-100";
+
   return (
     <DashboardLayout activeMenu="call-logs" title="Call Logs">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15, gap: 15 }}>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <input
           type="text"
           id="searchCallLog"
           placeholder="Search call logs..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          style={{ maxWidth: 300, width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid #d1d5db" }}
+          className="max-w-xs w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
         />
 
-        <div style={{ display: "flex", gap: 10 }}>
+        <div className="flex gap-2">
           <button
             type="button"
-            className="primary-button"
             onClick={() => router.push("/add-call-log")}
-            style={{ padding: "8px 14px", background: "#2563eb", color: "#fff", borderRadius: 6, fontWeight: 600 }}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
           >
             + Add Call Log
           </button>
@@ -149,92 +151,76 @@ export default function CallLogsPage() {
             type="button"
             id="refreshCallLogs"
             onClick={loadData}
-            style={{ padding: "8px 14px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer" }}
+            className="border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
           >
-            Refresh
+            🔄 Refresh
           </button>
         </div>
       </div>
 
-      {message && <p id="callLogMessage" style={{ color: "red" }}>{message}</p>}
+      {message && <p id="callLogMessage" className="text-red-500 text-sm font-medium mb-3">{message}</p>}
 
-      <div className="table-container" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, overflowX: "auto" }}>
-        <table className="leads-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ background: "#111827", color: "#fff" }}>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Call ID</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Lead</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Agent</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Start Time</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>End Time</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Duration (s)</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Status</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Outcome</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Remarks</th>
-              <th style={{ padding: "12px 10px", textAlign: "left" }}>Action</th>
-            </tr>
-          </thead>
-          <tbody id="callLogsTableBody">
-            {loading ? (
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-900">
               <tr>
-                <td colSpan={10} style={{ textAlign: "center", padding: 24 }}>Loading call logs...</td>
+                <th className={thCls}>Call ID</th>
+                <th className={thCls}>Lead</th>
+                <th className={thCls}>Agent</th>
+                <th className={thCls}>Start Time</th>
+                <th className={thCls}>End Time</th>
+                <th className={thCls}>Duration (s)</th>
+                <th className={thCls}>Status</th>
+                <th className={thCls}>Outcome</th>
+                <th className={thCls}>Remarks</th>
+                <th className={thCls}>Action</th>
               </tr>
-            ) : filteredCallLogs.length === 0 ? (
-              <tr>
-                <td colSpan={10} style={{ textAlign: "center", padding: 24, color: "#6b7280" }}>
-                  No call logs found.
-                </td>
-              </tr>
-            ) : (
-              filteredCallLogs.map((log) => (
-                <tr key={log.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                  <td style={{ padding: "10px" }}>{log.id}</td>
-                  <td style={{ padding: "10px" }}>
-                    <strong>{leadNameMap[log.leadId] || "Unknown Lead"}</strong>
-                    <br />
-                    <small style={{ color: "#6b7280" }}>ID: {log.leadId}</small>
-                  </td>
-                  <td style={{ padding: "10px" }}>
-                    <strong>{userNameMap[log.agentId] || "Unknown User"}</strong>
-                    <br />
-                    <small style={{ color: "#6b7280" }}>ID: {log.agentId}</small>
-                  </td>
-                  <td style={{ padding: "10px", fontSize: 13 }}>{log.callStartTime || "-"}</td>
-                  <td style={{ padding: "10px", fontSize: 13 }}>{log.callEndTime || "-"}</td>
-                  <td style={{ padding: "10px" }}>{log.durationSeconds ?? "-"}</td>
-                  <td style={{ padding: "10px" }}>
-                    <span
-                      style={{
-                        padding: "3px 8px",
-                        borderRadius: 12,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        background: "#eff6ff",
-                        color: "#1d4ed8",
-                      }}
-                    >
-                      {log.callStatus || "-"}
-                    </span>
-                  </td>
-                  <td style={{ padding: "10px" }}>{log.callOutcome || "-"}</td>
-                  <td style={{ padding: "10px", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {log.remarks || "-"}
-                  </td>
-                  <td style={{ padding: "10px" }}>
-                    <button
-                      type="button"
-                      className="view-lead-button"
-                      onClick={() => router.push(`/call-log-details?id=${log.id}`)}
-                      style={{ padding: "4px 10px", borderRadius: 4, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer" }}
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody id="callLogsTableBody">
+              {loading ? (
+                <tr><td colSpan={10} className="text-center py-8 text-gray-400 text-sm">Loading call logs...</td></tr>
+              ) : filteredCallLogs.length === 0 ? (
+                <tr><td colSpan={10} className="text-center py-8 text-gray-400 text-sm">No call logs found.</td></tr>
+              ) : (
+                filteredCallLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                    <td className={tdCls}>{log.id}</td>
+                    <td className={tdCls}>
+                      <span className="font-semibold text-gray-800">{leadNameMap[log.leadId] || "Unknown Lead"}</span>
+                      <br />
+                      <span className="text-xs text-gray-400">ID: {log.leadId}</span>
+                    </td>
+                    <td className={tdCls}>
+                      <span className="font-semibold text-gray-800">{userNameMap[log.agentId] || "Unknown User"}</span>
+                      <br />
+                      <span className="text-xs text-gray-400">ID: {log.agentId}</span>
+                    </td>
+                    <td className={`${tdCls} text-xs`}>{log.callStartTime || "-"}</td>
+                    <td className={`${tdCls} text-xs`}>{log.callEndTime || "-"}</td>
+                    <td className={tdCls}>{log.durationSeconds ?? "-"}</td>
+                    <td className={tdCls}>
+                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700">
+                        {log.callStatus || "-"}
+                      </span>
+                    </td>
+                    <td className={tdCls}>{log.callOutcome || "-"}</td>
+                    <td className={`${tdCls} max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap`}>{log.remarks || "-"}</td>
+                    <td className={tdCls}>
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/call-log-details?id=${log.id}`)}
+                        className="text-xs px-2.5 py-1 border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </DashboardLayout>
   );

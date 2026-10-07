@@ -188,134 +188,145 @@ function AddFollowUpContent() {
 
   return (
     <DashboardLayout activeMenu="follow-ups" title="Add Follow-up">
-      <div className="content-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div>
-          <h2 style={{ margin: 0 }}>Schedule New Follow-up</h2>
-          <p style={{ margin: "4px 0 0", color: "#6b7280" }}>Set next action date and purpose</p>
+      <div className="space-y-6 max-w-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Schedule New Follow-up</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Set next action date and purpose for this lead.</p>
+          </div>
+          <button
+            type="button"
+            onClick={goBack}
+            className="self-start sm:self-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            Cancel
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={goBack}
-          style={{ padding: "8px 14px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer" }}
-        >
-          Cancel
-        </button>
-      </div>
 
-      <div className="form-card" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: 24, maxWidth: 700 }}>
-        <form id="addFollowUpForm" onSubmit={handleSubmit}>
-          <div className="form-group" style={{ marginBottom: 15 }}>
-            <label htmlFor="leadDisplay" style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Lead</label>
-            <input
-              type="text"
-              id="leadDisplay"
-              disabled
-              value={leadDisplay}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", background: "#f3f4f6" }}
-            />
-            {!leadIdParam && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <form id="addFollowUpForm" onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="leadDisplay" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Lead
+              </label>
               <input
-                type="number"
-                placeholder="Enter Lead ID"
-                value={leadId}
-                onChange={(e) => setLeadId(e.target.value)}
-                style={{ width: "100%", marginTop: 6, padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
+                type="text"
+                id="leadDisplay"
+                disabled
+                value={leadDisplay}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
               />
-            )}
-          </div>
+              {!leadIdParam && (
+                <input
+                  type="number"
+                  placeholder="Enter Lead ID"
+                  value={leadId}
+                  onChange={(e) => setLeadId(e.target.value)}
+                  className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              )}
+            </div>
 
-          <div className="form-group" style={{ marginBottom: 15 }}>
-            <label htmlFor="agentDisplay" style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Assigned Agent</label>
-            <input
-              type="text"
-              id="agentDisplay"
-              disabled
-              value={agentDisplay}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db", background: "#f3f4f6" }}
-            />
-          </div>
+            <div>
+              <label htmlFor="agentDisplay" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Assigned Agent
+              </label>
+              <input
+                type="text"
+                id="agentDisplay"
+                disabled
+                value={agentDisplay}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
+              />
+            </div>
 
-          <div className="form-group" style={{ marginBottom: 15 }}>
-            <label htmlFor="followUpDate" style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Follow-up Date & Time *</label>
-            <input
-              type="datetime-local"
-              id="followUpDate"
-              required
-              value={followUpDate}
-              onChange={(e) => setFollowUpDate(e.target.value)}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
-            />
-          </div>
+            <div>
+              <label htmlFor="followUpDate" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Follow-up Date & Time *
+              </label>
+              <input
+                type="datetime-local"
+                id="followUpDate"
+                required
+                value={followUpDate}
+                onChange={(e) => setFollowUpDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
 
-          <div className="form-group" style={{ marginBottom: 15 }}>
-            <label htmlFor="purpose" style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Purpose</label>
-            <input
-              type="text"
-              id="purpose"
-              placeholder="e.g., Course discussion, Payment confirmation"
-              value={purpose}
-              onChange={(e) => setPurpose(e.target.value)}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
-            />
-          </div>
+            <div>
+              <label htmlFor="purpose" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Purpose
+              </label>
+              <input
+                type="text"
+                id="purpose"
+                placeholder="e.g., Course discussion, Payment confirmation"
+                value={purpose}
+                onChange={(e) => setPurpose(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
 
-          <div className="form-group" style={{ marginBottom: 15 }}>
-            <label htmlFor="status" style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Status</label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
-            >
-              <option value="PENDING">PENDING</option>
-              <option value="COMPLETED">COMPLETED</option>
-              <option value="CANCELLED">CANCELLED</option>
-            </select>
-          </div>
-
-          <div className="form-group" style={{ marginBottom: 20 }}>
-            <label htmlFor="remarks" style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Remarks</label>
-            <textarea
-              id="remarks"
-              rows={3}
-              placeholder="Optional notes regarding this follow-up..."
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
-            />
-          </div>
-
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="primary-button"
-              style={{ padding: "9px 18px", background: "#2563eb", color: "#fff", borderRadius: 6, fontWeight: 600 }}
-            >
-              {submitting ? "Saving..." : "Schedule Follow-up"}
-            </button>
-            <button
-              type="button"
-              onClick={goBack}
-              style={{ padding: "9px 18px", background: "#f3f4f6", color: "#374151", border: "1px solid #d1d5db", borderRadius: 6, cursor: "pointer" }}
-            >
-              Cancel
-            </button>
-
-            {message && (
-              <span
-                id="addFollowUpMessage"
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: message.isError ? "#dc2626" : "#15803d",
-                }}
+            <div>
+              <label htmlFor="status" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Status
+              </label>
+              <select
+                id="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {message.text}
-              </span>
-            )}
-          </div>
-        </form>
+                <option value="PENDING">PENDING</option>
+                <option value="COMPLETED">COMPLETED</option>
+                <option value="CANCELLED">CANCELLED</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="remarks" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Remarks
+              </label>
+              <textarea
+                id="remarks"
+                rows={3}
+                placeholder="Optional notes regarding this follow-up..."
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-3">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
+              >
+                {submitting ? "Saving..." : "Schedule Follow-up"}
+              </button>
+              <button
+                type="button"
+                onClick={goBack}
+                className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors"
+              >
+                Cancel
+              </button>
+
+              {message && (
+                <span
+                  id="addFollowUpMessage"
+                  className={`text-xs font-semibold ${
+                    message.isError ? "text-red-600" : "text-green-600"
+                  }`}
+                >
+                  {message.text}
+                </span>
+              )}
+            </div>
+          </form>
+        </div>
       </div>
     </DashboardLayout>
   );
@@ -323,7 +334,7 @@ function AddFollowUpContent() {
 
 export default function AddFollowUpPage() {
   return (
-    <Suspense fallback={<p style={{ padding: 20 }}>Loading...</p>}>
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}>
       <AddFollowUpContent />
     </Suspense>
   );

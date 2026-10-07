@@ -180,178 +180,216 @@ function LeadEditContent() {
   if (loading) {
     return (
       <DashboardLayout activeMenu="leads" title="Edit Lead">
-        <p style={{ padding: 20 }}>Loading lead details...</p>
+        <div className="p-8 text-center text-gray-400">Loading lead details...</div>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout activeMenu="leads">
-      <div className="content-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div>
-          <h1 className="page-title" style={{ margin: 0, fontSize: 24 }}>Edit Lead</h1>
-          <p className="page-subtitle" style={{ margin: "4px 0 0", color: "#6b7280" }}>Update lead information and status</p>
-        </div>
-        <button
-          type="button"
-          className="back-button"
-          onClick={() => router.push("/leads")}
-          style={{ padding: "8px 14px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer" }}
-        >
-          ← Back to Leads
-        </button>
-      </div>
-
-      <div className="form-card" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: 24 }}>
-        <h2 className="form-section-title" style={{ fontSize: 18, marginTop: 0, marginBottom: 16 }}>Lead Information</h2>
-
-        {message && (
-          <div
-            id="editMessage"
-            style={{
-              padding: "10px 14px",
-              borderRadius: 6,
-              marginBottom: 16,
-              background: message.includes("success") ? "#dcfce7" : "#f3f4f6",
-              color: message.includes("success") ? "#166534" : "#374151",
-              fontWeight: 600,
-            }}
+      <div className="space-y-6 max-w-3xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Edit Lead #{leadId}</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Update lead contact information and status.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push("/leads")}
+            className="self-start sm:self-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
           >
-            {message}
-          </div>
-        )}
+            &larr; Back to Leads
+          </button>
+        </div>
 
-        <form id="editLeadForm" onSubmit={handleSubmit}>
-          <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <div className="form-group">
-              <label htmlFor="fullName">Full Name</label>
-              <input
-                type="text"
-                id="fullName"
-                name="fullName"
-                disabled={isAgent}
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-              />
-            </div>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+            Lead Information
+          </h2>
 
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                disabled={isAgent}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="phone">Phone</label>
-              <input
-                type="text"
-                id="phone"
-                name="phone"
-                disabled={isAgent}
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="courseInterested">Course Interested</label>
-              <input
-                type="text"
-                id="courseInterested"
-                name="courseInterested"
-                disabled={isAgent}
-                value={courseInterested}
-                onChange={(e) => setCourseInterested(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="leadSource">Lead Source</label>
-              <input
-                type="text"
-                id="leadSource"
-                name="leadSource"
-                disabled={isAgent}
-                value={leadSource}
-                onChange={(e) => setLeadSource(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="status">Lead Status</label>
-              <select
-                id="status"
-                name="status"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="NEW">NEW</option>
-                <option value="CONTACTED">CONTACTED</option>
-                <option value="INTERESTED">INTERESTED</option>
-                <option value="FOLLOW_UP">FOLLOW_UP</option>
-                <option value="COUNSELLING">COUNSELLING</option>
-                <option value="ENROLLED">ENROLLED</option>
-                <option value="NOT_INTERESTED">NOT_INTERESTED</option>
-                <option value="WRONG_NUMBER">WRONG_NUMBER</option>
-                <option value="NO_RESPONSE">NO_RESPONSE</option>
-                <option value="LOST">LOST</option>
-              </select>
-              {isAgent && <div className="field-help" style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>Agents can update only this field.</div>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="priority">Priority</label>
-              <select
-                id="priority"
-                name="priority"
-                disabled={isAgent}
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-              >
-                <option value="LOW">LOW</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HIGH">HIGH</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="city">City</label>
-              <input
-                type="text"
-                id="city"
-                name="city"
-                disabled={isAgent}
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="form-actions" style={{ display: "flex", gap: 12, marginTop: 24 }}>
-            <button
-              type="submit"
-              className="save-button"
-              disabled={submitting}
-              style={{ padding: "9px 18px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, fontWeight: 600, cursor: "pointer" }}
+          {message && (
+            <div
+              id="editMessage"
+              className={`p-3 rounded-lg text-sm font-medium border mb-5 ${
+                message.includes("success")
+                  ? "bg-green-50 text-green-700 border-green-200"
+                  : "bg-blue-50 text-blue-700 border-blue-200"
+              }`}
             >
-              {submitting ? "Saving..." : "Save Changes"}
-            </button>
-            <button
-              type="button"
-              className="cancel-button"
-              onClick={() => router.push("/leads")}
-              style={{ padding: "9px 18px", background: "#f3f4f6", color: "#374151", border: "1px solid #d1d5db", borderRadius: 6, cursor: "pointer" }}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+              {message}
+            </div>
+          )}
+
+          <form id="editLeadForm" onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="fullName" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  id="fullName"
+                  name="fullName"
+                  disabled={isAgent}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm ${
+                    isAgent ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  disabled={isAgent}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm ${
+                    isAgent ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="phone" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Phone
+                </label>
+                <input
+                  type="text"
+                  id="phone"
+                  name="phone"
+                  disabled={isAgent}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm ${
+                    isAgent ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="courseInterested" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Course Interested
+                </label>
+                <input
+                  type="text"
+                  id="courseInterested"
+                  name="courseInterested"
+                  disabled={isAgent}
+                  value={courseInterested}
+                  onChange={(e) => setCourseInterested(e.target.value)}
+                  className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm ${
+                    isAgent ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="leadSource" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Lead Source
+                </label>
+                <input
+                  type="text"
+                  id="leadSource"
+                  name="leadSource"
+                  disabled={isAgent}
+                  value={leadSource}
+                  onChange={(e) => setLeadSource(e.target.value)}
+                  className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm ${
+                    isAgent ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="status" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Lead Status *
+                </label>
+                <select
+                  id="status"
+                  name="status"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                >
+                  <option value="NEW">NEW</option>
+                  <option value="CONTACTED">CONTACTED</option>
+                  <option value="INTERESTED">INTERESTED</option>
+                  <option value="FOLLOW_UP">FOLLOW_UP</option>
+                  <option value="COUNSELLING">COUNSELLING</option>
+                  <option value="ENROLLED">ENROLLED</option>
+                  <option value="NOT_INTERESTED">NOT_INTERESTED</option>
+                  <option value="WRONG_NUMBER">WRONG_NUMBER</option>
+                  <option value="NO_RESPONSE">NO_RESPONSE</option>
+                  <option value="LOST">LOST</option>
+                </select>
+                {isAgent && (
+                  <p className="text-xs text-gray-500 mt-1">Agents can update only this field.</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="priority" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Priority
+                </label>
+                <select
+                  id="priority"
+                  name="priority"
+                  disabled={isAgent}
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value)}
+                  className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm ${
+                    isAgent ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  }`}
+                >
+                  <option value="LOW">LOW</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="HIGH">HIGH</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="city" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  City
+                </label>
+                <input
+                  type="text"
+                  id="city"
+                  name="city"
+                  disabled={isAgent}
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm ${
+                    isAgent ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-3">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
+              >
+                {submitting ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/leads")}
+                className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </DashboardLayout>
   );
@@ -359,7 +397,7 @@ function LeadEditContent() {
 
 export default function LeadEditPage() {
   return (
-    <Suspense fallback={<p style={{ padding: 20 }}>Loading...</p>}>
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}>
       <LeadEditContent />
     </Suspense>
   );

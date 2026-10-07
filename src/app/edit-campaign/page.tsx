@@ -153,32 +153,52 @@ function EditCampaignContent() {
   }
 
   return (
-    <div className="edit-campaign-page">
-      <div className="page-header">
+    <div className="space-y-6 max-w-3xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2>Edit Campaign</h2>
-          <p>Update campaign information.</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Edit Campaign</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Update campaign details and settings.</p>
         </div>
-        <button type="button" onClick={() => router.push("/campaigns")}>
-          ← Back to Campaigns
+        <button
+          type="button"
+          onClick={() => router.push("/campaigns")}
+          className="self-start sm:self-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+        >
+          &larr; Back to Campaigns
         </button>
       </div>
 
       {message && (
-        <div id="message" style={{ color: message.isError ? "red" : "green", marginBottom: "16px" }}>
+        <div
+          className={`p-3 rounded-lg text-sm font-medium border ${
+            message.isError
+              ? "bg-red-50 text-red-700 border-red-200"
+              : "bg-green-50 text-green-700 border-green-200"
+          }`}
+        >
           {message.text}
         </div>
       )}
 
-      <div className="form-card">
-        <form id="editCampaignForm" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="campaignId">Campaign ID</label>
-            <input type="text" id="campaignId" value={campaignId ?? ""} readOnly />
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <form id="editCampaignForm" onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label htmlFor="campaignId" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+              Campaign ID
+            </label>
+            <input
+              type="text"
+              id="campaignId"
+              value={campaignId ?? ""}
+              readOnly
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-500 cursor-not-allowed"
+            />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="campaignName">Campaign Name</label>
+          <div>
+            <label htmlFor="campaignName" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+              Campaign Name *
+            </label>
             <input
               type="text"
               id="campaignName"
@@ -186,87 +206,117 @@ function EditCampaignContent() {
               required
               value={campaignName}
               onChange={(e) => setCampaignName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
+          <div>
+            <label htmlFor="description" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+              Description
+            </label>
             <textarea
               id="description"
-              rows={4}
+              rows={3}
               placeholder="Enter campaign description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="source">Source</label>
-            <input
-              type="text"
-              id="source"
-              placeholder="e.g. Google Ads, Instagram, Facebook"
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label htmlFor="source" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Source
+              </label>
+              <input
+                type="text"
+                id="source"
+                placeholder="e.g. Google Ads, Instagram, Facebook"
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="courseId" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Course
+              </label>
+              <select
+                id="courseId"
+                value={courseIdValue}
+                onChange={(e) => setCourseIdValue(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">{coursesLoading ? "Loading courses..." : "Select Course"}</option>
+                {courses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.courseName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="startDate" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Start Date
+              </label>
+              <input
+                type="date"
+                id="startDate"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="endDate" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                End Date
+              </label>
+              <input
+                type="date"
+                id="endDate"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="status" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Status
+              </label>
+              <select
+                id="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="DRAFT">DRAFT</option>
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="PAUSED">PAUSED</option>
+                <option value="COMPLETED">COMPLETED</option>
+              </select>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="courseId">Course</label>
-            <select
-              id="courseId"
-              value={courseIdValue}
-              onChange={(e) => setCourseIdValue(e.target.value)}
+          <div className="flex items-center gap-3 pt-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
             >
-              <option value="">{coursesLoading ? "Loading courses..." : "Select Course"}</option>
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.courseName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="startDate">Start Date</label>
-            <input
-              type="date"
-              id="startDate"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="endDate">End Date</label>
-            <input
-              type="date"
-              id="endDate"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="status">Status</label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <option value="DRAFT">DRAFT</option>
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="PAUSED">PAUSED</option>
-              <option value="COMPLETED">COMPLETED</option>
-            </select>
-          </div>
-
-          <div className="form-actions">
-            <button type="button" onClick={() => router.push("/campaigns")} disabled={loading}>
-              Cancel
-            </button>
-            <button type="submit" className="primary-button" disabled={loading}>
               {loading ? "Saving..." : "Save Changes"}
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/campaigns")}
+              disabled={loading}
+              className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors"
+            >
+              Cancel
             </button>
           </div>
         </form>
@@ -278,7 +328,7 @@ function EditCampaignContent() {
 export default function EditCampaignPage() {
   return (
     <DashboardLayout activePage="campaigns">
-      <Suspense fallback={<div>Loading edit campaign form...</div>}>
+      <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading edit campaign form...</div>}>
         <EditCampaignContent />
       </Suspense>
     </DashboardLayout>

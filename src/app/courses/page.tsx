@@ -109,20 +109,24 @@ export default function CoursesPage() {
 
   return (
     <DashboardLayout activePage="courses">
-      <div className="courses-page">
-        <div className="courses-page-header">
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2>Courses</h2>
-            <p>Manage CRM courses and programs.</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Courses</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Manage CRM courses and programs.</p>
           </div>
-          <div className="courses-header-actions">
-            <button type="button" onClick={() => router.push("/dashboard")}>
-              ← Dashboard
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard")}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              &larr; Dashboard
             </button>
             <button
               type="button"
-              className="primary-button"
               onClick={() => router.push("/add-course")}
+              className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
             >
               + Add Course
             </button>
@@ -130,79 +134,106 @@ export default function CoursesPage() {
         </div>
 
         {message && (
-          <div id="message" style={{ color: message.isError ? "red" : "green", marginBottom: "16px" }}>
+          <div
+            className={`p-3 rounded-lg text-sm font-medium border ${
+              message.isError
+                ? "bg-red-50 text-red-700 border-red-200"
+                : "bg-green-50 text-green-700 border-green-200"
+            }`}
+          >
             {message.text}
           </div>
         )}
 
-        <div className="courses-toolbar">
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
           <input
             type="text"
             id="searchCourse"
             placeholder="Search courses..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full sm:w-80 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           />
-          <button type="button" id="refreshCourses" onClick={loadCourses} disabled={loading}>
+          <button
+            type="button"
+            id="refreshCourses"
+            onClick={loadCourses}
+            disabled={loading}
+            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors disabled:opacity-50"
+          >
             {loading ? "Refreshing..." : "Refresh"}
           </button>
         </div>
 
-        <div className="courses-table-container">
-          <table className="courses-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Course Name</th>
-                <th>Description</th>
-                <th>Duration</th>
-                <th>Status</th>
-                <th>Created At</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="coursesTableBody">
-              {filteredCourses.length === 0 ? (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: "center" }}>
-                    {loading ? "Loading..." : "No courses found."}
-                  </td>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-900 text-white text-xs uppercase tracking-wider">
+                  <th className="px-4 py-3 font-semibold">ID</th>
+                  <th className="px-4 py-3 font-semibold">Course Name</th>
+                  <th className="px-4 py-3 font-semibold">Description</th>
+                  <th className="px-4 py-3 font-semibold">Duration</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">Created At</th>
+                  <th className="px-4 py-3 font-semibold text-center sticky right-0 bg-gray-900 z-10 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.1)]">
+                    Action
+                  </th>
                 </tr>
-              ) : (
-                filteredCourses.map((course) => (
-                  <tr key={course.id}>
-                    <td>{course.id}</td>
-                    <td>{course.courseName ?? ""}</td>
-                    <td>{course.description ?? ""}</td>
-                    <td>
-                      {course.durationMonths != null
-                        ? `${course.durationMonths} months`
-                        : ""}
-                    </td>
-                    <td>{course.status ?? ""}</td>
-                    <td>{course.createdAt ?? ""}</td>
-                    <td>
-                      <button
-                        type="button"
-                        onClick={() => startTransition(() => router.push(`/course-details?id=${course.id}`))}
-                      >
-                        View
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => startTransition(() => router.push(`/edit-course?id=${course.id}`))}
-                      >
-                        Edit
-                      </button>
-                      <button type="button" onClick={() => handleDelete(course.id)}>
-                        Delete
-                      </button>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                {filteredCourses.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                      {loading ? "Loading..." : "No courses found."}
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredCourses.map((course) => (
+                    <tr key={course.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-gray-900">{course.id}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">{course.courseName ?? ""}</td>
+                      <td className="px-4 py-3 max-w-xs truncate" title={course.description ?? ""}>
+                        {course.description ?? ""}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {course.durationMonths != null ? `${course.durationMonths} months` : ""}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium status-${(course.status || "active").toLowerCase()}`}>
+                          {course.status ?? "Active"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{course.createdAt ?? ""}</td>
+                      <td className="px-4 py-3 sticky right-0 bg-white z-10 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] text-center whitespace-nowrap min-w-[200px]">
+                        <button
+                          type="button"
+                          onClick={() => startTransition(() => router.push(`/course-details?id=${course.id}`))}
+                          className="text-xs px-2.5 py-1 border border-gray-200 rounded hover:bg-gray-50 text-gray-700 font-medium transition-colors mr-1.5"
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => startTransition(() => router.push(`/edit-course?id=${course.id}`))}
+                          className="text-xs px-2.5 py-1 border border-blue-200 text-blue-600 rounded hover:bg-blue-50 font-medium transition-colors mr-1.5"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(course.id)}
+                          className="text-xs px-2.5 py-1 border border-red-200 text-red-600 rounded hover:bg-red-50 font-medium transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </DashboardLayout>

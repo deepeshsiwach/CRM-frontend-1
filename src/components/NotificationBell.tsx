@@ -152,59 +152,21 @@ export default function NotificationBell() {
   };
 
   return (
-    <div
-      id="crmNotificationContainer"
-      style={{
-        position: "relative",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginRight: "15px",
-      }}
-    >
+    <div id="crmNotificationContainer" className="relative inline-flex items-center justify-center mr-2">
       {/* BELL */}
       <div
         id="crmNotificationBell"
         ref={bellRef}
         title="Notifications"
         onClick={handleBellClick}
-        style={{
-          position: "relative",
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: "42px",
-          height: "42px",
-          cursor: "pointer",
-          fontSize: "24px",
-          borderRadius: "10px",
-          transition: "background 0.2s ease",
-        }}
+        className="relative inline-flex items-center justify-center w-10 h-10 cursor-pointer text-2xl rounded-xl hover:bg-gray-700 transition-colors duration-200"
       >
         🔔
         {/* UNREAD COUNT */}
         {unreadCount > 0 && (
           <span
             id="crmNotificationCount"
-            style={{
-              position: "absolute",
-              top: "-5px",
-              right: "-5px",
-              minWidth: "19px",
-              height: "19px",
-              padding: "0 5px",
-              borderRadius: "20px",
-              background: "#ef4444",
-              color: "#ffffff",
-              fontSize: "11px",
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              lineHeight: "19px",
-              border: "2px solid #172554",
-              boxSizing: "border-box",
-            }}
+            className="absolute -top-1 -right-1 min-w-[19px] h-[19px] px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center border-2 border-gray-800"
           >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
@@ -216,49 +178,16 @@ export default function NotificationBell() {
         <div
           id="crmNotificationPanel"
           ref={panelRef}
-          style={{
-            display: "block",
-            position: "fixed",
-            top: "85px",
-            right: "25px",
-            width: "400px",
-            maxWidth: "calc(100vw - 30px)",
-            maxHeight: "520px",
-            overflow: "hidden",
-            background: "#ffffff",
-            border: "1px solid #dbe3ef",
-            borderRadius: "12px",
-            boxShadow: "0 15px 40px rgba(15,23,42,0.22)",
-            zIndex: 999999,
-          }}
+          className="fixed top-[72px] right-6 w-[400px] max-w-[calc(100vw-24px)] max-h-[520px] overflow-hidden bg-white border border-gray-200 rounded-xl shadow-2xl z-[999999]"
         >
           {/* PANEL HEADER */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "15px 16px",
-              borderBottom: "1px solid #e5e7eb",
-              background: "#ffffff",
-            }}
-          >
-            <div style={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>
-              Notifications
-            </div>
+          <div className="flex justify-between items-center px-4 py-3.5 border-b border-gray-200 bg-white">
+            <span className="text-base font-bold text-gray-900">Notifications</span>
             <button
               id="crmMarkAllRead"
               type="button"
               onClick={(e) => { e.stopPropagation(); markAllRead(); }}
-              style={{
-                border: "none",
-                background: "none",
-                cursor: "pointer",
-                color: "#2563eb",
-                fontSize: "12px",
-                fontWeight: 600,
-                padding: "4px 0",
-              }}
+              className="text-blue-600 text-xs font-semibold hover:text-blue-800 transition-colors bg-transparent border-none cursor-pointer p-0"
             >
               Mark all as read
             </button>
@@ -267,45 +196,39 @@ export default function NotificationBell() {
           {/* NOTIFICATION LIST */}
           <div
             id="crmNotificationList"
-            style={{ maxHeight: "450px", overflowY: "auto", background: "#ffffff" }}
+            className="max-h-[450px] overflow-y-auto bg-white"
           >
             {loading ? (
-              <div style={{ padding: "30px", textAlign: "center", color: "#6b7280", fontSize: "13px" }}>
+              <div className="p-8 text-center text-gray-500 text-sm">
                 Loading notifications...
               </div>
             ) : notifications.length === 0 ? (
-              <div style={{ padding: "40px 20px", textAlign: "center", color: "#6b7280", background: "#ffffff" }}>
-                <div style={{ fontSize: "30px", marginBottom: "10px" }}>🔕</div>
-                <div style={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>No new notifications</div>
-                <div style={{ marginTop: "5px", fontSize: "12px", color: "#9ca3af" }}>You&apos;re all caught up.</div>
+              <div className="py-10 px-5 text-center bg-white">
+                <div className="text-4xl mb-2">🔕</div>
+                <div className="text-sm font-semibold text-gray-700">No new notifications</div>
+                <div className="mt-1 text-xs text-gray-400">You&apos;re all caught up.</div>
               </div>
             ) : (
               notifications.map((notification) => (
                 <div
                   key={notification.id}
                   onClick={(e) => { e.stopPropagation(); markRead(notification.id); }}
-                  style={{
-                    padding: "16px 15px",
-                    borderBottom: "1px solid #e5e7eb",
-                    cursor: "pointer",
-                    background: "#eef2ff",
-                    transition: "background 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#e0e7ff")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "#eef2ff")}
+                  className="px-4 py-4 border-b border-gray-100 cursor-pointer bg-indigo-50 hover:bg-indigo-100 transition-colors duration-150"
                 >
-                  <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
-                    <div style={{ fontSize: "21px", width: "30px", minWidth: "30px", textAlign: "center" }}>
+                  <div className="flex gap-3 items-start">
+                    <div className="text-xl w-8 min-w-[2rem] text-center">
                       {getIcon(notification.type)}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: "14px", fontWeight: 700, color: "#111827", marginBottom: "6px", lineHeight: 1.35 }}>
-                        {escapeHtml(notification.title)}
-                      </div>
-                      <div style={{ fontSize: "13px", fontWeight: 500, color: "#374151", lineHeight: 1.5 }}>
-                        {escapeHtml(notification.message)}
-                      </div>
-                      <div style={{ marginTop: "8px", fontSize: "11px", fontWeight: 500, color: "#6b7280" }}>
+                    <div className="flex-1 min-w-0">
+                      <div
+                        className="text-sm font-bold text-gray-900 mb-1 leading-snug"
+                        dangerouslySetInnerHTML={{ __html: escapeHtml(notification.title) }}
+                      />
+                      <div
+                        className="text-sm font-medium text-gray-700 leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: escapeHtml(notification.message) }}
+                      />
+                      <div className="mt-2 text-[11px] font-medium text-gray-500">
                         {formatNotificationDate(notification.createdAt)}
                       </div>
                     </div>

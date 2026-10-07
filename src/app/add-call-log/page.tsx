@@ -177,190 +177,219 @@ function AddCallLogContent() {
 
   return (
     <DashboardLayout activeMenu="call-logs" title="Add Call Log">
-      <div className="content-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div>
-          <h2 style={{ margin: 0 }}>Add New Call Log</h2>
-          <p style={{ margin: "4px 0 0", color: "#6b7280" }}>Record call outcome and details</p>
+      <div className="space-y-6 max-w-4xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add New Call Log</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Record call outcome and lead conversation details.</p>
+          </div>
+          <button
+            type="button"
+            onClick={goBack}
+            className="self-start sm:self-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            Cancel
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={goBack}
-          style={{ padding: "8px 14px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer" }}
-        >
-          Cancel
-        </button>
-      </div>
 
-      <div className="form-card" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: 24, maxWidth: 800 }}>
-        <form id="callLogForm" onSubmit={handleSubmit}>
-          <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <div className="form-group">
-              <label htmlFor="leadDisplay">Lead</label>
-              <input
-                type="text"
-                id="leadDisplay"
-                disabled
-                value={leadDisplay}
-                style={{ background: "#f3f4f6" }}
-              />
-              {!leadIdParam && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <form id="callLogForm" onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="leadDisplay" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Lead
+                </label>
+                <input
+                  type="text"
+                  id="leadDisplay"
+                  disabled
+                  value={leadDisplay}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
+                />
+                {!leadIdParam && (
+                  <input
+                    type="number"
+                    placeholder="Enter Lead ID"
+                    value={leadId}
+                    onChange={(e) => setLeadId(e.target.value)}
+                    className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="agentDisplay" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Agent
+                </label>
+                <input
+                  type="text"
+                  id="agentDisplay"
+                  disabled
+                  value={agentDisplay}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="callStartTime" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Call Start Time *
+                </label>
+                <input
+                  type="datetime-local"
+                  id="callStartTime"
+                  required
+                  value={callStartTime}
+                  onChange={(e) => setCallStartTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="callEndTime" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Call End Time
+                </label>
+                <input
+                  type="datetime-local"
+                  id="callEndTime"
+                  value={callEndTime}
+                  onChange={(e) => setCallEndTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="durationSeconds" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Duration (Seconds)
+                </label>
                 <input
                   type="number"
-                  placeholder="Enter Lead ID"
-                  value={leadId}
-                  onChange={(e) => setLeadId(e.target.value)}
-                  style={{ marginTop: 6 }}
+                  id="durationSeconds"
+                  min={0}
+                  value={durationSeconds}
+                  onChange={(e) => setDurationSeconds(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="callStatus" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Call Status *
+                </label>
+                <select
+                  id="callStatus"
+                  value={callStatus}
+                  onChange={(e) => setCallStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="COMPLETED">COMPLETED</option>
+                  <option value="MISSED">MISSED</option>
+                  <option value="REJECTED">REJECTED</option>
+                  <option value="BUSY">BUSY</option>
+                  <option value="NOT_ANSWERED">NOT_ANSWERED</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="callOutcome" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Call Outcome
+                </label>
+                <select
+                  id="callOutcome"
+                  value={callOutcome}
+                  onChange={(e) => setCallOutcome(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="CONNECTED">CONNECTED</option>
+                  <option value="INTERESTED">INTERESTED</option>
+                  <option value="NOT_INTERESTED">NOT_INTERESTED</option>
+                  <option value="CALLBACK_REQUESTED">CALLBACK_REQUESTED</option>
+                  <option value="WRONG_NUMBER">WRONG_NUMBER</option>
+                  <option value="ENROLLED">ENROLLED</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="city" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  City
+                </label>
+                <input
+                  type="text"
+                  id="city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="education" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Education
+                </label>
+                <input
+                  type="text"
+                  id="education"
+                  value={education}
+                  onChange={(e) => setEducation(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="interestedArea" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Interested Area
+                </label>
+                <input
+                  type="text"
+                  id="interestedArea"
+                  value={interestedArea}
+                  onChange={(e) => setInterestedArea(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="remarks" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Remarks
+              </label>
+              <textarea
+                id="remarks"
+                rows={3}
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-3">
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
+              >
+                {saving ? "Saving..." : "Save Call Log"}
+              </button>
+              <button
+                type="button"
+                onClick={goBack}
+                className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors"
+              >
+                Cancel
+              </button>
+
+              {message && (
+                <span
+                  id="message"
+                  className={`text-xs font-semibold ${
+                    message.isError ? "text-red-600" : "text-green-600"
+                  }`}
+                >
+                  {message.text}
+                </span>
               )}
             </div>
-
-            <div className="form-group">
-              <label htmlFor="agentDisplay">Agent</label>
-              <input
-                type="text"
-                id="agentDisplay"
-                disabled
-                value={agentDisplay}
-                style={{ background: "#f3f4f6" }}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="callStartTime">Call Start Time *</label>
-              <input
-                type="datetime-local"
-                id="callStartTime"
-                required
-                value={callStartTime}
-                onChange={(e) => setCallStartTime(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="callEndTime">Call End Time</label>
-              <input
-                type="datetime-local"
-                id="callEndTime"
-                value={callEndTime}
-                onChange={(e) => setCallEndTime(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="durationSeconds">Duration (Seconds)</label>
-              <input
-                type="number"
-                id="durationSeconds"
-                min={0}
-                value={durationSeconds}
-                onChange={(e) => setDurationSeconds(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="callStatus">Call Status *</label>
-              <select
-                id="callStatus"
-                value={callStatus}
-                onChange={(e) => setCallStatus(e.target.value)}
-              >
-                <option value="COMPLETED">COMPLETED</option>
-                <option value="MISSED">MISSED</option>
-                <option value="REJECTED">REJECTED</option>
-                <option value="BUSY">BUSY</option>
-                <option value="NOT_ANSWERED">NOT_ANSWERED</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="callOutcome">Call Outcome</label>
-              <select
-                id="callOutcome"
-                value={callOutcome}
-                onChange={(e) => setCallOutcome(e.target.value)}
-              >
-                <option value="CONNECTED">CONNECTED</option>
-                <option value="INTERESTED">INTERESTED</option>
-                <option value="NOT_INTERESTED">NOT_INTERESTED</option>
-                <option value="CALLBACK_REQUESTED">CALLBACK_REQUESTED</option>
-                <option value="WRONG_NUMBER">WRONG_NUMBER</option>
-                <option value="ENROLLED">ENROLLED</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="city">City</label>
-              <input
-                type="text"
-                id="city"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="education">Education</label>
-              <input
-                type="text"
-                id="education"
-                value={education}
-                onChange={(e) => setEducation(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="interestedArea">Interested Area</label>
-              <input
-                type="text"
-                id="interestedArea"
-                value={interestedArea}
-                onChange={(e) => setInterestedArea(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="form-group" style={{ marginTop: 16 }}>
-            <label htmlFor="remarks">Remarks</label>
-            <textarea
-              id="remarks"
-              rows={3}
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #d1d5db" }}
-            />
-          </div>
-
-          <div style={{ display: "flex", gap: 12, marginTop: 24, alignItems: "center" }}>
-            <button
-              type="submit"
-              disabled={saving}
-              className="primary-button"
-              style={{ padding: "9px 18px", background: "#2563eb", color: "#fff", borderRadius: 6, fontWeight: 600 }}
-            >
-              {saving ? "Saving..." : "Save Call Log"}
-            </button>
-            <button
-              type="button"
-              onClick={goBack}
-              style={{ padding: "9px 18px", background: "#f3f4f6", color: "#374151", border: "1px solid #d1d5db", borderRadius: 6, cursor: "pointer" }}
-            >
-              Cancel
-            </button>
-
-            {message && (
-              <span
-                id="message"
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: message.isError ? "#dc2626" : "#15803d",
-                }}
-              >
-                {message.text}
-              </span>
-            )}
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </DashboardLayout>
   );
@@ -368,7 +397,7 @@ function AddCallLogContent() {
 
 export default function AddCallLogPage() {
   return (
-    <Suspense fallback={<p style={{ padding: 20 }}>Loading...</p>}>
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}>
       <AddCallLogContent />
     </Suspense>
   );

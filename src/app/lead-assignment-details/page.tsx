@@ -195,142 +195,144 @@ function LeadAssignmentDetailsContent() {
   if (loading) {
     return (
       <DashboardLayout activeMenu="lead-assignments" title="Assignment Details">
-        <p style={{ padding: 20 }}>Loading assignment details...</p>
+        <div className="p-8 text-center text-gray-400">Loading assignment details...</div>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout activeMenu="lead-assignments">
-      <div className="content-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div>
-          <h2 style={{ margin: 0 }}>Lead Assignment Details</h2>
-          <p style={{ margin: "4px 0 0", color: "#6b7280" }}>View and reassign this lead</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => router.push("/lead-assignments")}
-          style={{ padding: "8px 14px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer" }}
-        >
-          ← Back to Assignments
-        </button>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-        {/* CURRENT DETAILS */}
-        <div className="form-card" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: 20 }}>
-          <h3 style={{ marginTop: 0, marginBottom: 16 }}>Current Assignment</h3>
-
-          {assignment ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-                <strong style={{ color: "#4b5563" }}>Assignment ID:</strong>
-                <span>{assignment.id}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-                <strong style={{ color: "#4b5563" }}>Lead ID:</strong>
-                <span>{assignment.leadId}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-                <strong style={{ color: "#4b5563" }}>Current Agent ID:</strong>
-                <span>{assignment.agentId}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-                <strong style={{ color: "#4b5563" }}>Current Team ID:</strong>
-                <span>{assignment.teamId ?? "-"}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-                <strong style={{ color: "#4b5563" }}>Assigned At:</strong>
-                <span>{assignment.assignedAt ?? "-"}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0" }}>
-                <strong style={{ color: "#4b5563" }}>Status:</strong>
-                <span
-                  style={{
-                    padding: "3px 8px",
-                    borderRadius: 12,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    background: assignment.status === "ACTIVE" ? "#dcfce7" : "#f3f4f6",
-                    color: assignment.status === "ACTIVE" ? "#166534" : "#4b5563",
-                  }}
-                >
-                  {assignment.status ?? "-"}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <p style={{ color: "#6b7280" }}>No assignment details found.</p>
-          )}
+      <div className="space-y-6 max-w-4xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Lead Assignment Details</h1>
+            <p className="text-sm text-gray-500 mt-0.5">View and reassign this lead to a different agent or team.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push("/lead-assignments")}
+            className="self-start sm:self-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            &larr; Back to Assignments
+          </button>
         </div>
 
-        {/* REASSIGN FORM */}
-        <div className="form-card" style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: 20 }}>
-          <h3 style={{ marginTop: 0, marginBottom: 16 }}>Reassign / Transfer Lead</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* CURRENT DETAILS */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+            <h3 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-3">
+              Current Assignment
+            </h3>
 
-          <form id="reassignForm" onSubmit={handleReassign}>
-            <div className="form-group" style={{ marginBottom: 15 }}>
-              <label htmlFor="agentSelect" style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>
-                Select Agent
-              </label>
-              <select
-                id="agentSelect"
-                style={{ width: "100%", padding: "9px 11px", borderRadius: 6, border: "1px solid #d1d5db" }}
-                value={selectedAgentId}
-                onChange={(e) => setSelectedAgentId(e.target.value)}
-              >
-                <option value="">Select Agent</option>
-                {agents.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.fullName} ({a.email})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group" style={{ marginBottom: 15 }}>
-              <label htmlFor="teamSelect" style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>
-                Select Team
-              </label>
-              <select
-                id="teamSelect"
-                style={{ width: "100%", padding: "9px 11px", borderRadius: 6, border: "1px solid #d1d5db" }}
-                value={selectedTeamId}
-                onChange={(e) => setSelectedTeamId(e.target.value)}
-              >
-                <option value="">Select Team</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.teamName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{ marginTop: 20 }}>
-              <button
-                type="submit"
-                disabled={submitting || !assignment}
-                className="primary-button"
-                style={{ padding: "9px 18px", background: "#2563eb", color: "#fff", borderRadius: 6, fontWeight: 600 }}
-              >
-                {submitting ? "Reassigning..." : "Reassign Lead"}
-              </button>
-            </div>
-
-            {message && (
-              <p
-                id="reassignMessage"
-                style={{
-                  marginTop: 15,
-                  fontWeight: 600,
-                  color: message.includes("success") ? "#15803d" : "#dc2626",
-                }}
-              >
-                {message}
-              </p>
+            {assignment ? (
+              <dl className="divide-y divide-gray-100 text-sm">
+                <div className="flex justify-between py-2.5">
+                  <dt className="text-gray-500 font-medium">Assignment ID</dt>
+                  <dd className="font-semibold text-gray-900">{assignment.id}</dd>
+                </div>
+                <div className="flex justify-between py-2.5">
+                  <dt className="text-gray-500 font-medium">Lead ID</dt>
+                  <dd className="font-semibold text-blue-600">{assignment.leadId}</dd>
+                </div>
+                <div className="flex justify-between py-2.5">
+                  <dt className="text-gray-500 font-medium">Current Agent ID</dt>
+                  <dd className="font-semibold text-gray-900">{assignment.agentId}</dd>
+                </div>
+                <div className="flex justify-between py-2.5">
+                  <dt className="text-gray-500 font-medium">Current Team ID</dt>
+                  <dd className="font-semibold text-gray-900">{assignment.teamId ?? "-"}</dd>
+                </div>
+                <div className="flex justify-between py-2.5">
+                  <dt className="text-gray-500 font-medium">Assigned At</dt>
+                  <dd className="text-gray-700 whitespace-nowrap">{assignment.assignedAt ?? "-"}</dd>
+                </div>
+                <div className="flex justify-between py-2.5 items-center">
+                  <dt className="text-gray-500 font-medium">Status</dt>
+                  <dd>
+                    <span
+                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        assignment.status === "ACTIVE"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {assignment.status ?? "-"}
+                    </span>
+                  </dd>
+                </div>
+              </dl>
+            ) : (
+              <p className="text-sm text-gray-400 py-4">No assignment details found.</p>
             )}
-          </form>
+          </div>
+
+          {/* REASSIGN FORM */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+            <h3 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-3">
+              Reassign / Transfer Lead
+            </h3>
+
+            <form id="reassignForm" onSubmit={handleReassign} className="space-y-4">
+              <div>
+                <label htmlFor="agentSelect" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Select Agent *
+                </label>
+                <select
+                  id="agentSelect"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedAgentId}
+                  onChange={(e) => setSelectedAgentId(e.target.value)}
+                >
+                  <option value="">Select Agent</option>
+                  {agents.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.fullName} ({a.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="teamSelect" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Select Team *
+                </label>
+                <select
+                  id="teamSelect"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedTeamId}
+                  onChange={(e) => setSelectedTeamId(e.target.value)}
+                >
+                  <option value="">Select Team</option>
+                  {teams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.teamName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={submitting || !assignment}
+                  className="w-full px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
+                >
+                  {submitting ? "Reassigning..." : "Reassign Lead"}
+                </button>
+              </div>
+
+              {message && (
+                <p
+                  id="reassignMessage"
+                  className={`text-xs font-semibold pt-1 ${
+                    message.includes("success") ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  {message}
+                </p>
+              )}
+            </form>
+          </div>
         </div>
       </div>
     </DashboardLayout>
@@ -339,7 +341,7 @@ function LeadAssignmentDetailsContent() {
 
 export default function LeadAssignmentDetailsPage() {
   return (
-    <Suspense fallback={<p style={{ padding: 20 }}>Loading...</p>}>
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}>
       <LeadAssignmentDetailsContent />
     </Suspense>
   );

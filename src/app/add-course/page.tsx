@@ -95,27 +95,39 @@ export default function AddCoursePage() {
 
   return (
     <DashboardLayout activePage="courses">
-      <div className="add-course-page">
-        <div className="add-course-page-header">
+      <div className="space-y-6 max-w-3xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2>Add Course</h2>
-            <p>Create a new CRM course.</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add Course</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Create a new CRM course or training program.</p>
           </div>
-          <button type="button" onClick={() => router.push("/courses")}>
-            ← Back to Courses
+          <button
+            type="button"
+            onClick={() => router.push("/courses")}
+            className="self-start sm:self-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            &larr; Back to Courses
           </button>
         </div>
 
         {message && (
-          <div id="message" style={{ color: message.isError ? "red" : "green", marginBottom: "16px" }}>
+          <div
+            className={`p-3 rounded-lg text-sm font-medium border ${
+              message.isError
+                ? "bg-red-50 text-red-700 border-red-200"
+                : "bg-green-50 text-green-700 border-green-200"
+            }`}
+          >
             {message.text}
           </div>
         )}
 
-        <div className="add-course-form-container">
-          <form id="addCourseForm" onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="courseName">Course Name</label>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <form id="addCourseForm" onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="courseName" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Course Name *
+              </label>
               <input
                 type="text"
                 id="courseName"
@@ -124,54 +136,75 @@ export default function AddCoursePage() {
                 required
                 value={courseName}
                 onChange={(e) => setCourseName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="description">Description</label>
+            <div>
+              <label htmlFor="description" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                Description
+              </label>
               <textarea
                 id="description"
                 name="description"
-                rows={5}
+                rows={4}
                 placeholder="Enter course description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="durationMonths">Duration (Months)</label>
-              <input
-                type="number"
-                id="durationMonths"
-                name="durationMonths"
-                min={1}
-                placeholder="Enter duration in months"
-                value={durationValue}
-                onChange={(e) => setDurationValue(e.target.value)}
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="durationMonths" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Duration (Months)
+                </label>
+                <input
+                  type="number"
+                  id="durationMonths"
+                  name="durationMonths"
+                  min={1}
+                  placeholder="Enter duration in months"
+                  value={durationValue}
+                  onChange={(e) => setDurationValue(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="status" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Status *
+                </label>
+                <select
+                  id="status"
+                  name="status"
+                  required
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="INACTIVE">INACTIVE</option>
+                </select>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="status">Status</label>
-              <select
-                id="status"
-                name="status"
-                required
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
+            <div className="flex items-center gap-3 pt-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
               >
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="INACTIVE">INACTIVE</option>
-              </select>
-            </div>
-
-            <div className="form-actions">
-              <button type="button" onClick={() => router.push("/courses")} disabled={loading}>
-                Cancel
-              </button>
-              <button type="submit" disabled={loading}>
                 {loading ? "Creating..." : "Create Course"}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/courses")}
+                disabled={loading}
+                className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-colors"
+              >
+                Cancel
               </button>
             </div>
           </form>

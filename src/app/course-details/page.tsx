@@ -68,60 +68,79 @@ function CourseDetailsContent() {
   }, [courseId, router]);
 
   return (
-    <div className="course-details-page">
-      <div className="course-details-page-header">
+    <div className="space-y-6 max-w-2xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2>Course Details</h2>
-          <p>View CRM course information.</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Course Details</h1>
+          <p className="text-sm text-gray-500 mt-0.5">View CRM course syllabus, duration, and status.</p>
         </div>
-        <button type="button" onClick={() => router.push("/courses")}>
-          ← Back to Courses
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.push("/courses")}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            &larr; Back to Courses
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push(`/edit-course?id=${courseId}`)}
+            className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
+          >
+            Edit Course
+          </button>
+        </div>
       </div>
 
       {message && (
-        <div id="message" style={{ color: message.isError ? "red" : "green", marginBottom: "16px" }}>
+        <div
+          className={`p-3 rounded-lg text-sm font-medium border ${
+            message.isError
+              ? "bg-red-50 text-red-700 border-red-200"
+              : "bg-green-50 text-green-700 border-green-200"
+          }`}
+        >
           {message.text}
         </div>
       )}
 
-      <div className="course-details-card">
-        <div className="detail-row">
-          <div className="detail-label">Course ID</div>
-          <div className="detail-value" id="courseId">{course?.id ?? "-"}</div>
-        </div>
-
-        <div className="detail-row">
-          <div className="detail-label">Course Name</div>
-          <div className="detail-value" id="courseName">{course?.courseName ?? "-"}</div>
-        </div>
-
-        <div className="detail-row">
-          <div className="detail-label">Description</div>
-          <div className="detail-value" id="description">{course?.description ?? "-"}</div>
-        </div>
-
-        <div className="detail-row">
-          <div className="detail-label">Duration</div>
-          <div className="detail-value" id="durationMonths">
-            {course?.durationMonths != null ? `${course.durationMonths} months` : "-"}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Course ID</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{course?.id ?? "-"}</dd>
           </div>
-        </div>
-
-        <div className="detail-row">
-          <div className="detail-label">Status</div>
-          <div className="detail-value" id="status">{course?.status ?? "-"}</div>
-        </div>
-
-        <div className="detail-row">
-          <div className="detail-label">Created At</div>
-          <div className="detail-value" id="createdAt">{course?.createdAt ?? "-"}</div>
-        </div>
-
-        <div className="detail-row">
-          <div className="detail-label">Updated At</div>
-          <div className="detail-value" id="updatedAt">{course?.updatedAt ?? "-"}</div>
-        </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Course Name</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{course?.courseName ?? "-"}</dd>
+          </div>
+          <div className="sm:col-span-2">
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{course?.description ?? "-"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Duration</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">
+              {course?.durationMonths != null ? `${course.durationMonths} months` : "-"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</dt>
+            <dd className="mt-1">
+              <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold status-${(course?.status || "active").toLowerCase()}`}>
+                {course?.status ?? "-"}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Created At</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{course?.createdAt ?? "-"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Updated At</dt>
+            <dd className="text-sm font-medium text-gray-900 mt-1">{course?.updatedAt ?? "-"}</dd>
+          </div>
+        </dl>
       </div>
     </div>
   );
@@ -130,7 +149,7 @@ function CourseDetailsContent() {
 export default function CourseDetailsPage() {
   return (
     <DashboardLayout activePage="courses">
-      <Suspense fallback={<div>Loading course details...</div>}>
+      <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading course details...</div>}>
         <CourseDetailsContent />
       </Suspense>
     </DashboardLayout>

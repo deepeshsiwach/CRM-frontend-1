@@ -250,6 +250,11 @@ export default function LeadsPage() {
     loadLeads();
   };
 
+  // Shared style helpers
+  const inputCls = "px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white";
+  const thCls = "px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap";
+  const tdCls = "px-3 py-3 text-sm text-gray-700 border-t border-gray-100";
+
   return (
     <>
       {/* Load XLSX library */}
@@ -259,78 +264,96 @@ export default function LeadsPage() {
       />
 
       <DashboardLayout activeMenu="leads">
-        <h2>Leads</h2>
-
-        {/* ADD / IMPORT BUTTONS */}
-        <button
-          type="button"
-          className="add-lead-button"
-          onClick={() => router.push("/add-lead")}
-        >
-          + Add Lead
-        </button>
-
-        <button
-          type="button"
-          className="import-lead-button"
-          onClick={() => setExcelOpen(!excelOpen)}
-        >
-          📊 Import Excel
-        </button>
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Leads</h2>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => router.push("/add-lead")}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors duration-200 shadow-sm"
+            >
+              + Add Lead
+            </button>
+            <button
+              type="button"
+              onClick={() => setExcelOpen(!excelOpen)}
+              className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors duration-200 shadow-sm"
+            >
+              📊 Import Excel
+            </button>
+          </div>
+        </div>
 
         {/* EXCEL IMPORT SECTION */}
         {excelOpen && (
-          <div id="excelImportSection" className="excel-import-section">
-            <div className="excel-import-header">
+          <div id="excelImportSection" className="bg-white border border-gray-200 rounded-xl p-5 mb-5 shadow-sm">
+            <div className="flex justify-between items-start mb-4">
               <div>
-                <h3>Import Leads from Excel</h3>
-                <p>Upload an Excel file to import multiple leads into the CRM.</p>
+                <h3 className="text-base font-bold text-gray-800">Import Leads from Excel</h3>
+                <p className="text-sm text-gray-500 mt-0.5">Upload an Excel file to import multiple leads into the CRM.</p>
               </div>
-              <button type="button" className="excel-close-button" onClick={() => setExcelOpen(false)}>✕</button>
+              <button
+                type="button"
+                onClick={() => setExcelOpen(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none p-1"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="excel-upload-area">
-              <div className="excel-upload-icon">📊</div>
-              <h4>Select Excel File</h4>
-              <p>Supported format: .xlsx</p>
+            <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center bg-gray-50 mb-4">
+              <div className="text-4xl mb-2">📊</div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-1">Select Excel File</h4>
+              <p className="text-xs text-gray-400 mb-3">Supported format: .xlsx</p>
               <input
                 type="file"
                 id="excelFile"
                 accept=".xlsx"
                 ref={fileInputRef}
                 onChange={handleFileChange}
+                className="text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:font-semibold hover:file:bg-blue-700 cursor-pointer"
               />
-              {excelFile && <div className="excel-file-name">{excelFile.name}</div>}
+              {excelFile && <div className="mt-2 text-xs text-gray-500 font-medium">{excelFile.name}</div>}
             </div>
 
-            <div className="excel-import-actions">
-              <button type="button" className="primary-button" onClick={previewExcelFile}>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={previewExcelFile}
+                disabled={!excelFile}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+              >
                 Preview Excel
               </button>
-              <button type="button" className="secondary-button" onClick={() => setExcelOpen(false)}>
+              <button
+                type="button"
+                onClick={() => setExcelOpen(false)}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+              >
                 Cancel
               </button>
             </div>
 
             {previewOpen && (
-              <div id="excelPreviewSection" className="excel-preview-section">
-                <div className="excel-preview-header">
+              <div id="excelPreviewSection" className="mt-4">
+                <div className="flex justify-between items-center mb-3">
                   <div>
-                    <h4>Excel Preview</h4>
-                    <p id="excelPreviewInfo">{excelRows.length} rows found. Review before importing.</p>
+                    <h4 className="text-sm font-bold text-gray-800">Excel Preview</h4>
+                    <p id="excelPreviewInfo" className="text-xs text-gray-500 mt-0.5">{excelRows.length} rows found. Review before importing.</p>
                   </div>
                 </div>
 
-                <div className="excel-preview-table-container">
-                  <table className="excel-preview-table">
+                <div className="overflow-x-auto rounded-lg border border-gray-200 mb-3">
+                  <table className="w-full border-collapse text-sm">
                     <thead>
-                      <tr>{excelHeaders.map((h) => <th key={h}>{h}</th>)}</tr>
+                      <tr>{excelHeaders.map((h) => <th key={h} className={thCls}>{h}</th>)}</tr>
                     </thead>
                     <tbody>
                       {excelRows.slice(0, 10).map((row, i) => (
-                        <tr key={i}>
+                        <tr key={i} className="hover:bg-gray-50">
                           {excelHeaders.map((h) => (
-                            <td key={h}>{String(row[h] ?? "")}</td>
+                            <td key={h} className={tdCls}>{String(row[h] ?? "")}</td>
                           ))}
                         </tr>
                       ))}
@@ -339,12 +362,17 @@ export default function LeadsPage() {
                 </div>
 
                 {importMessage && (
-                  <div id="excelImportMessage" className="excel-import-message">
+                  <div id="excelImportMessage" className="text-sm font-medium text-blue-700 bg-blue-50 px-4 py-2.5 rounded-lg mb-3">
                     {importMessage}
                   </div>
                 )}
 
-                <button type="button" id="confirmExcelImport" className="primary-button" onClick={importExcelLeads}>
+                <button
+                  type="button"
+                  id="confirmExcelImport"
+                  onClick={importExcelLeads}
+                  className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors"
+                >
                   Import Leads
                 </button>
               </div>
@@ -353,127 +381,151 @@ export default function LeadsPage() {
         )}
 
         {/* LEAD FILTERS */}
-        <div className="leads-toolbar">
+        <div className="flex flex-wrap gap-2 mb-4 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
           <input
             type="text"
             id="searchLead"
             placeholder="Search leads..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
+            className={`${inputCls} flex-1 min-w-[180px]`}
           />
 
-          <select id="filterStatus" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <select id="filterStatus" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={inputCls}>
             <option value="">All Status</option>
             {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
 
-          <select id="filterPriority" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+          <select id="filterPriority" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className={inputCls}>
             <option value="">All Priority</option>
             {PRIORITY_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
 
-          <select id="filterSource" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
+          <select id="filterSource" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className={inputCls}>
             <option value="">All Sources</option>
             {SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
 
-          <select id="filterCourse" value={courseFilter} onChange={(e) => setCourseFilter(e.target.value)}>
+          <select id="filterCourse" value={courseFilter} onChange={(e) => setCourseFilter(e.target.value)} className={inputCls}>
             <option value="">All Courses</option>
             {courseOptions.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
 
-          <button id="refreshLeads" onClick={loadLeads}>Refresh</button>
-          <button id="clearLeadFilters" onClick={clearFilters}>Clear Filters</button>
+          <button
+            id="refreshLeads"
+            onClick={loadLeads}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded-lg transition-colors"
+          >
+            🔄 Refresh
+          </button>
+          <button
+            id="clearLeadFilters"
+            onClick={clearFilters}
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-3 py-2 rounded-lg transition-colors"
+          >
+            Clear
+          </button>
         </div>
 
-        {message && <p style={{ color: "green", margin: "10px 0" }}>{message}</p>}
+        {message && <p className="text-green-600 font-medium text-sm mb-4">{message}</p>}
 
         {/* LEADS TABLE */}
-        <div className="table-container">
-          <table className="leads-table">
-            <thead>
-              <tr>
-                <th>S.No.</th>
-                <th className="sortable" onClick={() => handleSort("id")}>Lead ID ↕</th>
-                <th className="sortable" onClick={() => handleSort("fullName")}>Name ↕</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Course</th>
-                <th>Source</th>
-                <th className="sortable" onClick={() => handleSort("status")}>Status ↕</th>
-                <th className="sortable" onClick={() => handleSort("priority")}>Priority ↕</th>
-                <th>City</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="leadsTableBody">
-              {paginatedLeads.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
                 <tr>
-                  <td colSpan={11} style={{ textAlign: "center", padding: "30px" }}>
-                    <strong>No leads found</strong><br />
-                    <span>Try changing your search or filters.</span>
-                  </td>
+                  <th className={thCls}>S.No.</th>
+                  <th className={`${thCls} cursor-pointer hover:bg-gray-100`} onClick={() => handleSort("id")}>Lead ID ↕</th>
+                  <th className={`${thCls} cursor-pointer hover:bg-gray-100`} onClick={() => handleSort("fullName")}>Name ↕</th>
+                  <th className={thCls}>Email</th>
+                  <th className={thCls}>Phone</th>
+                  <th className={thCls}>Course</th>
+                  <th className={thCls}>Source</th>
+                  <th className={`${thCls} cursor-pointer hover:bg-gray-100`} onClick={() => handleSort("status")}>Status ↕</th>
+                  <th className={`${thCls} cursor-pointer hover:bg-gray-100`} onClick={() => handleSort("priority")}>Priority ↕</th>
+                  <th className={thCls}>City</th>
+                  <th className={thCls}>Action</th>
                 </tr>
-              ) : (
-                paginatedLeads.map((lead, index) => (
-                  <tr key={lead.id}>
-                    <td>{startIndex + index + 1}</td>
-                    <td>{lead.id ?? ""}</td>
-                    <td>{lead.fullName ?? ""}</td>
-                    <td>{lead.email ?? ""}</td>
-                    <td>{lead.phone ?? ""}</td>
-                    <td>{lead.courseInterested ?? ""}</td>
-                    <td>{lead.leadSource ?? ""}</td>
-                    <td>
-                      <span className={`lead-status-badge status-${(lead.status || "").toLowerCase().replace(/_/g, "-")}`}>
-                        {lead.status || ""}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`lead-priority-badge priority-${(lead.priority || "").toLowerCase()}`}>
-                        {lead.priority || ""}
-                      </span>
-                    </td>
-                    <td>{lead.city ?? ""}</td>
-                    <td className="lead-actions">
-                      <button type="button" className="action-view" title="View Lead" onClick={() => viewLead(lead.id)}>👁</button>
-                      <button type="button" className="action-edit" title="Edit Lead" onClick={() => editLead(lead.id)}>✏️</button>
-                      <button type="button" className="action-assign" title="Assign Lead" onClick={() => assignLead(lead.id)}>👤</button>
-                      <button type="button" className="action-delete" title="Delete Lead" onClick={() => deleteLead(lead.id)}>🗑</button>
+              </thead>
+              <tbody id="leadsTableBody">
+                {paginatedLeads.length === 0 ? (
+                  <tr>
+                    <td colSpan={11} className="text-center py-10 text-gray-400">
+                      <div className="text-4xl mb-2">🔍</div>
+                      <strong className="block text-gray-600">No leads found</strong>
+                      <span className="text-sm">Try changing your search or filters.</span>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  paginatedLeads.map((lead, index) => (
+                    <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
+                      <td className={tdCls}>{startIndex + index + 1}</td>
+                      <td className={tdCls}>{lead.id ?? ""}</td>
+                      <td className={`${tdCls} font-medium text-gray-800`}>{lead.fullName ?? ""}</td>
+                      <td className={tdCls}>{lead.email ?? ""}</td>
+                      <td className={tdCls}>{lead.phone ?? ""}</td>
+                      <td className={tdCls}>{lead.courseInterested ?? ""}</td>
+                      <td className={tdCls}>{lead.leadSource ?? ""}</td>
+                      <td className={tdCls}>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold status-${(lead.status || "").toLowerCase().replace(/_/g, "-")}`}>
+                          {lead.status || ""}
+                        </span>
+                      </td>
+                      <td className={tdCls}>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold priority-${(lead.priority || "").toLowerCase()}`}>
+                          {lead.priority || ""}
+                        </span>
+                      </td>
+                      <td className={tdCls}>{lead.city ?? ""}</td>
+                      <td className={`${tdCls} whitespace-nowrap`}>
+                        <button type="button" title="View Lead" onClick={() => viewLead(lead.id)}
+                          className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-blue-100 text-base transition-colors mr-0.5">👁</button>
+                        <button type="button" title="Edit Lead" onClick={() => editLead(lead.id)}
+                          className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-yellow-100 text-base transition-colors mr-0.5">✏️</button>
+                        <button type="button" title="Assign Lead" onClick={() => assignLead(lead.id)}
+                          className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-green-100 text-base transition-colors mr-0.5">👤</button>
+                        <button type="button" title="Delete Lead" onClick={() => deleteLead(lead.id)}
+                          className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-red-100 text-base transition-colors">🗑</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* PAGINATION */}
-        <div className="lead-pagination">
-          <div className="pagination-info">
+        <div className="flex items-center justify-between mt-4 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-500">
             Showing{" "}
-            <span id="paginationStart">{filteredLeads.length === 0 ? 0 : startIndex + 1}</span>
+            <span id="paginationStart" className="font-semibold text-gray-700">{filteredLeads.length === 0 ? 0 : startIndex + 1}</span>
             {" "}-{" "}
-            <span id="paginationEnd">{Math.min(startIndex + PAGE_SIZE, filteredLeads.length)}</span>
+            <span id="paginationEnd" className="font-semibold text-gray-700">{Math.min(startIndex + PAGE_SIZE, filteredLeads.length)}</span>
             {" "}of{" "}
-            <span id="paginationTotal">{filteredLeads.length}</span>
+            <span id="paginationTotal" className="font-semibold text-gray-700">{filteredLeads.length}</span>
             {" "}leads
           </div>
-          <div className="pagination-controls">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               id="previousPage"
               disabled={currentPage <= 1}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              className="px-3 py-1.5 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Previous
             </button>
-            <span id="paginationPage">Page {currentPage} of {totalPages}</span>
+            <span id="paginationPage" className="text-sm font-medium text-gray-600 px-2">
+              Page {currentPage} of {totalPages}
+            </span>
             <button
               type="button"
               id="nextPage"
               disabled={currentPage >= totalPages}
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              className="px-3 py-1.5 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Next
             </button>
