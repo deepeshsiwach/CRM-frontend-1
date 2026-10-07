@@ -79,7 +79,6 @@ export default function LoginPage() {
                 alt="DERIVION"
                 width={160}
                 height={53}
-                priority
                 className="h-10 w-auto object-contain"
               />
             </div>

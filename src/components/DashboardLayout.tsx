@@ -95,7 +95,13 @@ export default function DashboardLayout({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <Image src="/derivion_logo.png" alt="DERIVION" width={120} height={40} priority />
+          <Image
+            src="/derivion_logo.png"
+            alt="DERIVION"
+            width={120}
+            height={40}
+            className="h-8 w-auto object-contain"
+          />
         </div>
 
         <div className="flex items-center gap-3">
