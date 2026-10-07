@@ -2,7 +2,6 @@
 
 // ============================================================
 // DERIVION CRM - LEADS PAGE
-// Ported from leads.html + leads.js
 // ============================================================
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -10,7 +9,7 @@ import { useRouter } from "next/navigation";
 import Script from "next/script";
 import DashboardLayout from "@/components/DashboardLayout";
 import { API_BASE_URL } from "@/lib/config";
-import { getToken } from "@/lib/auth";
+import { getToken, getUserRole } from "@/lib/auth";
 
 // ============================================================
 // TYPES
@@ -99,11 +98,173 @@ export default function LeadsPage() {
   const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [importMessage, setImportMessage] = useState("");
-  const [xlsxLoaded, setXlsxLoaded] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const token = getToken();
+
+  // ============================================================
+  // LEAD QUEUE STORAGE
+  // ============================================================
+
+  const getQueueStorageKey = useCallback(() => {
+    if (typeof window === "undefined") {
+      return "derivion_lead_queue";
+    }
+
+    const userId =
+      window.localStorage.getItem("userId") || "current-user";
+
+    return `derivion_lead_queue_${userId}`;
+  }, []);
+
+  // ============================================================
+  // CHECK WHETHER CURRENT USER IS AGENT
+  // ============================================================
+
+  const isAgent = useCallback(() => {
+    try {
+      const role = getUserRole();
+
+      return String(role || "").toUpperCase() === "AGENT";
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // ============================================================
+  // SAVE LEAD QUEUE ORDER
+  // ============================================================
+
+  const saveLeadQueue = useCallback(
+    (leads: Lead[]) => {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      try {
+        const ids = leads.map((lead) => lead.id);
+
+        window.localStorage.setItem(
+          getQueueStorageKey(),
+          JSON.stringify(ids)
+        );
+      } catch (error) {
+        console.error(
+          "Unable to save lead queue:",
+          error
+        );
+      }
+    },
+    [getQueueStorageKey]
+  );
+
+  // ============================================================
+  // APPLY SAVED LEAD QUEUE ORDER
+  // ============================================================
+
+  const applySavedLeadQueue = useCallback(
+    (leads: Lead[]): Lead[] => {
+      if (typeof window === "undefined") {
+        return leads;
+      }
+
+      try {
+        const stored = window.localStorage.getItem(
+          getQueueStorageKey()
+        );
+
+        if (!stored) {
+          return leads;
+        }
+
+        const savedIds: number[] = JSON.parse(stored);
+
+        if (
+          !Array.isArray(savedIds) ||
+          savedIds.length === 0
+        ) {
+          return leads;
+        }
+
+        const leadMap = new Map<number, Lead>();
+
+        leads.forEach((lead) => {
+          leadMap.set(lead.id, lead);
+        });
+
+        const orderedLeads: Lead[] = [];
+
+        // --------------------------------------------------------
+        // First add leads according to saved queue
+        // --------------------------------------------------------
+
+        savedIds.forEach((id) => {
+          const lead = leadMap.get(id);
+
+          if (lead) {
+            orderedLeads.push(lead);
+            leadMap.delete(id);
+          }
+        });
+
+        // --------------------------------------------------------
+        // New leads which were not in old queue
+        // are added at the beginning.
+        // --------------------------------------------------------
+
+        const newLeads = Array.from(leadMap.values());
+
+        return [...newLeads, ...orderedLeads];
+      } catch (error) {
+        console.error(
+          "Unable to restore lead queue:",
+          error
+        );
+
+        return leads;
+      }
+    },
+    [getQueueStorageKey]
+  );
+
+  // ============================================================
+  // ROTATE LEAD TO END OF QUEUE
+  // ============================================================
+
+  const rotateLeadToEnd = useCallback(
+    (leadId: number) => {
+      if (!isAgent()) {
+        return;
+      }
+
+      setAllLeads((currentLeads) => {
+        const index = currentLeads.findIndex(
+          (lead) => lead.id === leadId
+        );
+
+        if (index === -1) {
+          return currentLeads;
+        }
+
+        const selectedLead = currentLeads[index];
+
+        const remainingLeads = currentLeads.filter(
+          (lead) => lead.id !== leadId
+        );
+
+        const newOrder = [
+          ...remainingLeads,
+          selectedLead,
+        ];
+
+        saveLeadQueue(newOrder);
+
+        return newOrder;
+      });
+    },
+    [isAgent, saveLeadQueue]
+  );
 
   // ============================================================
   // LOAD LEADS + COURSES
@@ -116,15 +277,18 @@ export default function LeadsPage() {
     }
 
     try {
-      // ----------------------------------------------------------
-      // Load Leads
-      // ----------------------------------------------------------
+      // --------------------------------------------------------
+      // LOAD LEADS
+      // --------------------------------------------------------
 
-      const res = await fetch(`${API_BASE_URL}/api/leads`, {
-        headers: {
-          Authorization: "Bearer " + token,
-        },
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/leads`,
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
 
       if (!res.ok) {
         throw new Error("Failed to load leads.");
@@ -132,76 +296,125 @@ export default function LeadsPage() {
 
       const data: Lead[] = await res.json();
 
-      setAllLeads(data);
+      // --------------------------------------------------------
+      // RESTORE QUEUE ORDER
+      // --------------------------------------------------------
 
-      // ----------------------------------------------------------
-      // Load Courses from Courses API
-      // ----------------------------------------------------------
+      const orderedLeads =
+        applySavedLeadQueue(data);
+
+      setAllLeads(orderedLeads);
+
+      // --------------------------------------------------------
+      // SAVE CLEANED QUEUE
+      // --------------------------------------------------------
+
+      if (isAgent()) {
+        saveLeadQueue(orderedLeads);
+      }
+
+      // --------------------------------------------------------
+      // LOAD COURSES
+      // --------------------------------------------------------
 
       try {
-        const courseRes = await fetch(`${API_BASE_URL}/api/courses`, {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        });
+        const courseRes = await fetch(
+          `${API_BASE_URL}/api/courses`,
+          {
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          }
+        );
 
         if (courseRes.ok) {
-          const courses: Course[] = await courseRes.json();
+          const courses: Course[] =
+            await courseRes.json();
 
           const courseNames = courses
-            .map((course) => course.courseName)
+            .map(
+              (course) =>
+                course.courseName
+            )
             .filter(Boolean) as string[];
 
-          // ------------------------------------------------------
-          // Also collect course names already stored in leads
-          // ------------------------------------------------------
+          // ----------------------------------------------------
+          // ALSO GET COURSE NAMES FROM LEADS
+          // ----------------------------------------------------
 
-          const leadCourseNames = data
-            .map((lead) => lead.courseInterested)
+          const leadCourseNames = orderedLeads
+            .map(
+              (lead) =>
+                lead.courseInterested
+            )
             .filter(Boolean) as string[];
 
           const mergedCourses = [
-            ...new Set([...courseNames, ...leadCourseNames]),
+            ...new Set([
+              ...courseNames,
+              ...leadCourseNames,
+            ]),
           ].sort();
 
           setCourseOptions(mergedCourses);
         } else {
-          // ------------------------------------------------------
-          // Fallback: use course names stored on leads
-          // ------------------------------------------------------
+          // ----------------------------------------------------
+          // FALLBACK
+          // ----------------------------------------------------
 
           const leadCourseNames = [
             ...new Set(
-              data
-                .map((lead) => lead.courseInterested)
+              orderedLeads
+                .map(
+                  (lead) =>
+                    lead.courseInterested
+                )
                 .filter(Boolean) as string[]
             ),
           ].sort();
 
-          setCourseOptions(leadCourseNames);
+          setCourseOptions(
+            leadCourseNames
+          );
         }
       } catch (courseError) {
-        console.error("Unable to load courses:", courseError);
-
-        // --------------------------------------------------------
-        // Fallback: use courses stored directly on leads
-        // --------------------------------------------------------
+        console.error(
+          "Unable to load courses:",
+          courseError
+        );
 
         const leadCourseNames = [
           ...new Set(
-            data
-              .map((lead) => lead.courseInterested)
+            orderedLeads
+              .map(
+                (lead) =>
+                  lead.courseInterested
+              )
               .filter(Boolean) as string[]
           ),
         ].sort();
 
-        setCourseOptions(leadCourseNames);
+        setCourseOptions(
+          leadCourseNames
+        );
       }
     } catch (error) {
-      console.error("Error loading leads:", error);
-      setMessage("Unable to load leads.");
+      console.error(
+        "Error loading leads:",
+        error
+      );
+
+      setMessage(
+        "Unable to load leads."
+      );
     }
-  }, [token, router]);
+  }, [
+    token,
+    router,
+    applySavedLeadQueue,
+    isAgent,
+    saveLeadQueue,
+  ]);
 
   // ============================================================
   // INITIAL LOAD
@@ -219,51 +432,96 @@ export default function LeadsPage() {
     let leads = [...allLeads];
 
     // ----------------------------------------------------------
-    // Search
+    // SEARCH
     // ----------------------------------------------------------
 
     if (searchText) {
-      const s = searchText.toLowerCase();
+      const s =
+        searchText.toLowerCase();
 
       leads = leads.filter(
         (l) =>
-          String(l.id).toLowerCase().includes(s) ||
-          (l.fullName || "").toLowerCase().includes(s) ||
-          (l.email || "").toLowerCase().includes(s) ||
-          (l.phone || "").toLowerCase().includes(s) ||
-          (l.courseInterested || "").toLowerCase().includes(s) ||
-          (l.leadSource || "").toLowerCase().includes(s) ||
-          (l.city || "").toLowerCase().includes(s) ||
-          (l.status || "").toLowerCase().includes(s)
+          String(l.id)
+            .toLowerCase()
+            .includes(s) ||
+          (l.fullName || "")
+            .toLowerCase()
+            .includes(s) ||
+          (l.email || "")
+            .toLowerCase()
+            .includes(s) ||
+          (l.phone || "")
+            .toLowerCase()
+            .includes(s) ||
+          (l.courseInterested || "")
+            .toLowerCase()
+            .includes(s) ||
+          (l.leadSource || "")
+            .toLowerCase()
+            .includes(s) ||
+          (l.city || "")
+            .toLowerCase()
+            .includes(s) ||
+          (l.status || "")
+            .toLowerCase()
+            .includes(s)
       );
     }
 
     // ----------------------------------------------------------
-    // Filters
+    // STATUS
     // ----------------------------------------------------------
 
     if (statusFilter) {
-      leads = leads.filter((l) => l.status === statusFilter);
-    }
-
-    if (priorityFilter) {
-      leads = leads.filter((l) => l.priority === priorityFilter);
-    }
-
-    if (sourceFilter) {
-      leads = leads.filter((l) => l.leadSource === sourceFilter);
-    }
-
-    if (courseFilter) {
-      leads = leads.filter((l) => l.courseInterested === courseFilter);
+      leads = leads.filter(
+        (l) =>
+          l.status === statusFilter
+      );
     }
 
     // ----------------------------------------------------------
-    // Sorting
+    // PRIORITY
+    // ----------------------------------------------------------
+
+    if (priorityFilter) {
+      leads = leads.filter(
+        (l) =>
+          l.priority === priorityFilter
+      );
+    }
+
+    // ----------------------------------------------------------
+    // SOURCE
+    // ----------------------------------------------------------
+
+    if (sourceFilter) {
+      leads = leads.filter(
+        (l) =>
+          l.leadSource === sourceFilter
+      );
+    }
+
+    // ----------------------------------------------------------
+    // COURSE
+    // ----------------------------------------------------------
+
+    if (courseFilter) {
+      leads = leads.filter(
+        (l) =>
+          l.courseInterested ===
+          courseFilter
+      );
+    }
+
+    // ----------------------------------------------------------
+    // SORT
     // ----------------------------------------------------------
 
     if (sortField) {
-      const priorityOrder: Record<string, number> = {
+      const priorityOrder: Record<
+        string,
+        number
+      > = {
         HIGH: 1,
         MEDIUM: 2,
         LOW: 3,
@@ -271,10 +529,14 @@ export default function LeadsPage() {
 
       leads.sort((a, b) => {
         let va: string | number =
-          (a[sortField] as string | number) ?? "";
+          (a[sortField] as
+            | string
+            | number) ?? "";
 
         let vb: string | number =
-          (b[sortField] as string | number) ?? "";
+          (b[sortField] as
+            | string
+            | number) ?? "";
 
         if (sortField === "id") {
           va = Number(va);
@@ -282,24 +544,40 @@ export default function LeadsPage() {
         }
 
         if (sortField === "priority") {
-          va = priorityOrder[String(va)] || 999;
-          vb = priorityOrder[String(vb)] || 999;
+          va =
+            priorityOrder[
+            String(va)
+            ] || 999;
+
+          vb =
+            priorityOrder[
+            String(vb)
+            ] || 999;
         }
 
         if (
           sortField === "status" ||
           sortField === "fullName"
         ) {
-          va = String(va || "").toLowerCase();
-          vb = String(vb || "").toLowerCase();
+          va = String(
+            va || ""
+          ).toLowerCase();
+
+          vb = String(
+            vb || ""
+          ).toLowerCase();
         }
 
         if (va < vb) {
-          return sortDir === "asc" ? -1 : 1;
+          return sortDir === "asc"
+            ? -1
+            : 1;
         }
 
         if (va > vb) {
-          return sortDir === "asc" ? 1 : -1;
+          return sortDir === "asc"
+            ? 1
+            : -1;
         }
 
         return 0;
@@ -307,6 +585,7 @@ export default function LeadsPage() {
     }
 
     setFilteredLeads(leads);
+
     setCurrentPage(1);
   }, [
     allLeads,
@@ -325,23 +604,35 @@ export default function LeadsPage() {
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredLeads.length / PAGE_SIZE)
+    Math.ceil(
+      filteredLeads.length /
+      PAGE_SIZE
+    )
   );
 
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const startIndex =
+    (currentPage - 1) *
+    PAGE_SIZE;
 
-  const paginatedLeads = filteredLeads.slice(
-    startIndex,
-    startIndex + PAGE_SIZE
-  );
+  const paginatedLeads =
+    filteredLeads.slice(
+      startIndex,
+      startIndex + PAGE_SIZE
+    );
 
   // ============================================================
   // SORT
   // ============================================================
 
-  const handleSort = (field: string) => {
+  const handleSort = (
+    field: string
+  ) => {
     if (sortField === field) {
-      setSortDir(sortDir === "asc" ? "desc" : "asc");
+      setSortDir(
+        sortDir === "asc"
+          ? "desc"
+          : "asc"
+      );
     } else {
       setSortField(field);
       setSortDir("asc");
@@ -363,59 +654,109 @@ export default function LeadsPage() {
   };
 
   // ============================================================
-  // NAVIGATION
+  // VIEW LEAD
   // ============================================================
 
-  const viewLead = (id: number) => {
-    router.push(`/lead-details?id=${id}`);
+  const viewLead = (
+    id: number
+  ) => {
+    // ----------------------------------------------------------
+    // IMPORTANT:
+    // For agents, move the viewed lead to the end
+    // of the queue before opening the detail page.
+    // ----------------------------------------------------------
+
+    rotateLeadToEnd(id);
+
+    router.push(
+      `/lead-details?id=${id}`
+    );
   };
 
-  const editLead = (id: number) => {
-    router.push(`/lead-edit?id=${id}`);
+  // ============================================================
+  // EDIT LEAD
+  // ============================================================
+
+  const editLead = (
+    id: number
+  ) => {
+    router.push(
+      `/lead-edit?id=${id}`
+    );
   };
 
-  const assignLead = (id: number) => {
-    router.push(`/lead-assignments?leadId=${id}`);
+  // ============================================================
+  // ASSIGN LEAD
+  // ============================================================
+
+  const assignLead = (
+    id: number
+  ) => {
+    router.push(
+      `/lead-assignments?leadId=${id}`
+    );
   };
 
   // ============================================================
   // DELETE LEAD
   // ============================================================
 
-  const deleteLead = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this lead?")) {
+  const deleteLead = async (
+    id: number
+  ) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this lead?"
+      )
+    ) {
       return;
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/leads/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: "Bearer " + token,
-        },
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/leads/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization:
+              "Bearer " + token,
+          },
+        }
+      );
 
       if (!res.ok) {
-        throw new Error("Failed to delete lead.");
+        throw new Error(
+          "Failed to delete lead."
+        );
       }
 
-      setMessage("Lead deleted successfully.");
+      setMessage(
+        "Lead deleted successfully."
+      );
 
       await loadLeads();
     } catch (error) {
-      console.error("Error deleting lead:", error);
-      setMessage("Unable to delete lead.");
+      console.error(
+        "Error deleting lead:",
+        error
+      );
+
+      setMessage(
+        "Unable to delete lead."
+      );
     }
   };
 
   // ============================================================
-  // EXCEL IMPORT
+  // EXCEL FILE CHANGE
   // ============================================================
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = e.target.files?.[0] || null;
+    const file =
+      e.target.files?.[0] ||
+      null;
 
     setExcelFile(file);
     setPreviewOpen(false);
@@ -428,192 +769,267 @@ export default function LeadsPage() {
   // PREVIEW EXCEL
   // ============================================================
 
-  const previewExcelFile = async () => {
-    if (!excelFile) {
-      setImportMessage("Please select a file.");
-      return;
-    }
-
-    const win =
-      typeof window !== "undefined"
-        ? (window as unknown as Record<string, unknown>)
-        : null;
-
-    if (!win || !win.XLSX) {
-      setImportMessage(
-        "XLSX library not loaded yet. Please wait."
-      );
-      return;
-    }
-
-    const XLSX = win.XLSX as {
-      read: (
-        data: ArrayBuffer,
-        opts: { type: string }
-      ) => {
-        SheetNames: string[];
-        Sheets: Record<string, unknown>;
-      };
-
-      utils: {
-        sheet_to_json: (
-          sheet: unknown,
-          opts: {
-            header: number;
-            defval: string;
-          }
-        ) => unknown[][];
-      };
-    };
-
-    const reader = new FileReader();
-
-    reader.onload = (ev) => {
-      const data = ev.target?.result as ArrayBuffer;
-
-      const workbook = XLSX.read(data, {
-        type: "array",
-      });
-
-      const sheetName = workbook.SheetNames[0];
-
-      const sheet = workbook.Sheets[sheetName];
-
-      const rows: unknown[][] =
-        XLSX.utils.sheet_to_json(sheet, {
-          header: 1,
-          defval: "",
-        });
-
-      if (rows.length < 2) {
-        setImportMessage("File has no data.");
+  const previewExcelFile =
+    async () => {
+      if (!excelFile) {
+        setImportMessage(
+          "Please select a file."
+        );
         return;
       }
 
-      const headers = (rows[0] as string[]).map(String);
+      const win =
+        typeof window !==
+          "undefined"
+          ? (window as unknown as Record<
+            string,
+            unknown
+          >)
+          : null;
 
-      const dataRows = rows.slice(1).map((row) => {
-        const obj: Record<string, unknown> = {};
+      if (!win || !win.XLSX) {
+        setImportMessage(
+          "XLSX library not loaded yet. Please wait."
+        );
+        return;
+      }
 
-        headers.forEach((h, i) => {
-          obj[h] = (row as unknown[])[i];
-        });
+      const XLSX = win.XLSX as {
+        read: (
+          data: ArrayBuffer,
+          opts: {
+            type: string;
+          }
+        ) => {
+          SheetNames: string[];
+          Sheets: Record<
+            string,
+            unknown
+          >;
+        };
 
-        return obj;
-      });
+        utils: {
+          sheet_to_json: (
+            sheet: unknown,
+            opts: {
+              header: number;
+              defval: string;
+            }
+          ) => unknown[][];
+        };
+      };
 
-      setExcelHeaders(headers);
-      setExcelRows(dataRows);
-      setPreviewOpen(true);
+      const reader =
+        new FileReader();
+
+      reader.onload = (ev) => {
+        const data =
+          ev.target
+            ?.result as ArrayBuffer;
+
+        const workbook =
+          XLSX.read(data, {
+            type: "array",
+          });
+
+        const sheetName =
+          workbook
+            .SheetNames[0];
+
+        const sheet =
+          workbook.Sheets[
+          sheetName
+          ];
+
+        const rows: unknown[][] =
+          XLSX.utils.sheet_to_json(
+            sheet,
+            {
+              header: 1,
+              defval: "",
+            }
+          );
+
+        if (rows.length < 2) {
+          setImportMessage(
+            "File has no data."
+          );
+          return;
+        }
+
+        const headers =
+          (
+            rows[0] as string[]
+          ).map(String);
+
+        const dataRows =
+          rows
+            .slice(1)
+            .map((row) => {
+              const obj: Record<
+                string,
+                unknown
+              > = {};
+
+              headers.forEach(
+                (h, i) => {
+                  obj[h] =
+                    (
+                      row as unknown[]
+                    )[i];
+                }
+              );
+
+              return obj;
+            });
+
+        setExcelHeaders(
+          headers
+        );
+
+        setExcelRows(
+          dataRows
+        );
+
+        setPreviewOpen(
+          true
+        );
+      };
+
+      reader.readAsArrayBuffer(
+        excelFile
+      );
     };
-
-    reader.readAsArrayBuffer(excelFile);
-  };
 
   // ============================================================
   // IMPORT EXCEL LEADS
   // ============================================================
 
-  const importExcelLeads = async () => {
-    if (!excelRows.length) {
-      setImportMessage("No data to import.");
-      return;
-    }
-
-    setImportMessage("Importing...");
-
-    let success = 0;
-    let failed = 0;
-
-    for (const row of excelRows) {
-      try {
-        const leadData = {
-          fullName:
-            row["Name"] ||
-            row["Full Name"] ||
-            row["fullName"] ||
-            "",
-
-          email:
-            row["Email"] ||
-            row["email"] ||
-            "",
-
-          phone: String(
-            row["Phone"] ||
-            row["phone"] ||
-            row["Mobile"] ||
-            ""
-          ),
-
-          courseInterested: String(
-            row["Course"] ||
-            row["courseInterested"] ||
-            row["Course Interested"] ||
-            ""
-          ),
-
-          leadSource: String(
-            row["Source"] ||
-            row["leadSource"] ||
-            row["Lead Source"] ||
-            ""
-          ),
-
-          status: String(
-            row["Status"] ||
-            row["status"] ||
-            "NEW"
-          ),
-
-          priority: String(
-            row["Priority"] ||
-            row["priority"] ||
-            "MEDIUM"
-          ),
-
-          city: String(
-            row["City"] ||
-            row["city"] ||
-            ""
-          ),
-        };
-
-        const res = await fetch(
-          `${API_BASE_URL}/api/leads`,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + token,
-            },
-
-            body: JSON.stringify(leadData),
-          }
+  const importExcelLeads =
+    async () => {
+      if (!excelRows.length) {
+        setImportMessage(
+          "No data to import."
         );
+        return;
+      }
 
-        if (res.ok) {
-          success++;
-        } else {
+      setImportMessage(
+        "Importing..."
+      );
+
+      let success = 0;
+      let failed = 0;
+
+      for (const row of excelRows) {
+        try {
+          const leadData = {
+            fullName:
+              row["Name"] ||
+              row["Full Name"] ||
+              row["fullName"] ||
+              "",
+
+            email:
+              row["Email"] ||
+              row["email"] ||
+              "",
+
+            phone: String(
+              row["Phone"] ||
+              row["phone"] ||
+              row["Mobile"] ||
+              ""
+            ),
+
+            courseInterested:
+              String(
+                row["Course"] ||
+                row[
+                "courseInterested"
+                ] ||
+                row[
+                "Course Interested"
+                ] ||
+                ""
+              ),
+
+            leadSource:
+              String(
+                row["Source"] ||
+                row[
+                "leadSource"
+                ] ||
+                row[
+                "Lead Source"
+                ] ||
+                ""
+              ),
+
+            status:
+              String(
+                row["Status"] ||
+                row["status"] ||
+                "NEW"
+              ),
+
+            priority:
+              String(
+                row["Priority"] ||
+                row["priority"] ||
+                "MEDIUM"
+              ),
+
+            city:
+              String(
+                row["City"] ||
+                row["city"] ||
+                ""
+              ),
+          };
+
+          const res =
+            await fetch(
+              `${API_BASE_URL}/api/leads`,
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+
+                  Authorization:
+                    "Bearer " +
+                    token,
+                },
+
+                body: JSON.stringify(
+                  leadData
+                ),
+              }
+            );
+
+          if (res.ok) {
+            success++;
+          } else {
+            failed++;
+          }
+        } catch (error) {
+          console.error(
+            "Error importing lead:",
+            error
+          );
+
           failed++;
         }
-      } catch (error) {
-        console.error(
-          "Error importing lead:",
-          error
-        );
-
-        failed++;
       }
-    }
 
-    setImportMessage(
-      `Import complete: ${success} success, ${failed} failed.`
-    );
+      setImportMessage(
+        `Import complete: ${success} success, ${failed} failed.`
+      );
 
-    await loadLeads();
-  };
+      await loadLeads();
+    };
 
   // ============================================================
   // STYLES
@@ -634,18 +1050,21 @@ export default function LeadsPage() {
 
   return (
     <>
-      {/* Load XLSX library */}
+      {/* ======================================================
+          XLSX LIBRARY
+          ====================================================== */}
 
       <Script
         src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"
-        onLoad={() => setXlsxLoaded(true)}
       />
 
-      <DashboardLayout activeMenu="leads">
+      <DashboardLayout
+        activeMenu="leads"
+      >
 
-        {/* ======================================================
+        {/* ====================================================
             HEADER
-            ====================================================== */}
+            ==================================================== */}
 
         <div className="flex items-center justify-between mb-6">
 
@@ -658,7 +1077,9 @@ export default function LeadsPage() {
             <button
               type="button"
               onClick={() =>
-                router.push("/add-lead")
+                router.push(
+                  "/add-lead"
+                )
               }
               className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors duration-200 shadow-sm"
             >
@@ -668,7 +1089,9 @@ export default function LeadsPage() {
             <button
               type="button"
               onClick={() =>
-                setExcelOpen(!excelOpen)
+                setExcelOpen(
+                  !excelOpen
+                )
               }
               className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors duration-200 shadow-sm"
             >
@@ -676,17 +1099,15 @@ export default function LeadsPage() {
             </button>
 
           </div>
+
         </div>
 
-        {/* ======================================================
-            EXCEL IMPORT SECTION
-            ====================================================== */}
+        {/* ====================================================
+            EXCEL IMPORT
+            ==================================================== */}
 
         {excelOpen && (
-          <div
-            id="excelImportSection"
-            className="bg-white border border-gray-200 rounded-xl p-5 mb-5 shadow-sm"
-          >
+          <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5 shadow-sm">
 
             <div className="flex justify-between items-start mb-4">
 
@@ -697,8 +1118,7 @@ export default function LeadsPage() {
                 </h3>
 
                 <p className="text-sm text-gray-500 mt-0.5">
-                  Upload an Excel file to import multiple
-                  leads into the CRM.
+                  Upload an Excel file to import multiple leads into the CRM.
                 </p>
 
               </div>
@@ -706,7 +1126,9 @@ export default function LeadsPage() {
               <button
                 type="button"
                 onClick={() =>
-                  setExcelOpen(false)
+                  setExcelOpen(
+                    false
+                  )
                 }
                 className="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none p-1"
               >
@@ -731,10 +1153,11 @@ export default function LeadsPage() {
 
               <input
                 type="file"
-                id="excelFile"
                 accept=".xlsx"
                 ref={fileInputRef}
-                onChange={handleFileChange}
+                onChange={
+                  handleFileChange
+                }
                 className="text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:font-semibold hover:file:bg-blue-700 cursor-pointer"
               />
 
@@ -750,8 +1173,12 @@ export default function LeadsPage() {
 
               <button
                 type="button"
-                onClick={previewExcelFile}
-                disabled={!excelFile}
+                onClick={
+                  previewExcelFile
+                }
+                disabled={
+                  !excelFile
+                }
                 className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
               >
                 Preview Excel
@@ -760,7 +1187,9 @@ export default function LeadsPage() {
               <button
                 type="button"
                 onClick={() =>
-                  setExcelOpen(false)
+                  setExcelOpen(
+                    false
+                  )
                 }
                 className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
               >
@@ -769,35 +1198,17 @@ export default function LeadsPage() {
 
             </div>
 
-            {/* ==================================================
-                EXCEL PREVIEW
-                ================================================== */}
-
             {previewOpen && (
-              <div
-                id="excelPreviewSection"
-                className="mt-4"
-              >
+              <div className="mt-4">
 
-                <div className="flex justify-between items-center mb-3">
+                <h4 className="text-sm font-bold text-gray-800 mb-1">
+                  Excel Preview
+                </h4>
 
-                  <div>
-
-                    <h4 className="text-sm font-bold text-gray-800">
-                      Excel Preview
-                    </h4>
-
-                    <p
-                      id="excelPreviewInfo"
-                      className="text-xs text-gray-500 mt-0.5"
-                    >
-                      {excelRows.length} rows found.
-                      Review before importing.
-                    </p>
-
-                  </div>
-
-                </div>
+                <p className="text-xs text-gray-500 mb-3">
+                  {excelRows.length} rows found.
+                  Review before importing.
+                </p>
 
                 <div className="overflow-x-auto rounded-lg border border-gray-200 mb-3">
 
@@ -806,14 +1217,22 @@ export default function LeadsPage() {
                     <thead>
 
                       <tr>
-                        {excelHeaders.map((h) => (
-                          <th
-                            key={h}
-                            className={thCls}
-                          >
-                            {h}
-                          </th>
-                        ))}
+
+                        {excelHeaders.map(
+                          (header) => (
+                            <th
+                              key={
+                                header
+                              }
+                              className={
+                                thCls
+                              }
+                            >
+                              {header}
+                            </th>
+                          )
+                        )}
+
                       </tr>
 
                     </thead>
@@ -821,30 +1240,51 @@ export default function LeadsPage() {
                     <tbody>
 
                       {excelRows
-                        .slice(0, 10)
-                        .map((row, i) => (
+                        .slice(
+                          0,
+                          10
+                        )
+                        .map(
+                          (
+                            row,
+                            index
+                          ) => (
 
-                          <tr
-                            key={i}
-                            className="hover:bg-gray-50"
-                          >
+                            <tr
+                              key={
+                                index
+                              }
+                              className="hover:bg-gray-50"
+                            >
 
-                            {excelHeaders.map((h) => (
+                              {excelHeaders.map(
+                                (
+                                  header
+                                ) => (
 
-                              <td
-                                key={h}
-                                className={tdCls}
-                              >
-                                {String(
-                                  row[h] ?? ""
-                                )}
-                              </td>
+                                  <td
+                                    key={
+                                      header
+                                    }
+                                    className={
+                                      tdCls
+                                    }
+                                  >
+                                    {String(
+                                      row[
+                                      header
+                                      ] ??
+                                      ""
+                                    )}
+                                  </td>
 
-                            ))}
+                                )
+                              )}
 
-                          </tr>
+                            </tr>
 
-                        ))}
+                          )
+                        )}
 
                     </tbody>
 
@@ -853,18 +1293,18 @@ export default function LeadsPage() {
                 </div>
 
                 {importMessage && (
-                  <div
-                    id="excelImportMessage"
-                    className="text-sm font-medium text-blue-700 bg-blue-50 px-4 py-2.5 rounded-lg mb-3"
-                  >
-                    {importMessage}
+                  <div className="text-sm font-medium text-blue-700 bg-blue-50 px-4 py-2.5 rounded-lg mb-3">
+                    {
+                      importMessage
+                    }
                   </div>
                 )}
 
                 <button
                   type="button"
-                  id="confirmExcelImport"
-                  onClick={importExcelLeads}
+                  onClick={
+                    importExcelLeads
+                  }
                   className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors"
                 >
                   Import Leads
@@ -876,32 +1316,30 @@ export default function LeadsPage() {
           </div>
         )}
 
-        {/* ======================================================
-            LEAD FILTERS
-            ====================================================== */}
+        {/* ====================================================
+            FILTERS
+            ==================================================== */}
 
         <div className="flex flex-wrap gap-2 mb-4 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
 
-          {/* Search */}
-
           <input
             type="text"
-            id="searchLead"
             placeholder="Search leads..."
             value={searchText}
             onChange={(e) =>
-              setSearchText(e.target.value)
+              setSearchText(
+                e.target.value
+              )
             }
             className={`${inputCls} flex-1 min-w-[180px]`}
           />
 
-          {/* Status */}
-
           <select
-            id="filterStatus"
             value={statusFilter}
             onChange={(e) =>
-              setStatusFilter(e.target.value)
+              setStatusFilter(
+                e.target.value
+              )
             }
             className={inputCls}
           >
@@ -909,23 +1347,24 @@ export default function LeadsPage() {
               All Status
             </option>
 
-            {STATUS_OPTIONS.map((s) => (
-              <option
-                key={s}
-                value={s}
-              >
-                {s}
-              </option>
-            ))}
+            {STATUS_OPTIONS.map(
+              (status) => (
+                <option
+                  key={status}
+                  value={status}
+                >
+                  {status}
+                </option>
+              )
+            )}
           </select>
 
-          {/* Priority */}
-
           <select
-            id="filterPriority"
             value={priorityFilter}
             onChange={(e) =>
-              setPriorityFilter(e.target.value)
+              setPriorityFilter(
+                e.target.value
+              )
             }
             className={inputCls}
           >
@@ -933,23 +1372,24 @@ export default function LeadsPage() {
               All Priority
             </option>
 
-            {PRIORITY_OPTIONS.map((p) => (
-              <option
-                key={p}
-                value={p}
-              >
-                {p}
-              </option>
-            ))}
+            {PRIORITY_OPTIONS.map(
+              (priority) => (
+                <option
+                  key={priority}
+                  value={priority}
+                >
+                  {priority}
+                </option>
+              )
+            )}
           </select>
 
-          {/* Source */}
-
           <select
-            id="filterSource"
             value={sourceFilter}
             onChange={(e) =>
-              setSourceFilter(e.target.value)
+              setSourceFilter(
+                e.target.value
+              )
             }
             className={inputCls}
           >
@@ -957,23 +1397,24 @@ export default function LeadsPage() {
               All Sources
             </option>
 
-            {SOURCE_OPTIONS.map((s) => (
-              <option
-                key={s}
-                value={s}
-              >
-                {s}
-              </option>
-            ))}
+            {SOURCE_OPTIONS.map(
+              (source) => (
+                <option
+                  key={source}
+                  value={source}
+                >
+                  {source}
+                </option>
+              )
+            )}
           </select>
 
-          {/* Course */}
-
           <select
-            id="filterCourse"
             value={courseFilter}
             onChange={(e) =>
-              setCourseFilter(e.target.value)
+              setCourseFilter(
+                e.target.value
+              )
             }
             className={inputCls}
           >
@@ -981,20 +1422,19 @@ export default function LeadsPage() {
               All Courses
             </option>
 
-            {courseOptions.map((course) => (
-              <option
-                key={course}
-                value={course}
-              >
-                {course}
-              </option>
-            ))}
+            {courseOptions.map(
+              (course) => (
+                <option
+                  key={course}
+                  value={course}
+                >
+                  {course}
+                </option>
+              )
+            )}
           </select>
 
-          {/* Refresh */}
-
           <button
-            id="refreshLeads"
             type="button"
             onClick={loadLeads}
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded-lg transition-colors"
@@ -1002,12 +1442,11 @@ export default function LeadsPage() {
             🔄 Refresh
           </button>
 
-          {/* Clear */}
-
           <button
-            id="clearLeadFilters"
             type="button"
-            onClick={clearFilters}
+            onClick={
+              clearFilters
+            }
             className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-3 py-2 rounded-lg transition-colors"
           >
             Clear
@@ -1015,9 +1454,9 @@ export default function LeadsPage() {
 
         </div>
 
-        {/* ======================================================
+        {/* ====================================================
             MESSAGE
-            ====================================================== */}
+            ==================================================== */}
 
         {message && (
           <p className="text-green-600 font-medium text-sm mb-4">
@@ -1025,9 +1464,21 @@ export default function LeadsPage() {
           </p>
         )}
 
-        {/* ======================================================
+        {/* ====================================================
+            AGENT QUEUE INFORMATION
+            ==================================================== */}
+
+        {isAgent() && (
+          <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-700">
+            <strong>Agent Queue:</strong>{" "}
+            When you open a lead, that lead moves to the end of
+            the queue and the next lead comes forward.
+          </div>
+        )}
+
+        {/* ====================================================
             LEADS TABLE
-            ====================================================== */}
+            ==================================================== */}
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
 
@@ -1046,7 +1497,9 @@ export default function LeadsPage() {
                   <th
                     className={`${thCls} cursor-pointer hover:bg-gray-100`}
                     onClick={() =>
-                      handleSort("id")
+                      handleSort(
+                        "id"
+                      )
                     }
                   >
                     Lead ID ↕
@@ -1055,7 +1508,9 @@ export default function LeadsPage() {
                   <th
                     className={`${thCls} cursor-pointer hover:bg-gray-100`}
                     onClick={() =>
-                      handleSort("fullName")
+                      handleSort(
+                        "fullName"
+                      )
                     }
                   >
                     Name ↕
@@ -1080,7 +1535,9 @@ export default function LeadsPage() {
                   <th
                     className={`${thCls} cursor-pointer hover:bg-gray-100`}
                     onClick={() =>
-                      handleSort("status")
+                      handleSort(
+                        "status"
+                      )
                     }
                   >
                     Status ↕
@@ -1089,7 +1546,9 @@ export default function LeadsPage() {
                   <th
                     className={`${thCls} cursor-pointer hover:bg-gray-100`}
                     onClick={() =>
-                      handleSort("priority")
+                      handleSort(
+                        "priority"
+                      )
                     }
                   >
                     Priority ↕
@@ -1107,9 +1566,10 @@ export default function LeadsPage() {
 
               </thead>
 
-              <tbody id="leadsTableBody">
+              <tbody>
 
-                {paginatedLeads.length === 0 ? (
+                {paginatedLeads.length ===
+                  0 ? (
 
                   <tr>
 
@@ -1137,123 +1597,207 @@ export default function LeadsPage() {
                 ) : (
 
                   paginatedLeads.map(
-                    (lead, index) => (
+                    (
+                      lead,
+                      index
+                    ) => (
 
                       <tr
-                        key={lead.id}
+                        key={
+                          lead.id
+                        }
                         className="hover:bg-gray-50 transition-colors"
                       >
 
-                        <td className={tdCls}>
-                          {startIndex + index + 1}
+                        <td
+                          className={
+                            tdCls
+                          }
+                        >
+                          {
+                            startIndex +
+                            index +
+                            1
+                          }
                         </td>
 
-                        <td className={tdCls}>
-                          {lead.id ?? ""}
+                        <td
+                          className={
+                            tdCls
+                          }
+                        >
+                          {
+                            lead.id
+                          }
                         </td>
 
                         <td
                           className={`${tdCls} font-medium text-gray-800`}
                         >
-                          {lead.fullName ?? ""}
+                          {
+                            lead.fullName ??
+                            ""
+                          }
                         </td>
 
-                        <td className={tdCls}>
-                          {lead.email ?? ""}
+                        <td
+                          className={
+                            tdCls
+                          }
+                        >
+                          {
+                            lead.email ??
+                            ""
+                          }
                         </td>
 
-                        <td className={tdCls}>
-                          {lead.phone ?? ""}
+                        <td
+                          className={
+                            tdCls
+                          }
+                        >
+                          {
+                            lead.phone ??
+                            ""
+                          }
                         </td>
 
-                        <td className={tdCls}>
-                          {lead.courseInterested ?? ""}
+                        <td
+                          className={
+                            tdCls
+                          }
+                        >
+                          {
+                            lead.courseInterested ??
+                            ""
+                          }
                         </td>
 
-                        <td className={tdCls}>
-                          {lead.leadSource ?? ""}
+                        <td
+                          className={
+                            tdCls
+                          }
+                        >
+                          {
+                            lead.leadSource ??
+                            ""
+                          }
                         </td>
 
-                        <td className={tdCls}>
+                        <td
+                          className={
+                            tdCls
+                          }
+                        >
 
                           <span
                             className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold status-${(
-                              lead.status || ""
+                              lead.status ||
+                              ""
                             )
                               .toLowerCase()
-                              .replace(/_/g, "-")}`}
+                              .replace(
+                                /_/g,
+                                "-"
+                              )}`}
                           >
-                            {lead.status || ""}
+                            {
+                              lead.status ||
+                              ""
+                            }
                           </span>
 
                         </td>
 
-                        <td className={tdCls}>
+                        <td
+                          className={
+                            tdCls
+                          }
+                        >
 
                           <span
                             className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold priority-${(
-                              lead.priority || ""
+                              lead.priority ||
+                              ""
                             ).toLowerCase()}`}
                           >
-                            {lead.priority || ""}
+                            {
+                              lead.priority ||
+                              ""
+                            }
                           </span>
 
                         </td>
 
-                        <td className={tdCls}>
-                          {lead.city ?? ""}
+                        <td
+                          className={
+                            tdCls
+                          }
+                        >
+                          {
+                            lead.city ??
+                            ""
+                          }
                         </td>
 
                         <td
                           className={`${tdCls} whitespace-nowrap`}
                         >
 
-                          {/* View */}
+                          {/* VIEW */}
 
                           <button
                             type="button"
                             title="View Lead"
                             onClick={() =>
-                              viewLead(lead.id)
+                              viewLead(
+                                lead.id
+                              )
                             }
                             className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-blue-100 text-base transition-colors mr-0.5"
                           >
                             👁
                           </button>
 
-                          {/* Edit */}
+                          {/* EDIT */}
 
                           <button
                             type="button"
                             title="Edit Lead"
                             onClick={() =>
-                              editLead(lead.id)
+                              editLead(
+                                lead.id
+                              )
                             }
                             className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-yellow-100 text-base transition-colors mr-0.5"
                           >
                             ✏️
                           </button>
 
-                          {/* Assign */}
+                          {/* ASSIGN */}
 
                           <button
                             type="button"
                             title="Assign Lead"
                             onClick={() =>
-                              assignLead(lead.id)
+                              assignLead(
+                                lead.id
+                              )
                             }
                             className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-green-100 text-base transition-colors mr-0.5"
                           >
                             👤
                           </button>
 
-                          {/* Delete */}
+                          {/* DELETE */}
 
                           <button
                             type="button"
                             title="Delete Lead"
                             onClick={() =>
-                              deleteLead(lead.id)
+                              deleteLead(
+                                lead.id
+                              )
                             }
                             className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-red-100 text-base transition-colors"
                           >
@@ -1277,9 +1821,9 @@ export default function LeadsPage() {
 
         </div>
 
-        {/* ======================================================
+        {/* ====================================================
             PAGINATION
-            ====================================================== */}
+            ==================================================== */}
 
         <div className="flex items-center justify-between mt-4 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
 
@@ -1287,34 +1831,32 @@ export default function LeadsPage() {
 
             Showing{" "}
 
-            <span
-              id="paginationStart"
-              className="font-semibold text-gray-700"
-            >
-              {filteredLeads.length === 0
-                ? 0
-                : startIndex + 1}
+            <span className="font-semibold text-gray-700">
+              {
+                filteredLeads.length ===
+                  0
+                  ? 0
+                  : startIndex +
+                  1
+              }
             </span>
 
-            {" "}-{" "}
+            {" - "}
 
-            <span
-              id="paginationEnd"
-              className="font-semibold text-gray-700"
-            >
+            <span className="font-semibold text-gray-700">
               {Math.min(
-                startIndex + PAGE_SIZE,
+                startIndex +
+                PAGE_SIZE,
                 filteredLeads.length
               )}
             </span>
 
-            {" "}of{" "}
+            {" of "}
 
-            <span
-              id="paginationTotal"
-              className="font-semibold text-gray-700"
-            >
-              {filteredLeads.length}
+            <span className="font-semibold text-gray-700">
+              {
+                filteredLeads.length
+              }
             </span>
 
             {" "}leads
@@ -1325,11 +1867,16 @@ export default function LeadsPage() {
 
             <button
               type="button"
-              id="previousPage"
-              disabled={currentPage <= 1}
+              disabled={
+                currentPage <= 1
+              }
               onClick={() =>
-                setCurrentPage((p) =>
-                  Math.max(1, p - 1)
+                setCurrentPage(
+                  (p) =>
+                    Math.max(
+                      1,
+                      p - 1
+                    )
                 )
               }
               className="px-3 py-1.5 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
@@ -1337,20 +1884,30 @@ export default function LeadsPage() {
               Previous
             </button>
 
-            <span
-              id="paginationPage"
-              className="text-sm font-medium text-gray-600 px-2"
-            >
-              Page {currentPage} of {totalPages}
+            <span className="text-sm font-medium text-gray-600 px-2">
+              Page{" "}
+              {
+                currentPage
+              }{" "}
+              of{" "}
+              {
+                totalPages
+              }
             </span>
 
             <button
               type="button"
-              id="nextPage"
-              disabled={currentPage >= totalPages}
+              disabled={
+                currentPage >=
+                totalPages
+              }
               onClick={() =>
-                setCurrentPage((p) =>
-                  Math.min(totalPages, p + 1)
+                setCurrentPage(
+                  (p) =>
+                    Math.min(
+                      totalPages,
+                      p + 1
+                    )
                 )
               }
               className="px-3 py-1.5 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
