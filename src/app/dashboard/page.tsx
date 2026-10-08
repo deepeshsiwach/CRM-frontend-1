@@ -194,15 +194,15 @@ function getTodayDateString(): string {
 
 
 
-  const year = now\.getFullYear();
+  const year = now.getFullYear();
 
 
 
-  const month = String(now\.getMonth() + 1).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
 
 
 
-  const day = String(now\.getDate()).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
 
 
 
@@ -4479,11 +4479,11 @@ export default function DashboardPage() {
 
 
 
-      {/\* =====================================================
+      {/* =====================================================
 
           HEADER
 
-          ===================================================== \*/}
+          ===================================================== */}
 
 
 
@@ -4591,19 +4591,19 @@ export default function DashboardPage() {
 
 
 
-      {/\* =====================================================
+      {/* =====================================================
 
           DASHBOARD CARDS
 
-          ===================================================== \*/}
+          ===================================================== */}
 
 
 
-      {/\* =====================================================
+      {/* =====================================================
 
     DASHBOARD CARDS
 
-    ===================================================== \*/}
+    ===================================================== */}
 
 
 
@@ -4611,7 +4611,7 @@ export default function DashboardPage() {
 
 
 
-        {/\* TOTAL LEADS \*/}
+        {/* TOTAL LEADS */}
 
         <StatCard
 
@@ -4635,7 +4635,7 @@ export default function DashboardPage() {
 
 
 
-        {/\* ATTENDED LEADS \*/}
+        {/* ATTENDED LEADS */}
 
         <StatCard
 
@@ -4659,7 +4659,7 @@ export default function DashboardPage() {
 
 
 
-        {/\* REMAINING LEADS \*/}
+        {/* REMAINING LEADS */}
 
         <StatCard
 
@@ -4683,7 +4683,7 @@ export default function DashboardPage() {
 
 
 
-        {/\* FOLLOW-UPS \*/}
+        {/* FOLLOW-UPS */}
 
         <StatCard
 
@@ -4705,7 +4705,7 @@ export default function DashboardPage() {
 
 
 
-        {/\* CALL LOGS \*/}
+        {/* CALL LOGS */}
 
         <StatCard
 
@@ -4727,7 +4727,7 @@ export default function DashboardPage() {
 
 
 
-        {/\* PENDING FOLLOW-UPS \*/}
+        {/* PENDING FOLLOW-UPS */}
 
         <StatCard
 
@@ -4753,7 +4753,7 @@ export default function DashboardPage() {
 
 
 
-        {/\* COMPLETED FOLLOW-UPS \*/}
+        {/* COMPLETED FOLLOW-UPS */}
 
         <StatCard
 
@@ -4779,7 +4779,7 @@ export default function DashboardPage() {
 
 
 
-        {/\* MISSED FOLLOW-UPS \*/}
+        {/* MISSED FOLLOW-UPS */}
 
         <StatCard
 
@@ -4805,7 +4805,7 @@ export default function DashboardPage() {
 
 
 
-        {/\* CANCELLED FOLLOW-UPS \*/}
+        {/* CANCELLED FOLLOW-UPS */}
 
         <StatCard
 
@@ -4831,7 +4831,7 @@ export default function DashboardPage() {
 
 
 
-        {/\* TODAY'S FOLLOW-UPS \*/}
+        {/* TODAY'S FOLLOW-UPS */}
 
         <StatCard
 
@@ -4857,7 +4857,7 @@ export default function DashboardPage() {
 
 
 
-        {/\* UNASSIGNED LEADS \*/}
+        {/* UNASSIGNED LEADS */}
 
         {isManagement && (
 
@@ -4895,11 +4895,11 @@ export default function DashboardPage() {
 
 
 
-      {/\* =====================================================
+      {/* =====================================================
 
           ANALYTICS
 
-          ===================================================== \*/}
+          ===================================================== */}
 
 
 
@@ -4919,11 +4919,11 @@ export default function DashboardPage() {
 
 
 
-        {/\* ===================================================
+        {/* ===================================================
 
             LEAD OVERVIEW
 
-            =================================================== \*/}
+            =================================================== */}
 
 
 
@@ -4991,11 +4991,11 @@ export default function DashboardPage() {
 
 
 
-        {/\* ===================================================
+        {/* ===================================================
 
             CRM ACTIVITY
 
-            =================================================== \*/}
+            =================================================== */}
 
 
 
@@ -5061,11 +5061,11 @@ export default function DashboardPage() {
 
 
 
-        {/\* ===================================================
+        {/* ===================================================
 
             AGENT LEAD DISTRIBUTION
 
-            =================================================== \*/}
+            =================================================== */}
 
 
 
@@ -5145,11 +5145,11 @@ export default function DashboardPage() {
 
 
 
-        {/\* ===================================================
+        {/* ===================================================
 
             AGENT PERFORMANCE
 
-            =================================================== \*/}
+            =================================================== */}
 
 
 
@@ -5465,11 +5465,11 @@ export default function DashboardPage() {
 
 
 
-        {/\* ===================================================
+        {/* ===================================================
 
             CAMPAIGN PERFORMANCE
 
-            =================================================== \*/}
+            =================================================== */}
 
 
 
@@ -5821,11 +5821,11 @@ export default function DashboardPage() {
 
 
 
-        {/\* ===================================================
+        {/* ===================================================
 
             LEAD SOURCE PERFORMANCE
 
-            =================================================== \*/}
+            =================================================== */}
 
 
 
