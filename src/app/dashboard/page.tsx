@@ -214,6 +214,31 @@ function getTodayDateString(): string {
 
 
 
+function formatBreakDuration(totalSeconds: number): string {
+  const safeSeconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
+
+  return [
+    String(hours).padStart(2, "0"),
+    String(minutes).padStart(2, "0"),
+    String(seconds).padStart(2, "0"),
+  ].join(":");
+}
+
+function parseBreakStartTime(value: unknown): number | null {
+  if (!value) return null;
+
+  const timestamp = new Date(String(value)).getTime();
+
+  if (Number.isNaN(timestamp)) {
+    return null;
+  }
+
+  return timestamp;
+}
+
 function isCallFromToday(call: CallLog): boolean {
 
 
@@ -406,6 +431,16 @@ export default function DashboardPage() {
   const [breakActive, setBreakActive] = useState(false);
   const [breakLoading, setBreakLoading] = useState(false);
   const [breakMessage, setBreakMessage] = useState("");
+
+  const [breakElapsedSeconds, setBreakElapsedSeconds] = useState(0);
+  const [normalBreakUsedSeconds, setNormalBreakUsedSeconds] = useState(0);
+  const [exceptionBreakUsedSeconds, setExceptionBreakUsedSeconds] = useState(0);
+  const [activeBreakStartTime, setActiveBreakStartTime] = useState<number | null>(
+    null
+  );
+  const [activeBreakType, setActiveBreakType] = useState<
+    "NORMAL" | "EXCEPTION" | null
+  >(null);
 
 
 
@@ -619,7 +654,7 @@ export default function DashboardPage() {
   // AGENT BREAK FUNCTIONS
   // ==========================================================
 
-  async function checkCurrentBreak() {
+  async function loadBreakSummary() {
     try {
       const token = getToken();
       const userId = localStorage.getItem("userId");
@@ -627,7 +662,9 @@ export default function DashboardPage() {
       if (!token || !userId) return;
 
       const response = await fetch(
-        `${API_BASE_URL}/api/attendance/today?agentId=${Number(userId)}`,
+        `${API_BASE_URL}/api/attendance/break/summary?agentId=${Number(
+          userId
+        )}`,
         {
           method: "GET",
           headers: {
@@ -639,7 +676,117 @@ export default function DashboardPage() {
       if (!response.ok) return;
 
       const data = await response.json();
-      setBreakActive(data?.activeBreak === true);
+
+      setNormalBreakUsedSeconds(
+        Number(data?.normalBreakTotalSeconds) || 0
+      );
+
+      setExceptionBreakUsedSeconds(
+        Number(data?.exceptionBreakTotalSeconds) || 0
+      );
+
+      if (data?.activeBreak === true) {
+        setBreakActive(true);
+
+        const summaryStart =
+          data?.activeBreakStartTime ??
+          data?.startTime ??
+          data?.activeStartTime;
+
+        const parsedStart = parseBreakStartTime(summaryStart);
+
+        if (parsedStart !== null) {
+          setActiveBreakStartTime(parsedStart);
+        }
+
+        const summaryType = String(
+          data?.activeBreakType || data?.breakType || ""
+        ).toUpperCase();
+
+        if (
+          summaryType === "NORMAL" ||
+          summaryType === "EXCEPTION"
+        ) {
+          setActiveBreakType(summaryType);
+        }
+      }
+    } catch (error) {
+      console.error("Break summary error:", error);
+    }
+  }
+
+  async function checkCurrentBreak() {
+    try {
+      const token = getToken();
+      const userId = localStorage.getItem("userId");
+
+      if (!token || !userId) return;
+
+      const todayResponse = await fetch(
+        `${API_BASE_URL}/api/attendance/today?agentId=${Number(userId)}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (todayResponse.ok) {
+        const todayData = await todayResponse.json();
+
+        if (todayData?.activeBreak === true) {
+          setBreakActive(true);
+        }
+      }
+
+      const activeResponse = await fetch(
+        `${API_BASE_URL}/api/attendance/break/active?agentId=${Number(
+          userId
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (activeResponse.ok) {
+        const activeData = await activeResponse.json();
+
+        if (activeData) {
+          setBreakActive(true);
+
+          const startValue =
+            activeData?.startTime ??
+            activeData?.breakStartTime ??
+            activeData?.startedAt;
+
+          const parsedStart = parseBreakStartTime(startValue);
+
+          if (parsedStart !== null) {
+            setActiveBreakStartTime(parsedStart);
+          }
+
+          const typeValue = String(
+            activeData?.breakType || ""
+          ).toUpperCase();
+
+          if (
+            typeValue === "NORMAL" ||
+            typeValue === "EXCEPTION"
+          ) {
+            setActiveBreakType(typeValue);
+          }
+        } else {
+          setBreakActive(false);
+          setActiveBreakStartTime(null);
+          setActiveBreakType(null);
+        }
+      }
+
+      await loadBreakSummary();
     } catch (error) {
       console.error("Check current break error:", error);
     }
@@ -693,10 +840,28 @@ export default function DashboardPage() {
       }
 
       setBreakActive(true);
+      setActiveBreakType(selectedType);
+      setBreakElapsedSeconds(0);
+
+      const responseStart =
+        data?.startTime ??
+        data?.breakStartTime ??
+        data?.startedAt;
+
+      const parsedStart = parseBreakStartTime(responseStart);
+
+      if (parsedStart !== null) {
+        setActiveBreakStartTime(parsedStart);
+      } else {
+        setActiveBreakStartTime(Date.now());
+      }
+
       setBreakModalOpen(false);
       setBreakReason("");
       setBreakType("NORMAL");
       setBreakMessage("");
+
+      await checkCurrentBreak();
     } catch (error) {
       console.error("Start break error:", error);
 
@@ -745,7 +910,12 @@ export default function DashboardPage() {
       }
 
       setBreakActive(false);
+      setBreakElapsedSeconds(0);
+      setActiveBreakStartTime(null);
+      setActiveBreakType(null);
       setBreakMessage("");
+
+      await loadBreakSummary();
     } catch (error) {
       console.error("End break error:", error);
 
@@ -758,6 +928,50 @@ export default function DashboardPage() {
       setBreakLoading(false);
     }
   }
+
+  // ==========================================================
+  // LIVE BREAK TIMER
+  // ==========================================================
+
+  useEffect(() => {
+    if (!breakActive || !activeBreakStartTime) {
+      setBreakElapsedSeconds(0);
+      return;
+    }
+
+    const updateBreakTimer = () => {
+      const elapsed = Math.max(
+        0,
+        Math.floor((Date.now() - activeBreakStartTime) / 1000)
+      );
+
+      setBreakElapsedSeconds(elapsed);
+    };
+
+    updateBreakTimer();
+
+    const timer = window.setInterval(
+      updateBreakTimer,
+      1000
+    );
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [breakActive, activeBreakStartTime]);
+
+  // Refresh the authoritative break summary periodically.
+  useEffect(() => {
+    if (userRole !== "AGENT") return;
+
+    const interval = window.setInterval(() => {
+      checkCurrentBreak();
+    }, 30000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [userRole]);
 
   // CHART CLEANUP
 
@@ -4606,6 +4820,132 @@ export default function DashboardPage() {
     ===================================================== */}
 
 
+
+      {/* =====================================================
+          LARGE ACTIVE BREAK DISPLAY
+          ===================================================== */}
+
+      {userRole === "AGENT" && breakActive && (
+        <div
+          className={`
+            mb-8 rounded-2xl border-2 p-6 shadow-lg
+            ${activeBreakType === "EXCEPTION"
+              ? "border-blue-300 bg-blue-50"
+              : "border-orange-300 bg-orange-50"
+            }
+          `}
+        >
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div
+                className={`
+                  text-sm font-bold uppercase tracking-widest
+                  ${activeBreakType === "EXCEPTION"
+                    ? "text-blue-700"
+                    : "text-orange-700"
+                  }
+                `}
+              >
+                {activeBreakType === "EXCEPTION"
+                  ? "⚠ EXCEPTION / MEETING"
+                  : "☕ ON BREAK"}
+              </div>
+
+              <div
+                className={`
+                  mt-2 text-6xl font-black leading-none tracking-tight sm:text-7xl
+                  ${activeBreakType === "EXCEPTION"
+                    ? "text-blue-800"
+                    : "text-orange-800"
+                  }
+                `}
+              >
+                {formatBreakDuration(breakElapsedSeconds)}
+              </div>
+
+              <div className="mt-3 text-sm font-medium text-gray-600">
+                {activeBreakType === "EXCEPTION"
+                  ? "This time does not count toward your normal 1-hour break limit."
+                  : "Break time is tracked from the server-recorded start time."}
+              </div>
+            </div>
+
+            <div className="grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="rounded-xl bg-white p-4 text-center shadow-sm">
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Normal Used
+                </div>
+                <div className="mt-1 text-2xl font-black text-gray-800">
+                  {formatBreakDuration(
+                    normalBreakUsedSeconds +
+                    (activeBreakType === "NORMAL"
+                      ? breakElapsedSeconds
+                      : 0)
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-white p-4 text-center shadow-sm">
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Normal Remaining
+                </div>
+                <div
+                  className={`
+                    mt-1 text-2xl font-black
+                    ${Math.max(
+                    0,
+                    3600 -
+                    normalBreakUsedSeconds -
+                    (activeBreakType === "NORMAL"
+                      ? breakElapsedSeconds
+                      : 0)
+                  ) === 0
+                      ? "text-red-600"
+                      : "text-green-600"
+                    }
+                  `}
+                >
+                  {formatBreakDuration(
+                    Math.max(
+                      0,
+                      3600 -
+                      normalBreakUsedSeconds -
+                      (activeBreakType === "NORMAL"
+                        ? breakElapsedSeconds
+                        : 0)
+                    )
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-white p-4 text-center shadow-sm">
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Exception Used
+                </div>
+                <div className="mt-1 text-2xl font-black text-gray-800">
+                  {formatBreakDuration(exceptionBreakUsedSeconds)}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={endBreak}
+              disabled={breakLoading}
+              className="
+                min-w-[180px] rounded-xl bg-red-600 px-6 py-4
+                text-lg font-black text-white shadow-md
+                transition-colors hover:bg-red-700
+                disabled:cursor-not-allowed disabled:opacity-50
+              "
+            >
+              {breakLoading
+                ? "Ending..."
+                : "⏹ END BREAK"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
 
