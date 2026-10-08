@@ -230,7 +230,18 @@ function formatBreakDuration(totalSeconds: number): string {
 function parseBreakStartTime(value: unknown): number | null {
   if (!value) return null;
 
-  const timestamp = new Date(String(value)).getTime();
+  const rawValue = String(value).trim();
+
+  // Backend uses LocalDateTime and the deployed Spring Boot server
+  // runs on UTC. If the API returns a timestamp without a timezone,
+  // explicitly treat it as UTC so the browser does not interpret it
+  // as the user's local time (which can create a 5:30 hour error in IST).
+  const normalizedValue =
+    /(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(rawValue)
+      ? rawValue
+      : `${rawValue}Z`;
+
+  const timestamp = new Date(normalizedValue).getTime();
 
   if (Number.isNaN(timestamp)) {
     return null;
