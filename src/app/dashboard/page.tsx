@@ -227,29 +227,6 @@ function formatBreakDuration(totalSeconds: number): string {
   ].join(":");
 }
 
-function parseBreakStartTime(value: unknown): number | null {
-  if (!value) return null;
-
-  const rawValue = String(value).trim();
-
-  // Backend uses LocalDateTime and the deployed Spring Boot server
-  // runs on UTC. If the API returns a timestamp without a timezone,
-  // explicitly treat it as UTC so the browser does not interpret it
-  // as the user's local time (which can create a 5:30 hour error in IST).
-  const normalizedValue =
-    /(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(rawValue)
-      ? rawValue
-      : `${rawValue}Z`;
-
-  const timestamp = new Date(normalizedValue).getTime();
-
-  if (Number.isNaN(timestamp)) {
-    return null;
-  }
-
-  return timestamp;
-}
-
 function isCallFromToday(call: CallLog): boolean {
 
 
@@ -688,38 +665,50 @@ export default function DashboardPage() {
 
       const data = await response.json();
 
+      // ==========================================
+      // BREAK TOTALS
+      // ==========================================
+
       setNormalBreakUsedSeconds(
-        Number(data?.normalBreakTotalSeconds) || 0
+        Number(data?.normalUsedSeconds) || 0
       );
 
       setExceptionBreakUsedSeconds(
-        Number(data?.exceptionBreakTotalSeconds) || 0
+        Number(data?.exceptionUsedSeconds) || 0
       );
 
-      if (data?.activeBreak === true) {
+      // ==========================================
+      // ACTIVE BREAK
+      // ==========================================
+
+      const activeStart =
+        data?.activeBreakStartTime ?? null;
+
+      const activeType = String(
+        data?.activeBreakType ?? ""
+      ).toUpperCase();
+
+      const activeElapsed =
+        Number(data?.activeBreakElapsedSeconds) || 0;
+
+      if (activeStart) {
         setBreakActive(true);
 
-        const summaryStart =
-          data?.activeBreakStartTime ??
-          data?.startTime ??
-          data?.activeStartTime;
-
-        const parsedStart = parseBreakStartTime(summaryStart);
-
-        if (parsedStart !== null) {
-          setActiveBreakStartTime(parsedStart);
-        }
-
-        const summaryType = String(
-          data?.activeBreakType || data?.breakType || ""
-        ).toUpperCase();
-
         if (
-          summaryType === "NORMAL" ||
-          summaryType === "EXCEPTION"
+          activeType === "NORMAL" ||
+          activeType === "EXCEPTION"
         ) {
-          setActiveBreakType(summaryType);
+          setActiveBreakType(activeType);
         }
+
+        // Backend is authoritative for elapsed time.
+        // Do not calculate elapsed time from the timestamp.
+        setBreakElapsedSeconds(activeElapsed);
+      } else {
+        setBreakActive(false);
+        setBreakElapsedSeconds(0);
+        setActiveBreakStartTime(null);
+        setActiveBreakType(null);
       }
     } catch (error) {
       console.error("Break summary error:", error);
@@ -734,7 +723,9 @@ export default function DashboardPage() {
       if (!token || !userId) return;
 
       const todayResponse = await fetch(
-        `${API_BASE_URL}/api/attendance/today?agentId=${Number(userId)}`,
+        `${API_BASE_URL}/api/attendance/today?agentId=${Number(
+          userId
+        )}`,
         {
           method: "GET",
           headers: {
@@ -769,17 +760,6 @@ export default function DashboardPage() {
         if (activeData) {
           setBreakActive(true);
 
-          const startValue =
-            activeData?.startTime ??
-            activeData?.breakStartTime ??
-            activeData?.startedAt;
-
-          const parsedStart = parseBreakStartTime(startValue);
-
-          if (parsedStart !== null) {
-            setActiveBreakStartTime(parsedStart);
-          }
-
           const typeValue = String(
             activeData?.breakType || ""
           ).toUpperCase();
@@ -792,11 +772,13 @@ export default function DashboardPage() {
           }
         } else {
           setBreakActive(false);
+          setBreakElapsedSeconds(0);
           setActiveBreakStartTime(null);
           setActiveBreakType(null);
         }
       }
 
+      // This gets the authoritative elapsed seconds from the server.
       await loadBreakSummary();
     } catch (error) {
       console.error("Check current break error:", error);
@@ -852,21 +834,13 @@ export default function DashboardPage() {
 
       setBreakActive(true);
       setActiveBreakType(selectedType);
+
+      // Timer starts from the server summary below.
+      // No browser timestamp/timezone calculation is used.
       setBreakElapsedSeconds(0);
+      setActiveBreakStartTime(null);
 
-      const responseStart =
-        data?.startTime ??
-        data?.breakStartTime ??
-        data?.startedAt;
-
-      const parsedStart = parseBreakStartTime(responseStart);
-
-      if (parsedStart !== null) {
-        setActiveBreakStartTime(parsedStart);
-      } else {
-        setActiveBreakStartTime(Date.now());
-      }
-
+      setBreakModalOpen(false);
       setBreakModalOpen(false);
       setBreakReason("");
       setBreakType("NORMAL");
@@ -943,33 +917,25 @@ export default function DashboardPage() {
   // ==========================================================
   // LIVE BREAK TIMER
   // ==========================================================
+  //
+  // The backend supplies the authoritative elapsed seconds.
+  // The browser only increments that value once per second.
+  // No timezone/date parsing is used here.
+  // ==========================================================
 
   useEffect(() => {
-    if (!breakActive || !activeBreakStartTime) {
-      setBreakElapsedSeconds(0);
+    if (!breakActive) {
       return;
     }
 
-    const updateBreakTimer = () => {
-      const elapsed = Math.max(
-        0,
-        Math.floor((Date.now() - activeBreakStartTime) / 1000)
-      );
-
-      setBreakElapsedSeconds(elapsed);
-    };
-
-    updateBreakTimer();
-
-    const timer = window.setInterval(
-      updateBreakTimer,
-      1000
-    );
+    const timer = window.setInterval(() => {
+      setBreakElapsedSeconds((previous) => previous + 1);
+    }, 1000);
 
     return () => {
       window.clearInterval(timer);
     };
-  }, [breakActive, activeBreakStartTime]);
+  }, [breakActive]);
 
   // Refresh the authoritative break summary periodically.
   useEffect(() => {
