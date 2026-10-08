@@ -2207,35 +2207,37 @@ export default function DashboardPage() {
           DASHBOARD CARDS
           ===================================================== */}
 
-      <div className="
-        grid
-        grid-cols-2
-        sm:grid-cols-3
-        lg:grid-cols-4
-        xl:grid-cols-5
-        gap-4
-        mb-8
-      ">
+      {/* =====================================================
+    DASHBOARD CARDS
+    ===================================================== */}
 
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
+
+        {/* TOTAL LEADS */}
         <StatCard
           icon="👥"
           label="Total Leads"
           value={totalLeads}
           sublabel="Currently assigned"
           id="totalLeads"
-          onClick={() => router.push("/leads")}
+          onClick={() =>
+            router.push("/leads")
+          }
         />
 
-
+        {/* ATTENDED LEADS */}
         <StatCard
           icon="☎️"
           label="Attended Leads"
           value={attendedLeads}
           sublabel="Leads worked today"
           id="attendedLeadsCard"
+          onClick={() =>
+            router.push("/leads?view=attended")
+          }
         />
 
-
+        {/* REMAINING LEADS */}
         <StatCard
           icon="⏳"
           label="Remaining Leads"
@@ -2247,73 +2249,107 @@ export default function DashboardPage() {
           }
         />
 
-
+        {/* FOLLOW-UPS */}
         <StatCard
           icon="📅"
           label="Follow-ups"
           value={totalFollowUps}
           sublabel="Scheduled activities"
+          onClick={() =>
+            router.push("/follow-ups")
+          }
         />
 
-
+        {/* CALL LOGS */}
         <StatCard
           icon="📞"
           label="Call Logs"
           value={totalCalls}
           sublabel="Recorded calls"
+          onClick={() =>
+            router.push("/call-logs")
+          }
         />
 
-
+        {/* PENDING FOLLOW-UPS */}
         <StatCard
           icon="⏳"
           label="Pending Follow-ups"
           value={pendingFollowUps}
           sublabel="Waiting for action"
+          onClick={() =>
+            router.push(
+              "/follow-ups?status=PENDING"
+            )
+          }
         />
 
-
+        {/* COMPLETED FOLLOW-UPS */}
         <StatCard
           icon="✅"
           label="Completed Follow-ups"
           value={completedFollowUps}
           sublabel="Successfully completed"
+          onClick={() =>
+            router.push(
+              "/follow-ups?status=COMPLETED"
+            )
+          }
         />
 
-
+        {/* MISSED FOLLOW-UPS */}
         <StatCard
           icon="⚠️"
           label="Missed Follow-ups"
           value={missedFollowUps}
           sublabel="Require attention"
+          onClick={() =>
+            router.push(
+              "/follow-ups?status=MISSED"
+            )
+          }
         />
 
-
+        {/* CANCELLED FOLLOW-UPS */}
         <StatCard
           icon="❌"
           label="Cancelled Follow-ups"
           value={cancelledFollowUps}
           sublabel="Cancelled activities"
+          onClick={() =>
+            router.push(
+              "/follow-ups?status=CANCELLED"
+            )
+          }
         />
 
-
+        {/* TODAY'S FOLLOW-UPS */}
         <StatCard
           icon="📆"
           label="Today's Follow-ups"
           value={todayFollowUps}
           sublabel="Due today"
+          onClick={() =>
+            router.push(
+              "/follow-ups?view=today"
+            )
+          }
         />
 
-
+        {/* UNASSIGNED LEADS */}
         {isManagement && (
-
           <StatCard
             icon="📥"
             label="Unassigned Leads"
             value={unassignedLeads}
             sublabel="Awaiting assignment"
             id="unassignedLeadsCard"
+            onClick={() =>
+              router.push(
+                "/leads?view=unassigned"
+              )
+            }
           />
-
         )}
 
       </div>
