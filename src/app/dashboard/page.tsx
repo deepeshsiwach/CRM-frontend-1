@@ -2035,73 +2035,46 @@ export default function DashboardPage() {
   // ==========================================================
   // STAT CARD
   // ==========================================================
-
   const StatCard = ({
     icon,
     label,
     value,
     sublabel,
     id,
+    onClick,
   }: {
     icon: string;
     label: string;
     value: number;
     sublabel: string;
     id?: string;
+    onClick?: () => void;
   }) => (
-
     <div
-      className="
-        bg-white
-        rounded-xl
-        p-6
-        shadow-sm
-        border
-        border-gray-100
-        hover:shadow-md
-        transition-shadow
-        duration-200
-      "
       id={id}
+      onClick={onClick}
+      className={`bg-white rounded-xl p-6 shadow-sm border border-gray-100 transition-all duration-200 ${onClick
+        ? "cursor-pointer hover:shadow-lg hover:-translate-y-1 hover:border-blue-200"
+        : ""
+        }`}
     >
-
       <div className="text-3xl mb-3">
         {icon}
       </div>
 
-
-      <div className="
-        text-sm
-        font-medium
-        text-gray-500
-        mb-1
-      ">
+      <div className="text-sm font-medium text-gray-500 mb-1">
         {label}
       </div>
 
-
-      <div className="
-        text-3xl
-        font-bold
-        text-blue-600
-        mb-1
-      ">
+      <div className="text-3xl font-bold text-blue-600 mb-1">
         {value}
       </div>
 
-
-      <div className="
-        text-xs
-        text-gray-400
-      ">
+      <div className="text-xs text-gray-400">
         {sublabel}
       </div>
-
     </div>
-
   );
-
-
   // ==========================================================
   // ANALYTICS CARD
   // ==========================================================
@@ -2250,6 +2223,7 @@ export default function DashboardPage() {
           value={totalLeads}
           sublabel="Currently assigned"
           id="totalLeads"
+          onClick={() => router.push("/leads")}
         />
 
 
@@ -2268,6 +2242,9 @@ export default function DashboardPage() {
           value={remainingLeads}
           sublabel="Yet to be worked"
           id="remainingLeadsCard"
+          onClick={() =>
+            router.push("/leads?view=remaining")
+          }
         />
 
 
