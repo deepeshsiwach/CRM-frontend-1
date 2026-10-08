@@ -30,7 +30,10 @@ function AddCallLogContent() {
 
   const [callStartTime, setCallStartTime] = useState("");
   const [callEndTime, setCallEndTime] = useState("");
-  const [callOutcome, setCallOutcome] = useState("CONNECTED");
+
+  // Default value must exist in backend CallOutcome enum
+  const [callOutcome, setCallOutcome] = useState("INTERESTED");
+
   const [remarks, setRemarks] = useState("");
 
   const [message, setMessage] = useState<{
@@ -42,7 +45,10 @@ function AddCallLogContent() {
 
   const token = getToken();
 
-  // Initialize current date/time
+  // ========================================
+  // INITIALIZE CURRENT DATE/TIME
+  // ========================================
+
   useEffect(() => {
     const now = new Date();
 
@@ -55,7 +61,10 @@ function AddCallLogContent() {
     setCallStartTime(localDateTime);
   }, []);
 
-  // Load lead details
+  // ========================================
+  // LOAD LEAD DETAILS
+  // ========================================
+
   const loadLeadDetails = useCallback(async () => {
     if (!leadId || !token) {
       setLeadDisplay("No Lead ID");
@@ -86,7 +95,10 @@ function AddCallLogContent() {
     }
   }, [leadId, token]);
 
-  // Load current agent details
+  // ========================================
+  // LOAD CURRENT AGENT DETAILS
+  // ========================================
+
   const loadAgentDetails = useCallback(async () => {
     const currentUserId = getUserId();
 
@@ -121,7 +133,10 @@ function AddCallLogContent() {
     }
   }, [token]);
 
-  // Check login and load data
+  // ========================================
+  // CHECK LOGIN AND LOAD DATA
+  // ========================================
+
   useEffect(() => {
     if (!token) {
       router.replace("/");
@@ -137,7 +152,10 @@ function AddCallLogContent() {
     loadAgentDetails,
   ]);
 
-  // Go back
+  // ========================================
+  // GO BACK
+  // ========================================
+
   const goBack = () => {
     if (leadIdParam) {
       router.push(`/lead-details?id=${leadIdParam}`);
@@ -146,7 +164,10 @@ function AddCallLogContent() {
     }
   };
 
-  // Submit call log
+  // ========================================
+  // SUBMIT CALL LOG
+  // ========================================
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -174,6 +195,7 @@ function AddCallLogContent() {
       return;
     }
 
+    // Only fields that are currently required by the form
     const payload = {
       leadId: Number(leadId),
       agentId: Number(agentId),
@@ -195,10 +217,12 @@ function AddCallLogContent() {
         `${API_BASE_URL}/api/call-logs`,
         {
           method: "POST",
+
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + token,
           },
+
           body: JSON.stringify(payload),
         }
       );
@@ -219,7 +243,9 @@ function AddCallLogContent() {
       setTimeout(() => {
         goBack();
       }, 800);
+
     } catch (err: unknown) {
+
       const msg =
         err instanceof Error
           ? err.message
@@ -229,6 +255,7 @@ function AddCallLogContent() {
         text: msg,
         isError: true,
       });
+
     } finally {
       setSaving(false);
     }
@@ -239,12 +266,17 @@ function AddCallLogContent() {
       activeMenu="call-logs"
       title="Add Call Log"
     >
+
       <div className="space-y-6 max-w-4xl">
 
-        {/* PAGE HEADER */}
+        {/* ========================================
+            PAGE HEADER
+            ======================================== */}
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
           <div>
+
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
               Add New Call Log
             </h1>
@@ -252,6 +284,7 @@ function AddCallLogContent() {
             <p className="text-sm text-gray-500 mt-0.5">
               Record call outcome and lead conversation details.
             </p>
+
           </div>
 
           <button
@@ -264,7 +297,11 @@ function AddCallLogContent() {
 
         </div>
 
-        {/* FORM CARD */}
+
+        {/* ========================================
+            FORM CARD
+            ======================================== */}
+
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
 
           <form
@@ -275,8 +312,13 @@ function AddCallLogContent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-              {/* LEAD */}
+
+              {/* ========================================
+                  LEAD
+                  ======================================== */}
+
               <div>
+
                 <label
                   htmlFor="leadDisplay"
                   className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5"
@@ -297,14 +339,22 @@ function AddCallLogContent() {
                     type="number"
                     placeholder="Enter Lead ID"
                     value={leadId}
-                    onChange={(e) => setLeadId(e.target.value)}
+                    onChange={(e) =>
+                      setLeadId(e.target.value)
+                    }
                     className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 )}
+
               </div>
 
-              {/* AGENT */}
+
+              {/* ========================================
+                  AGENT
+                  ======================================== */}
+
               <div>
+
                 <label
                   htmlFor="agentDisplay"
                   className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5"
@@ -319,10 +369,16 @@ function AddCallLogContent() {
                   value={agentDisplay}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
                 />
+
               </div>
 
-              {/* CALL START TIME */}
+
+              {/* ========================================
+                  CALL START TIME
+                  ======================================== */}
+
               <div>
+
                 <label
                   htmlFor="callStartTime"
                   className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5"
@@ -340,10 +396,16 @@ function AddCallLogContent() {
                   }
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+
               </div>
 
-              {/* CALL END TIME */}
+
+              {/* ========================================
+                  CALL END TIME
+                  ======================================== */}
+
               <div>
+
                 <label
                   htmlFor="callEndTime"
                   className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5"
@@ -360,10 +422,16 @@ function AddCallLogContent() {
                   }
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+
               </div>
 
-              {/* CALL OUTCOME */}
+
+              {/* ========================================
+                  CALL OUTCOME
+                  ======================================== */}
+
               <div>
+
                 <label
                   htmlFor="callOutcome"
                   className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5"
@@ -379,9 +447,6 @@ function AddCallLogContent() {
                   }
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="CONNECTED">
-                    CONNECTED
-                  </option>
 
                   <option value="INTERESTED">
                     INTERESTED
@@ -391,24 +456,43 @@ function AddCallLogContent() {
                     NOT_INTERESTED
                   </option>
 
-                  <option value="CALLBACK_REQUESTED">
-                    CALLBACK_REQUESTED
+                  <option value="CALL_BACK">
+                    CALL_BACK
+                  </option>
+
+                  <option value="FOLLOW_UP">
+                    FOLLOW_UP
+                  </option>
+
+                  <option value="COUNSELLING">
+                    COUNSELLING
+                  </option>
+
+                  <option value="ENROLLED">
+                    ENROLLED
                   </option>
 
                   <option value="WRONG_NUMBER">
                     WRONG_NUMBER
                   </option>
 
-                  <option value="ENROLLED">
-                    ENROLLED
+                  <option value="NO_RESPONSE">
+                    NO_RESPONSE
                   </option>
+
                 </select>
+
               </div>
 
             </div>
 
-            {/* REMARKS */}
+
+            {/* ========================================
+                REMARKS
+                ======================================== */}
+
             <div>
+
               <label
                 htmlFor="remarks"
                 className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5"
@@ -425,9 +509,14 @@ function AddCallLogContent() {
                 }
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+
             </div>
 
-            {/* ACTIONS */}
+
+            {/* ========================================
+                ACTIONS
+                ======================================== */}
+
             <div className="flex flex-wrap items-center gap-3 pt-3">
 
               <button
@@ -435,8 +524,11 @@ function AddCallLogContent() {
                 disabled={saving}
                 className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
               >
-                {saving ? "Saving..." : "Save Call Log"}
+                {saving
+                  ? "Saving..."
+                  : "Save Call Log"}
               </button>
+
 
               <button
                 type="button"
@@ -445,6 +537,7 @@ function AddCallLogContent() {
               >
                 Cancel
               </button>
+
 
               {message && (
                 <span
@@ -465,12 +558,16 @@ function AddCallLogContent() {
         </div>
 
       </div>
+
     </DashboardLayout>
   );
 }
 
+
 export default function AddCallLogPage() {
+
   return (
+
     <Suspense
       fallback={
         <div className="p-8 text-center text-gray-400">
@@ -478,7 +575,10 @@ export default function AddCallLogPage() {
         </div>
       }
     >
+
       <AddCallLogContent />
+
     </Suspense>
+
   );
 }
