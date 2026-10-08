@@ -748,6 +748,7 @@ export default function LeadsPage() {
   };
 
   // ============================================================
+
   // EXCEL FILE CHANGE
   // ============================================================
 
@@ -1032,6 +1033,327 @@ export default function LeadsPage() {
     };
 
   // ============================================================
+  // LEAD 360 EXCEL EXPORT
+  // ============================================================
+
+  const exportLead360Excel = async () => {
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+
+    try {
+      const win = window as typeof window & {
+        XLSX?: {
+          utils: {
+            book_new: () => any;
+            json_to_sheet: (
+              data: Record<string, unknown>[]
+            ) => any;
+            book_append_sheet: (
+              workbook: any,
+              worksheet: any,
+              name: string
+            ) => void;
+            writeFile: (
+              workbook: any,
+              filename: string
+            ) => void;
+          };
+        };
+      };
+
+      if (!win.XLSX) {
+        setMessage(
+          "Excel library is still loading. Please wait a moment and try again."
+        );
+        return;
+      }
+
+      setMessage(
+        "Preparing Lead 360 Excel export..."
+      );
+
+      const [
+        assignmentsRes,
+        callLogsRes,
+        followUpsRes,
+        notesRes,
+      ] = await Promise.all([
+        fetch(
+          `${API_BASE_URL}/api/lead-assignments`,
+          {
+            headers: {
+              Authorization:
+                "Bearer " + token,
+            },
+          }
+        ),
+        fetch(
+          `${API_BASE_URL}/api/call-logs`,
+          {
+            headers: {
+              Authorization:
+                "Bearer " + token,
+            },
+          }
+        ),
+        fetch(
+          `${API_BASE_URL}/api/follow-ups`,
+          {
+            headers: {
+              Authorization:
+                "Bearer " + token,
+            },
+          }
+        ),
+        fetch(
+          `${API_BASE_URL}/api/notes`,
+          {
+            headers: {
+              Authorization:
+                "Bearer " + token,
+            },
+          }
+        ),
+      ]);
+
+      if (
+        !assignmentsRes.ok ||
+        !callLogsRes.ok ||
+        !followUpsRes.ok ||
+        !notesRes.ok
+      ) {
+        throw new Error(
+          "Unable to load all CRM records for Excel export."
+        );
+      }
+
+      const assignments =
+        await assignmentsRes.json();
+
+      const callLogs =
+        await callLogsRes.json();
+
+      const followUps =
+        await followUpsRes.json();
+
+      const notes =
+        await notesRes.json();
+
+      const leadIds = new Set(
+        allLeads.map(
+          (lead) => lead.id
+        )
+      );
+
+      const filterByLead = (
+        rows: unknown
+      ): unknown[] => {
+        if (!Array.isArray(rows)) {
+          return [];
+        }
+
+        return rows.filter((row) => {
+          if (
+            !row ||
+            typeof row !==
+            "object"
+          ) {
+            return false;
+          }
+
+          const item =
+            row as Record<
+              string,
+              unknown
+            >;
+
+          const leadId =
+            Number(item.leadId);
+
+          return (
+            Number.isFinite(
+              leadId
+            ) &&
+            leadIds.has(
+              leadId
+            )
+          );
+        });
+      };
+
+      const normalizeRows = (
+        rows: unknown[]
+      ): Record<
+        string,
+        unknown
+      >[] => {
+        return rows.map((row) => {
+          if (
+            !row ||
+            typeof row !==
+            "object"
+          ) {
+            return {
+              Value: String(
+                row ?? ""
+              ),
+            };
+          }
+
+          const output:
+            Record<
+              string,
+              unknown
+            > = {};
+
+          Object.entries(
+            row as Record<
+              string,
+              unknown
+            >
+          ).forEach(
+            ([key, value]) => {
+              if (
+                value !== null &&
+                typeof value ===
+                "object"
+              ) {
+                output[key] =
+                  JSON.stringify(
+                    value
+                  );
+              } else {
+                output[key] =
+                  value;
+              }
+            }
+          );
+
+          return output;
+        });
+      };
+
+      const leadRows =
+        normalizeRows(
+          allLeads
+        );
+
+      const assignmentRows =
+        normalizeRows(
+          filterByLead(
+            assignments
+          )
+        );
+
+      const callLogRows =
+        normalizeRows(
+          filterByLead(
+            callLogs
+          )
+        );
+
+      const followUpRows =
+        normalizeRows(
+          filterByLead(
+            followUps
+          )
+        );
+
+      const noteRows =
+        normalizeRows(
+          filterByLead(
+            notes
+          )
+        );
+
+      const workbook =
+        win.XLSX.utils.book_new();
+
+      const leadsSheet =
+        win.XLSX.utils.json_to_sheet(
+          leadRows
+        );
+
+      const assignmentsSheet =
+        win.XLSX.utils.json_to_sheet(
+          assignmentRows
+        );
+
+      const callLogsSheet =
+        win.XLSX.utils.json_to_sheet(
+          callLogRows
+        );
+
+      const followUpsSheet =
+        win.XLSX.utils.json_to_sheet(
+          followUpRows
+        );
+
+      const notesSheet =
+        win.XLSX.utils.json_to_sheet(
+          noteRows
+        );
+
+      win.XLSX.utils.book_append_sheet(
+        workbook,
+        leadsSheet,
+        "Leads"
+      );
+
+      win.XLSX.utils.book_append_sheet(
+        workbook,
+        assignmentsSheet,
+        "Assignments"
+      );
+
+      win.XLSX.utils.book_append_sheet(
+        workbook,
+        callLogsSheet,
+        "Call Logs"
+      );
+
+      win.XLSX.utils.book_append_sheet(
+        workbook,
+        followUpsSheet,
+        "Follow-ups"
+      );
+
+      win.XLSX.utils.book_append_sheet(
+        workbook,
+        notesSheet,
+        "Notes"
+      );
+
+      const today =
+        new Date()
+          .toISOString()
+          .split("T")[0];
+
+      win.XLSX.utils.writeFile(
+        workbook,
+        `DERIVION_Lead_360_${today}.xlsx`
+      );
+
+      setMessage(
+        "Lead 360 Excel exported successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Lead 360 export error:",
+        error
+      );
+
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to export Lead 360 Excel."
+      );
+    }
+  };
+
+  // ============================================================
   // STYLES
   // ============================================================
 
@@ -1096,6 +1418,16 @@ export default function LeadsPage() {
               className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors duration-200 shadow-sm"
             >
               📊 Import Excel
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                exportLead360Excel
+              }
+              className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors duration-200 shadow-sm"
+            >
+              📥 Export Excel
             </button>
 
           </div>
