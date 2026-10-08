@@ -543,8 +543,8 @@ function AddCallLogContent() {
                 <span
                   id="message"
                   className={`text-xs font-semibold ${message.isError
-                      ? "text-red-600"
-                      : "text-green-600"
+                    ? "text-red-600"
+                    : "text-green-600"
                     }`}
                 >
                   {message.text}
