@@ -722,52 +722,55 @@ export default function DashboardPage() {
 
       if (!token || !userId) return;
 
+      const headers = { Authorization: `Bearer ${token}` };
+      const agentId = Number(userId);
+
+      // Check today's attendance. Some API responses may have an empty body,
+      // so read text first instead of assuming every successful response is JSON.
       const todayResponse = await fetch(
-        `${API_BASE_URL}/api/attendance/today?agentId=${Number(
-          userId
-        )}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        `${API_BASE_URL}/api/attendance/today?agentId=${agentId}`,
+        { method: "GET", headers }
       );
 
       if (todayResponse.ok) {
-        const todayData = await todayResponse.json();
-
-        if (todayData?.activeBreak === true) {
-          setBreakActive(true);
+        const todayText = await todayResponse.text();
+        if (todayText.trim()) {
+          try {
+            const todayData = JSON.parse(todayText);
+            if (todayData?.activeBreak === true) {
+              setBreakActive(true);
+            }
+          } catch (parseError) {
+            console.warn("Today's attendance response was not valid JSON.", parseError);
+          }
         }
+      } else {
+        console.warn("Today's attendance check failed:", todayResponse.status);
       }
 
+      // Check for an active break. An empty response means no active break.
       const activeResponse = await fetch(
-        `${API_BASE_URL}/api/attendance/break/active?agentId=${Number(
-          userId
-        )}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        `${API_BASE_URL}/api/attendance/break/active?agentId=${agentId}`,
+        { method: "GET", headers }
       );
 
       if (activeResponse.ok) {
-        const activeData = await activeResponse.json();
+        const activeText = await activeResponse.text();
+        let activeData: { breakType?: string; startTime?: string; breakStartTime?: string } | null = null;
+
+        if (activeText.trim()) {
+          try {
+            activeData = JSON.parse(activeText);
+          } catch (parseError) {
+            console.warn("Active-break response was not valid JSON.", parseError);
+          }
+        }
 
         if (activeData) {
           setBreakActive(true);
 
-          const typeValue = String(
-            activeData?.breakType || ""
-          ).toUpperCase();
-
-          if (
-            typeValue === "NORMAL" ||
-            typeValue === "EXCEPTION"
-          ) {
+          const typeValue = String(activeData.breakType || "").toUpperCase();
+          if (typeValue === "NORMAL" || typeValue === "EXCEPTION") {
             setActiveBreakType(typeValue);
           }
         } else {
@@ -776,9 +779,12 @@ export default function DashboardPage() {
           setActiveBreakStartTime(null);
           setActiveBreakType(null);
         }
+      } else {
+        console.warn("Active-break check failed:", activeResponse.status);
       }
 
-      // This gets the authoritative elapsed seconds from the server.
+      // Refresh server-recorded break totals; failures here should not break
+      // the current-break check.
       await loadBreakSummary();
     } catch (error) {
       console.error("Check current break error:", error);
