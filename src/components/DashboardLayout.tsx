@@ -53,17 +53,18 @@ export default function DashboardLayout({
   }, [router, pathname]);
 
   const navLinks = [
-    { href: "/dashboard",           label: "🏠 Dashboard",              key: "dashboard" },
-    { href: "/leads",               label: "👥 Leads",                   key: "leads" },
-    { href: "/lead-assignments",    label: "📋 Lead Assignments",        key: "lead-assignments", restricted: true },
-    { href: "/closed-leads",        label: "✅ Closed / Disposed Leads", key: "closed-leads" },
-    { href: "/call-logs",           label: "📞 Call Logs",               key: "call-logs" },
-    { href: "/follow-ups",          label: "📅 Follow-ups",              key: "follow-ups" },
-    { href: "/notes",               label: "📝 Notes",                   key: "notes" },
-    { href: "/users",               label: "👤 Users",                   key: "users",            restricted: true, adminOnly: true },
-    { href: "/teams",               label: "🏢 Teams",                   key: "teams",            restricted: true },
-    { href: "/courses",             label: "🎓 Courses",                 key: "courses",          restricted: true },
-    { href: "/campaigns",           label: "📣 Campaigns",               key: "campaigns",        restricted: true },
+    { href: "/dashboard", label: "🏠 Dashboard", key: "dashboard" },
+    { href: "/attendance", label: "🕒 Attendance", key: "attendance", adminOnly: true },
+    { href: "/leads", label: "👥 Leads", key: "leads" },
+    { href: "/lead-assignments", label: "📋 Lead Assignments", key: "lead-assignments", restricted: true },
+    { href: "/closed-leads", label: "✅ Closed / Disposed Leads", key: "closed-leads" },
+    { href: "/call-logs", label: "📞 Call Logs", key: "call-logs" },
+    { href: "/follow-ups", label: "📅 Follow-ups", key: "follow-ups" },
+    { href: "/notes", label: "📝 Notes", key: "notes" },
+    { href: "/users", label: "👤 Users", key: "users", restricted: true, adminOnly: true },
+    { href: "/teams", label: "🏢 Teams", key: "teams", restricted: true },
+    { href: "/courses", label: "🎓 Courses", key: "courses", restricted: true },
+    { href: "/campaigns", label: "📣 Campaigns", key: "campaigns", restricted: true },
   ];
 
   const isLinkVisible = (link: typeof navLinks[number]) => {
