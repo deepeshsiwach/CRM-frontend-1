@@ -324,7 +324,15 @@ export default function AttendancePage() {
                     attendanceDate: data.attendanceDate || "",
                     loginTime: data.loginTime || "",
                     logoutTime: data.logoutTime ?? null,
-                    workingSeconds: Number(data.workingSeconds) || 0,
+                    workingSeconds: Math.max(
+                        0,
+                        Math.floor(
+                            (
+                                new Date(data.logoutTime || new Date().toISOString()).getTime() -
+                                new Date(data.loginTime).getTime()
+                            ) / 1000
+                        )
+                    ),
                     normalBreakSeconds: Number(data.normalBreakSeconds) || 0,
                     exceptionBreakSeconds: Number(data.exceptionBreakSeconds) || 0,
                 }]);
