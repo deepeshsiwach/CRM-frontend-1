@@ -298,25 +298,35 @@ export default function AttendancePage() {
                 return;
             }
 
-            const response = await fetch(
-                `${API_BASE_URL}/api/attendance/today?agentId=${agentId}`,
-                {
+            const headers = { Authorization: `Bearer ${token}` };
+            const [attendanceResponse, breakResponse] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/attendance/today?agentId=${agentId}`, {
                     method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+                    headers,
+                }),
+                fetch(`${API_BASE_URL}/api/attendance/break/summary?agentId=${agentId}`, {
+                    method: "GET",
+                    headers,
+                }),
+            ]);
 
-            const data = await response.json().catch(() => null);
+            const data = await attendanceResponse.json().catch(() => null);
+            const breakSummary = await breakResponse.json().catch(() => null);
 
-            if (!response.ok) {
-                throw new Error(
-                    data?.message || data?.error || "Unable to load your attendance."
-                );
+            if (!attendanceResponse.ok) {
+                throw new Error(data?.message || data?.error || "Unable to load your attendance.");
+            }
+            if (!breakResponse.ok) {
+                throw new Error(breakSummary?.message || breakSummary?.error || "Unable to load your break summary.");
             }
 
             if (data) {
+                const normalBreakSeconds = Math.max(0, Number(breakSummary?.normalUsedSeconds) || 0);
+                const exceptionBreakSeconds = Math.max(0, Number(breakSummary?.exceptionUsedSeconds) || 0);
+                const loginMilliseconds = data.loginTime ? new Date(data.loginTime).getTime() : Date.now();
+                const endMilliseconds = data.logoutTime ? new Date(data.logoutTime).getTime() : Date.now();
+                const grossWorkingSeconds = Math.max(0, Math.floor((endMilliseconds - loginMilliseconds) / 1000));
+
                 setRows([{
                     id: Number(data.id) || 0,
                     agentId: Number(data.agentId) || agentId,
@@ -324,32 +334,21 @@ export default function AttendancePage() {
                     attendanceDate: data.attendanceDate || "",
                     loginTime: data.loginTime || "",
                     logoutTime: data.logoutTime ?? null,
-                    workingSeconds: Math.max(
-                        0,
-                        Math.floor(
-                            (
-                                new Date(data.logoutTime || new Date().toISOString()).getTime() -
-                                new Date(data.loginTime).getTime()
-                            ) / 1000
-                        )
-                    ),
-                    normalBreakSeconds: Number(data.normalBreakSeconds) || 0,
-                    exceptionBreakSeconds: Number(data.exceptionBreakSeconds) || 0,
+                    workingSeconds: Math.max(0, grossWorkingSeconds - normalBreakSeconds - exceptionBreakSeconds),
+                    normalBreakSeconds,
+                    exceptionBreakSeconds,
                 }]);
             } else {
                 setRows([]);
             }
         } catch (error) {
             console.error("My attendance load error:", error);
-            setMessage(
-                error instanceof Error
-                    ? error.message
-                    : "Unable to load your attendance."
-            );
+            setMessage(error instanceof Error ? error.message : "Unable to load your attendance.");
         } finally {
             setLoading(false);
         }
     }
+
 
     async function openDetails(id: number) {
 
@@ -513,13 +512,7 @@ export default function AttendancePage() {
 
                             type="button"
 
-                            onClick={() => {
-                                if (getUserRole() === "ADMIN") {
-                                    loadAttendance();
-                                } else {
-                                    loadMyAttendance();
-                                }
-                            }}
+                            onClick={getUserRole() === "ADMIN" ? loadAttendance : loadMyAttendance}
 
                             disabled={loading}
 
@@ -760,15 +753,21 @@ export default function AttendancePage() {
 
 
                                             <td className="px-4 py-4 text-center">
-                                                {getUserRole() === "ADMIN" && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openDetails(row.id)}
-                                                        className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50"
-                                                    >
-                                                        View
-                                                    </button>
-                                                )}
+
+                                                <button
+
+                                                    type="button"
+
+                                                    onClick={() => openDetails(row.id)}
+
+                                                    className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50"
+
+                                                >
+
+                                                    View
+
+                                                </button>
+
                                             </td>
 
                                         </tr>
@@ -825,7 +824,7 @@ export default function AttendancePage() {
 
                                 >
 
-                                    view
+                                    ✕
 
                                 </button>
 
