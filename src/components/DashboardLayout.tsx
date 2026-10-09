@@ -9,7 +9,18 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getToken, getUserName, getUserRole, logout, PAGE_ACCESS } from "@/lib/auth";
+
+import {
+  getToken,
+  getUserId,
+  getUserName,
+  getUserRole,
+  logout,
+  PAGE_ACCESS,
+} from "@/lib/auth";
+
+import { API_BASE_URL } from "@/lib/config";
+
 import NotificationBell from "@/components/NotificationBell";
 
 interface DashboardLayoutProps {
@@ -73,9 +84,44 @@ export default function DashboardLayout({
     return userRole === "ADMIN" || userRole === "MANAGER";
   };
 
-  const handleLogout = () => {
-    logout();
+
+
+
+
+  const handleLogout = async () => {
+    try {
+      const token = getToken();
+      const userId = getUserId();
+      const role = getUserRole();
+
+      if (token && userId && role === "AGENT") {
+        const response = await fetch(
+          `${API_BASE_URL}/api/auth/logout/${userId}`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          console.error(
+            "Failed to record attendance logout:",
+            await response.text()
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Attendance logout error:", error);
+    } finally {
+      logout();
+    }
   };
+
+
+
+
 
   const currentKey = activePage || activeMenu || (pathname.split("/").filter(Boolean)[0] || "dashboard");
 
