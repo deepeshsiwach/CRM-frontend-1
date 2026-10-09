@@ -754,19 +754,17 @@ export default function AttendancePage() {
 
                                             <td className="px-4 py-4 text-center">
 
-                                                <button
 
-                                                    type="button"
+                                                {getUserRole() === "ADMIN" && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openDetails(row.id)}
+                                                        className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50"
+                                                    >
+                                                        View
+                                                    </button>
+                                                )}
 
-                                                    onClick={() => openDetails(row.id)}
-
-                                                    className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50"
-
-                                                >
-
-                                                    View
-
-                                                </button>
 
                                             </td>
 
