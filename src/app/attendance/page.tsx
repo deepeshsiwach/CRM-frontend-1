@@ -817,7 +817,7 @@ export default function AttendancePage() {
 
                                 >
 
-                                    ✕
+                                    view
 
                                 </button>
 
