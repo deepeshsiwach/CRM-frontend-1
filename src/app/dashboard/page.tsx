@@ -808,6 +808,20 @@ export default function DashboardPage() {
       setBreakLoading(true);
       setBreakMessage("");
 
+      const numericAgentId = Number(userId);
+
+      // Temporary diagnostics: verify which agent ID is sent to the backend.
+      console.log("Break start debug:", {
+        userId,
+        numericAgentId,
+        selectedType,
+        tokenExists: Boolean(token),
+      });
+
+      if (!Number.isFinite(numericAgentId) || numericAgentId <= 0) {
+        throw new Error("Invalid agent ID in the current login session. Please log out and log in again.");
+      }
+
       const response = await fetch(
         `${API_BASE_URL}/api/attendance/break/start`,
         {
@@ -817,18 +831,35 @@ export default function DashboardPage() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            agentId: Number(userId),
+            agentId: numericAgentId,
             breakType: selectedType,
             reason: reason.trim() || null,
           }),
         }
       );
 
-      const data = await response.json().catch(() => null);
+      // Some backend errors return JSON using `error`, others use `message`.
+      const responseText = await response.text();
+      let data: { message?: string; error?: string } | null = null;
+
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText) as { message?: string; error?: string };
+        } catch {
+          data = null;
+        }
+      }
+
+      console.log("Break start response:", {
+        status: response.status,
+        ok: response.ok,
+        body: data ?? responseText,
+      });
 
       if (!response.ok) {
         throw new Error(
-          data?.message || "Unable to start break."
+          data?.message || data?.error || responseText ||
+          `Unable to start break (HTTP ${response.status}).`
         );
       }
 
@@ -840,7 +871,6 @@ export default function DashboardPage() {
       setBreakElapsedSeconds(0);
       setActiveBreakStartTime(null);
 
-      setBreakModalOpen(false);
       setBreakModalOpen(false);
       setBreakReason("");
       setBreakType("NORMAL");
