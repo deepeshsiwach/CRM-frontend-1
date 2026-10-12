@@ -44,6 +44,20 @@ interface Lead {
 
   city?: string;
 
+  age?: number | string | null;
+
+  education?: string;
+
+  currentProfession?: string;
+
+  primaryObjective?: string;
+
+  tradingExperience?: string;
+
+  customerLookingFor?: string;
+
+  interestedArea?: string;
+
   campaignId?: number | null;
 
   [key: string]: unknown;
@@ -1557,188 +1571,97 @@ export default function LeadsPage() {
 
       let failed = 0;
 
-      for (const row of excelRows) {
+      const failureDetails: string[] = [];
+
+      // Match Excel headings without caring about uppercase/lowercase,
+      // spaces, underscores, or common alternate names such as MAIL/NUMBER.
+      const getCell = (row: Record<string, unknown>, aliases: string[]): string => {
+        const normalizedRow: Record<string, unknown> = {};
+        Object.keys(row).forEach((key) => {
+          normalizedRow[key.trim().toLowerCase().replace(/[\s_-]/g, "")] = row[key];
+        });
+
+        for (const alias of aliases) {
+          const value = normalizedRow[alias.trim().toLowerCase().replace(/[\s_-]/g, "")];
+          if (value !== undefined && value !== null && String(value).trim() !== "") {
+            return String(value).trim();
+          }
+        }
+        return "";
+      };
+
+      for (let index = 0; index < excelRows.length; index++) {
+        const row = excelRows[index];
 
         try {
-
-          const leadData = {
-
-            fullName:
-
-              row["Name"] ||
-
-              row["Full Name"] ||
-
-              row["fullName"] ||
-
-              "",
-
-            email:
-
-              row["Email"] ||
-
-              row["email"] ||
-
-              "",
-
-            phone: String(
-
-              row["Phone"] ||
-
-              row["phone"] ||
-
-              row["Mobile"] ||
-
-              ""
-
-            ),
-
-            courseInterested:
-
-              String(
-
-                row["Course"] ||
-
-                row[
-
-                "courseInterested"
-
-                ] ||
-
-                row[
-
-                "Course Interested"
-
-                ] ||
-
-                ""
-
-              ),
-
-            leadSource:
-
-              String(
-
-                row["Source"] ||
-
-                row[
-
-                "leadSource"
-
-                ] ||
-
-                row[
-
-                "Lead Source"
-
-                ] ||
-
-                ""
-
-              ),
-
-            status:
-
-              String(
-
-                row["Status"] ||
-
-                row["status"] ||
-
-                "NEW"
-
-              ),
-
-            priority:
-
-              String(
-
-                row["Priority"] ||
-
-                row["priority"] ||
-
-                "MEDIUM"
-
-              ),
-
-            city:
-
-              String(
-
-                row["City"] ||
-
-                row["city"] ||
-
-                ""
-
-              ),
-
-          };
-
-          const res =
-
-            await fetch(
-
-              `${API_BASE_URL}/api/leads`,
-
-              {
-
-                method: "POST",
-
-                headers: {
-
-                  "Content-Type":
-
-                    "application/json",
-
-                  Authorization:
-
-                    "Bearer " +
-
-                    token,
-
-                },
-
-                body: JSON.stringify(
-
-                  leadData
-
-                ),
-
-              }
-
-            );
-
-          if (res.ok) {
-
-            success++;
-
-          } else {
-
+          const fullName = getCell(row, ["Name", "Full Name", "fullName", "Student Name", "Lead Name"]);
+          const email = getCell(row, ["Email", "Mail", "E-mail", "Email Address"]);
+          const phone = getCell(row, ["Phone", "Number", "Mobile", "Mobile Number", "Phone Number", "Contact"]);
+
+          // Full Name identifies the lead. Email and phone are optional
+          // so agents can collect missing contact details later.
+          if (!fullName) {
             failed++;
-
+            failureDetails.push(`Excel row ${index + 2}: Full Name is missing. Add a name and retry this row.`);
+            continue;
           }
 
+          const ageText = getCell(row, ["Age"]);
+          const parsedAge = ageText ? Number(ageText) : null;
+
+          const leadData = {
+            fullName,
+            // Use null for missing contact details; backend/database must allow nullable values.
+            email: email || null,
+            phone: phone ? phone.replace(/\.0$/, "") : null,
+            courseInterested: getCell(row, ["Course", "courseInterested", "Course Interested", "Course Name"]),
+            leadSource: getCell(row, ["Source", "leadSource", "Lead Source"]),
+            status: (getCell(row, ["Status"]) || "NEW").toUpperCase().replace(/[\s-]+/g, "_"),
+            priority: (getCell(row, ["Priority"]) || "MEDIUM").toUpperCase(),
+            city: getCell(row, ["City", "Location"]),
+            age: ageText && Number.isFinite(parsedAge) ? parsedAge : null,
+            education: getCell(row, ["Education", "Qualification"]),
+            currentProfession: getCell(row, ["Current Profession", "Profession", "Occupation", "Job"]),
+            primaryObjective: getCell(row, ["Primary Objective", "Objective", "Goal"]),
+            tradingExperience: getCell(row, ["Trading Experience", "Experience"]),
+            customerLookingFor: getCell(row, ["Customer Looking For", "Looking For", "What Are You Looking For"]),
+            interestedArea: getCell(row, ["Interested Area", "Area of Interest", "Interest Area"]),
+          };
+
+          const res = await fetch(`${API_BASE_URL}/api/leads`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify(leadData),
+          });
+
+          if (res.ok) {
+            success++;
+          } else {
+            failed++;
+            let reason = `HTTP ${res.status}`;
+            try {
+              const responseText = await res.text();
+              if (responseText) reason += `: ${responseText.slice(0, 250)}`;
+            } catch {
+              // Keep the HTTP status if the response body cannot be read.
+            }
+            failureDetails.push(`Excel row ${index + 2} (${fullName}): ${reason}`);
+            console.error("Lead import failed:", { row: index + 2, leadData, status: res.status, reason });
+          }
         } catch (error) {
-
-          console.error(
-
-            "Error importing lead:",
-
-            error
-
-          );
-
           failed++;
-
+          const reason = error instanceof Error ? error.message : String(error);
+          failureDetails.push(`Excel row ${index + 2}: ${reason}`);
+          console.error("Error importing lead:", error);
         }
-
       }
 
       setImportMessage(
-
-        `Import complete: ${success} success, ${failed} failed.`
-
+        `Import complete: ${success} success, ${failed} failed. Missing email/phone are allowed by the import screen; only rows without Full Name are skipped. ` +
+        (failureDetails.length ? "Failure details: " + failureDetails.slice(0, 3).join(" | ") : "")
       );
 
       await loadLeads();
