@@ -214,8 +214,11 @@ export default function LeadsPage() {
 
   const isAdmin = useCallback(() => {
     try {
-      const role = getUserRole();
-      return String(role || "").toUpperCase() === "ADMIN";
+      const role = String(getUserRole() || "")
+        .trim()
+        .toUpperCase()
+        .replace(/^ROLE_/, "");
+      return role === "ADMIN";
     } catch {
       return false;
     }
@@ -683,6 +686,21 @@ export default function LeadsPage() {
     saveLeadQueue,
 
   ]);
+
+  // ============================================================
+  // KEEP EXCEL IMPORT CLOSED FOR NON-ADMIN USERS
+  // ============================================================
+
+  useEffect(() => {
+    if (!isAdmin()) {
+      setExcelOpen(false);
+      setExcelFile(null);
+      setExcelRows([]);
+      setExcelHeaders([]);
+      setPreviewOpen(false);
+      setImportMessage("");
+    }
+  }, [isAdmin]);
 
   // ============================================================
 
