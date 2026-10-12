@@ -120,6 +120,10 @@ export default function AttendancePage() {
 
     const [searchTerm, setSearchTerm] = useState("");
 
+    // Admin date-range filters use the YYYY-MM-DD format returned by the API.
+    const [dateFrom, setDateFrom] = useState("");
+    const [dateTo, setDateTo] = useState("");
+
     const [loading, setLoading] = useState(false);
 
     const [message, setMessage] = useState("");
@@ -475,31 +479,27 @@ export default function AttendancePage() {
 
         const search = searchTerm.trim().toLowerCase();
 
-        if (!search) return rows;
+        return rows.filter((row) => {
 
-        return rows.filter((row) =>
+            // API attendanceDate is YYYY-MM-DD, so string comparison is date-safe.
+            if (dateFrom && row.attendanceDate < dateFrom) return false;
+            if (dateTo && row.attendanceDate > dateTo) return false;
 
-            [
+            if (!search) return true;
 
+            return [
                 row.agentName,
-
                 row.agentId,
-
                 row.attendanceDate,
-
                 row.loginTime,
-
                 row.logoutTime,
-
             ]
-
                 .map((value) => String(value ?? "").toLowerCase())
+                .some((value) => value.includes(search));
 
-                .some((value) => value.includes(search))
+        });
 
-        );
-
-    }, [rows, searchTerm]);
+    }, [rows, searchTerm, dateFrom, dateTo]);
 
     return (
 
@@ -573,23 +573,73 @@ export default function AttendancePage() {
 
                 <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
 
-                    <input
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
 
-                        type="text"
+                        {getUserRole() === "ADMIN" && (
+                            <>
+                                <div className="flex flex-col gap-1.5">
+                                    <label htmlFor="attendance-date-from" className="text-xs font-semibold text-gray-600">
+                                        From date
+                                    </label>
+                                    <input
+                                        id="attendance-date-from"
+                                        type="date"
+                                        value={dateFrom}
+                                        max={dateTo || undefined}
+                                        onChange={(event) => setDateFrom(event.target.value)}
+                                        className="rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label htmlFor="attendance-date-to" className="text-xs font-semibold text-gray-600">
+                                        To date
+                                    </label>
+                                    <input
+                                        id="attendance-date-to"
+                                        type="date"
+                                        value={dateTo}
+                                        min={dateFrom || undefined}
+                                        onChange={(event) => setDateTo(event.target.value)}
+                                        className="rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                    />
+                                </div>
+                            </>
+                        )}
 
-                        value={searchTerm}
+                        <div className="flex-1">
+                            <label htmlFor="attendance-search" className="mb-1.5 block text-xs font-semibold text-gray-600">
+                                Search
+                            </label>
+                            <input
+                                id="attendance-search"
+                                type="text"
+                                value={searchTerm}
+                                onChange={(event) => setSearchTerm(event.target.value)}
+                                placeholder="Search agent, ID or date..."
+                                className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            />
+                        </div>
 
-                        onChange={(event) =>
+                        {getUserRole() === "ADMIN" && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setDateFrom("");
+                                    setDateTo("");
+                                    setSearchTerm("");
+                                }}
+                                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                Clear Filters
+                            </button>
+                        )}
+                    </div>
 
-                            setSearchTerm(event.target.value)
-
-                        }
-
-                        placeholder="Search agent, ID or date..."
-
-                        className="w-full max-w-md rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-
-                    />
+                    {getUserRole() === "ADMIN" && (
+                        <p className="mt-3 text-xs text-gray-500">
+                            Showing {filteredRows.length} of {rows.length} attendance records. Choose either date or both dates to filter a range.
+                        </p>
+                    )}
 
                 </div>
 
@@ -751,7 +801,7 @@ export default function AttendancePage() {
                                                             Delete
                                                         </button>
                                                     </div>
-                                                )}
+                                                )}}
 
                                             </td>
 
