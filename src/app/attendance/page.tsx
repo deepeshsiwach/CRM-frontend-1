@@ -712,31 +712,10 @@ export default function AttendancePage() {
                                             <td className="whitespace-nowrap px-4 py-4 font-semibold text-blue-700">
 
                                                 {formatDuration(
-
-                                                    row.logoutTime && row.loginTime
-
-                                                        ? Math.max(
-
-                                                            0,
-
-                                                            Math.floor(
-
-                                                                (new Date(row.logoutTime).getTime() -
-
-                                                                    new Date(row.loginTime).getTime()) /
-
-                                                                1000
-
-                                                            ) -
-
-                                                            (Number(row.normalBreakSeconds) || 0) -
-
-                                                            (Number(row.exceptionBreakSeconds) || 0)
-
-                                                        )
-
-                                                        : Number(row.workingSeconds) || 0
-
+                                                    Math.max(
+                                                        0,
+                                                        Number(row.workingSeconds) || 0
+                                                    )
                                                 )}
 
                                             </td>
