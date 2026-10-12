@@ -121,6 +121,34 @@ function LeadDetailsContent() {
 
   const token = getToken();
 
+  // Record today's lead view for the logged-in agent.
+  const recordLeadView = useCallback(async () => {
+    if (!leadId || !token) return;
+
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/lead-views/${leadId}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        console.error(
+          "Failed to record lead view:",
+          res.status,
+          await res.text()
+        );
+      }
+    } catch (error) {
+      console.error("Error recording lead view:", error);
+    }
+  }, [leadId, token]);
+
+
   const loadLead = useCallback(async () => {
     if (!leadId || !token) return;
     try {
@@ -202,16 +230,28 @@ function LeadDetailsContent() {
     }
   }, [leadId, token]);
 
+
   useEffect(() => {
     if (!token) {
       router.replace("/");
       return;
     }
+
     loadLead();
+    recordLeadView();
     loadCallLogs();
     loadFollowUps();
     loadNotes();
-  }, [token, router, loadLead, loadCallLogs, loadFollowUps, loadNotes]);
+  }, [
+    token,
+    router,
+    loadLead,
+    recordLeadView,
+    loadCallLogs,
+    loadFollowUps,
+    loadNotes,
+  ]);
+
 
   const handleSaveDetails = async () => {
     if (!leadId || !token) return;
