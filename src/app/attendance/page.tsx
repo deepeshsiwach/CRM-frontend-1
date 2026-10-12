@@ -801,7 +801,7 @@ export default function AttendancePage() {
                                                             Delete
                                                         </button>
                                                     </div>
-                                                )}}
+                                                )}
 
                                             </td>
 
