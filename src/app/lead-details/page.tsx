@@ -496,6 +496,10 @@ function LeadDetailsContent() {
                     className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                   >
                     <option value="NEW">NEW</option>
+
+                    <option value="CONNECTED">CONNECTED</option>
+                    <option value="NOT_CONNECTED">NOT_CONNECTED</option>
+
                     <option value="CONTACTED">CONTACTED</option>
                     <option value="INTERESTED">INTERESTED</option>
                     <option value="FOLLOW_UP">FOLLOW_UP</option>
@@ -709,9 +713,8 @@ function LeadDetailsContent() {
                       </div>
                       <div className="flex justify-between">
                         <span className="font-semibold text-gray-600">Status:</span>
-                        <span className={`font-semibold px-2 py-0.5 rounded-full ${
-                          fu.status === "COMPLETED" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-                        }`}>
+                        <span className={`font-semibold px-2 py-0.5 rounded-full ${fu.status === "COMPLETED" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                          }`}>
                           {fu.status ?? "-"}
                         </span>
                       </div>
@@ -831,9 +834,8 @@ function LeadDetailsContent() {
 
               {transferMessage && (
                 <div
-                  className={`text-xs font-semibold ${
-                    transferMessage.isError ? "text-red-600" : "text-green-600"
-                  }`}
+                  className={`text-xs font-semibold ${transferMessage.isError ? "text-red-600" : "text-green-600"
+                    }`}
                 >
                   {transferMessage.text}
                 </div>
