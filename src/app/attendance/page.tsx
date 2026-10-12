@@ -1,7 +1,5 @@
 "use client";
 
-
-
 import { useEffect, useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
@@ -11,8 +9,6 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { API_BASE_URL } from "@/lib/config";
 
 import { getToken, getUserRole } from "@/lib/auth";
-
-
 
 interface AttendanceRow {
 
@@ -36,8 +32,6 @@ interface AttendanceRow {
 
 }
 
-
-
 interface BreakRow {
 
     id: number;
@@ -54,8 +48,6 @@ interface BreakRow {
 
 }
 
-
-
 interface AttendanceDetails extends AttendanceRow {
 
     grossWorkingSeconds: number;
@@ -63,8 +55,6 @@ interface AttendanceDetails extends AttendanceRow {
     breaks: BreakRow[];
 
 }
-
-
 
 function formatDuration(totalSeconds: number): string {
 
@@ -75,8 +65,6 @@ function formatDuration(totalSeconds: number): string {
     const minutes = Math.floor((safe % 3600) / 60);
 
     const seconds = safe % 60;
-
-
 
     return [
 
@@ -90,21 +78,13 @@ function formatDuration(totalSeconds: number): string {
 
 }
 
-
-
 function formatTime(value: string | null): string {
 
     if (!value) return "Still Logged In";
 
-
-
     const match = value.match(/T(\d{2}):(\d{2})(?::(\d{2}))?/);
 
-
-
     if (!match) return value;
-
-
 
     const hour = Number(match[1]);
 
@@ -112,45 +92,29 @@ function formatTime(value: string | null): string {
 
     const second = match[3] ?? "00";
 
-
-
     const suffix = hour >= 12 ? "PM" : "AM";
 
     const displayHour = hour % 12 || 12;
-
-
 
     return `${displayHour}:${minute}:${second} ${suffix}`;
 
 }
 
-
-
 function formatDate(value: string): string {
 
     if (!value) return "-";
 
-
-
     const [year, month, day] = value.split("-");
 
-
-
     if (!year || !month || !day) return value;
-
-
 
     return `${day}-${month}-${year}`;
 
 }
 
-
-
 export default function AttendancePage() {
 
     const router = useRouter();
-
-
 
     const [rows, setRows] = useState<AttendanceRow[]>([]);
 
@@ -166,13 +130,9 @@ export default function AttendancePage() {
 
     const [detailsLoading, setDetailsLoading] = useState(false);
 
-
-
     useEffect(() => {
 
         const token = getToken();
-
-
 
         if (!token) {
 
@@ -182,24 +142,27 @@ export default function AttendancePage() {
 
         }
 
-
-
         const role = getUserRole();
 
         if (role !== "ADMIN" && role !== "AGENT") {
+
             router.replace("/dashboard");
+
             return;
+
         }
 
         if (role === "ADMIN") {
+
             loadAttendance();
+
         } else {
+
             loadMyAttendance();
+
         }
 
     }, [router]);
-
-
 
     async function loadAttendance() {
 
@@ -209,11 +172,7 @@ export default function AttendancePage() {
 
             setMessage("");
 
-
-
             const token = getToken();
-
-
 
             const response = await fetch(
 
@@ -233,11 +192,7 @@ export default function AttendancePage() {
 
             );
 
-
-
             const data = await response.json().catch(() => null);
-
-
 
             if (!response.ok) {
 
@@ -249,15 +204,11 @@ export default function AttendancePage() {
 
             }
 
-
-
             setRows(Array.isArray(data) ? data : []);
 
         } catch (error) {
 
             console.error("Attendance load error:", error);
-
-
 
             setMessage(
 
@@ -277,78 +228,127 @@ export default function AttendancePage() {
 
     }
 
-
-
     async function loadMyAttendance() {
+
         try {
+
             setLoading(true);
+
             setMessage("");
 
             const token = getToken();
+
             const userId = localStorage.getItem("userId");
 
             if (!token || !userId) {
+
                 router.replace("/");
+
                 return;
+
             }
 
             const agentId = Number(userId);
+
             if (!Number.isFinite(agentId) || agentId <= 0) {
+
                 setMessage("Invalid agent session. Please log in again.");
+
                 return;
+
             }
 
             const headers = { Authorization: `Bearer ${token}` };
+
             const [attendanceResponse, breakResponse] = await Promise.all([
+
                 fetch(`${API_BASE_URL}/api/attendance/today?agentId=${agentId}`, {
+
                     method: "GET",
+
                     headers,
+
                 }),
+
                 fetch(`${API_BASE_URL}/api/attendance/break/summary?agentId=${agentId}`, {
+
                     method: "GET",
+
                     headers,
+
                 }),
+
             ]);
 
             const data = await attendanceResponse.json().catch(() => null);
+
             const breakSummary = await breakResponse.json().catch(() => null);
 
             if (!attendanceResponse.ok) {
+
                 throw new Error(data?.message || data?.error || "Unable to load your attendance.");
+
             }
+
             if (!breakResponse.ok) {
+
                 throw new Error(breakSummary?.message || breakSummary?.error || "Unable to load your break summary.");
+
             }
 
             if (data) {
+
                 const normalBreakSeconds = Math.max(0, Number(breakSummary?.normalUsedSeconds) || 0);
+
                 const exceptionBreakSeconds = Math.max(0, Number(breakSummary?.exceptionUsedSeconds) || 0);
+
                 const loginMilliseconds = data.loginTime ? new Date(data.loginTime).getTime() : Date.now();
+
                 const endMilliseconds = data.logoutTime ? new Date(data.logoutTime).getTime() : Date.now();
+
                 const grossWorkingSeconds = Math.max(0, Math.floor((endMilliseconds - loginMilliseconds) / 1000));
 
                 setRows([{
-                    id: Number(data.id) || 0,
-                    agentId: Number(data.agentId) || agentId,
-                    agentName: "My Attendance",
-                    attendanceDate: data.attendanceDate || "",
-                    loginTime: data.loginTime || "",
-                    logoutTime: data.logoutTime ?? null,
-                    workingSeconds: Math.max(0, grossWorkingSeconds - normalBreakSeconds - exceptionBreakSeconds),
-                    normalBreakSeconds,
-                    exceptionBreakSeconds,
-                }]);
-            } else {
-                setRows([]);
-            }
-        } catch (error) {
-            console.error("My attendance load error:", error);
-            setMessage(error instanceof Error ? error.message : "Unable to load your attendance.");
-        } finally {
-            setLoading(false);
-        }
-    }
 
+                    id: Number(data.id) || 0,
+
+                    agentId: Number(data.agentId) || agentId,
+
+                    agentName: "My Attendance",
+
+                    attendanceDate: data.attendanceDate || "",
+
+                    loginTime: data.loginTime || "",
+
+                    logoutTime: data.logoutTime ?? null,
+
+                    workingSeconds: Math.max(0, grossWorkingSeconds - normalBreakSeconds - exceptionBreakSeconds),
+
+                    normalBreakSeconds,
+
+                    exceptionBreakSeconds,
+
+                }]);
+
+            } else {
+
+                setRows([]);
+
+            }
+
+        } catch (error) {
+
+            console.error("My attendance load error:", error);
+
+            setMessage(error instanceof Error ? error.message : "Unable to load your attendance.");
+
+        } finally {
+
+            setLoading(false);
+
+        }
+
+    }
 
     async function openDetails(id: number) {
 
@@ -358,11 +358,7 @@ export default function AttendancePage() {
 
             setMessage("");
 
-
-
             const token = getToken();
-
-
 
             const response = await fetch(
 
@@ -382,11 +378,7 @@ export default function AttendancePage() {
 
             );
 
-
-
             const data = await response.json().catch(() => null);
-
-
 
             if (!response.ok) {
 
@@ -398,15 +390,11 @@ export default function AttendancePage() {
 
             }
 
-
-
             setSelected(data);
 
         } catch (error) {
 
             console.error("Attendance details error:", error);
-
-
 
             setMessage(
 
@@ -426,17 +414,68 @@ export default function AttendancePage() {
 
     }
 
+    async function deleteAttendance(id: number) {
+        if (getUserRole() !== "ADMIN") {
+            setMessage("Only administrators can delete attendance records.");
+            return;
+        }
 
+        const confirmed = window.confirm(
+            `Delete attendance record ID ${id}? This action cannot be undone.`
+        );
+
+        if (!confirmed) return;
+
+        try {
+            setMessage("");
+
+            const token = getToken();
+            if (!token) {
+                router.replace("/");
+                return;
+            }
+
+            const response = await fetch(
+                `${API_BASE_URL}/api/admin/attendance/${id}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                throw new Error(
+                    data?.message ||
+                    data?.error ||
+                    `Unable to delete attendance record (HTTP ${response.status}).`
+                );
+            }
+
+            if (selected?.id === id) {
+                setSelected(null);
+            }
+
+            setMessage("Attendance record deleted successfully.");
+            await loadAttendance();
+        } catch (error) {
+            console.error("Attendance deletion error:", error);
+            setMessage(
+                error instanceof Error
+                    ? error.message
+                    : "Unable to delete attendance record."
+            );
+        }
+    }
 
     const filteredRows = useMemo(() => {
 
         const search = searchTerm.trim().toLowerCase();
 
-
-
         if (!search) return rows;
-
-
 
         return rows.filter((row) =>
 
@@ -462,8 +501,6 @@ export default function AttendancePage() {
 
     }, [rows, searchTerm]);
 
-
-
     return (
 
         <DashboardLayout activeMenu="attendance">
@@ -488,8 +525,6 @@ export default function AttendancePage() {
 
                     </div>
 
-
-
                     <div className="flex gap-3">
 
                         <button
@@ -505,8 +540,6 @@ export default function AttendancePage() {
                             ← Dashboard
 
                         </button>
-
-
 
                         <button
 
@@ -528,8 +561,6 @@ export default function AttendancePage() {
 
                 </div>
 
-
-
                 {message && (
 
                     <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
@@ -539,8 +570,6 @@ export default function AttendancePage() {
                     </div>
 
                 )}
-
-
 
                 <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
 
@@ -563,8 +592,6 @@ export default function AttendancePage() {
                     />
 
                 </div>
-
-
 
                 <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
 
@@ -595,8 +622,6 @@ export default function AttendancePage() {
                                 </tr>
 
                             </thead>
-
-
 
                             <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
 
@@ -650,23 +675,17 @@ export default function AttendancePage() {
 
                                             </td>
 
-
-
                                             <td className="whitespace-nowrap px-4 py-4">
 
                                                 {formatDate(row.attendanceDate)}
 
                                             </td>
 
-
-
                                             <td className="whitespace-nowrap px-4 py-4">
 
                                                 {formatTime(row.loginTime)}
 
                                             </td>
-
-
 
                                             <td className="whitespace-nowrap px-4 py-4">
 
@@ -690,11 +709,7 @@ export default function AttendancePage() {
 
                                             </td>
 
-
-
                                             <td className="whitespace-nowrap px-4 py-4 font-semibold text-blue-700">
-
-
 
                                                 {formatDuration(
 
@@ -724,17 +739,7 @@ export default function AttendancePage() {
 
                                                 )}
 
-
-
-
-
-
-
-
-
                                             </td>
-
-
 
                                             <td className="whitespace-nowrap px-4 py-4 font-semibold text-orange-600">
 
@@ -742,29 +747,32 @@ export default function AttendancePage() {
 
                                             </td>
 
-
-
                                             <td className="whitespace-nowrap px-4 py-4 font-semibold text-blue-600">
 
                                                 {formatDuration(row.exceptionBreakSeconds)}
 
                                             </td>
 
-
-
                                             <td className="px-4 py-4 text-center">
 
-
                                                 {getUserRole() === "ADMIN" && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openDetails(row.id)}
-                                                        className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50"
-                                                    >
-                                                        View
-                                                    </button>
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openDetails(row.id)}
+                                                            className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50"
+                                                        >
+                                                            View
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => deleteAttendance(row.id)}
+                                                            className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
                                                 )}
-
 
                                             </td>
 
@@ -781,8 +789,6 @@ export default function AttendancePage() {
                     </div>
 
                 </div>
-
-
 
                 {selected && (
 
@@ -810,8 +816,6 @@ export default function AttendancePage() {
 
                                 </div>
 
-
-
                                 <button
 
                                     type="button"
@@ -827,8 +831,6 @@ export default function AttendancePage() {
                                 </button>
 
                             </div>
-
-
 
                             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
@@ -848,8 +850,6 @@ export default function AttendancePage() {
 
                                 </div>
 
-
-
                                 <div className="rounded-xl bg-gray-50 p-4">
 
                                     <div className="text-xs font-semibold uppercase text-gray-500">
@@ -866,8 +866,6 @@ export default function AttendancePage() {
 
                                 </div>
 
-
-
                                 <div className="rounded-xl bg-blue-50 p-4">
 
                                     <div className="text-xs font-semibold uppercase text-blue-600">
@@ -883,8 +881,6 @@ export default function AttendancePage() {
                                     </div>
 
                                 </div>
-
-
 
                                 <div className="rounded-xl bg-gray-50 p-4">
 
@@ -903,8 +899,6 @@ export default function AttendancePage() {
                                 </div>
 
                             </div>
-
-
 
                             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
 
@@ -934,8 +928,6 @@ export default function AttendancePage() {
 
                                 </div>
 
-
-
                                 <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
 
                                     <div className="text-sm font-bold text-blue-700">
@@ -964,8 +956,6 @@ export default function AttendancePage() {
 
                             </div>
 
-
-
                             <div className="mt-6">
 
                                 <h3 className="text-base font-bold text-gray-900">
@@ -973,8 +963,6 @@ export default function AttendancePage() {
                                     Break History
 
                                 </h3>
-
-
 
                                 <div className="mt-3 overflow-hidden rounded-xl border border-gray-200">
 
@@ -999,8 +987,6 @@ export default function AttendancePage() {
                                                 </tr>
 
                                             </thead>
-
-
 
                                             <tbody className="divide-y divide-gray-100">
 
@@ -1054,23 +1040,17 @@ export default function AttendancePage() {
 
                                                             </td>
 
-
-
                                                             <td className="whitespace-nowrap px-4 py-3">
 
                                                                 {formatTime(item.startTime)}
 
                                                             </td>
 
-
-
                                                             <td className="whitespace-nowrap px-4 py-3">
 
                                                                 {formatTime(item.endTime)}
 
                                                             </td>
-
-
 
                                                             <td className="whitespace-nowrap px-4 py-3 font-semibold">
 
@@ -1081,8 +1061,6 @@ export default function AttendancePage() {
                                                                 )}
 
                                                             </td>
-
-
 
                                                             <td className="px-4 py-3 text-gray-600">
 
@@ -1105,8 +1083,6 @@ export default function AttendancePage() {
                                 </div>
 
                             </div>
-
-
 
                             <div className="mt-6 flex justify-end">
 
@@ -1131,8 +1107,6 @@ export default function AttendancePage() {
                     </div>
 
                 )}
-
-
 
                 {detailsLoading && (
 
