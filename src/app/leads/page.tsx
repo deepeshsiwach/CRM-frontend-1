@@ -174,6 +174,8 @@ export default function LeadsPage() {
 
   const [importMessage, setImportMessage] = useState("");
 
+  const [failedImportRows, setFailedImportRows] = useState<Record<string, unknown>[]>([]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const token = getToken();
@@ -1302,6 +1304,8 @@ export default function LeadsPage() {
 
     setImportMessage("");
 
+    setFailedImportRows([]);
+
   };
 
   // ============================================================
@@ -1571,7 +1575,8 @@ export default function LeadsPage() {
 
       let failed = 0;
 
-      const failureDetails: string[] = [];
+      const failedRows: Record<string, unknown>[] = [];
+      setFailedImportRows([]);
 
       // Match Excel headings without caring about uppercase/lowercase,
       // spaces, underscores, or common alternate names such as MAIL/NUMBER.
@@ -1602,7 +1607,8 @@ export default function LeadsPage() {
           // so agents can collect missing contact details later.
           if (!fullName) {
             failed++;
-            failureDetails.push(`Excel row ${index + 2}: Full Name is missing. Add a name and retry this row.`);
+            const reason = "Full Name is missing. Add a name and retry this row.";
+            failedRows.push({ ...row, "Excel Row": index + 2, "Failure Reason": reason });
             continue;
           }
 
@@ -1648,25 +1654,52 @@ export default function LeadsPage() {
             } catch {
               // Keep the HTTP status if the response body cannot be read.
             }
-            failureDetails.push(`Excel row ${index + 2} (${fullName}): ${reason}`);
+            failedRows.push({ ...row, "Excel Row": index + 2, "Failure Reason": reason });
             console.error("Lead import failed:", { row: index + 2, leadData, status: res.status, reason });
           }
         } catch (error) {
           failed++;
           const reason = error instanceof Error ? error.message : String(error);
-          failureDetails.push(`Excel row ${index + 2}: ${reason}`);
+          failedRows.push({ ...row, "Excel Row": index + 2, "Failure Reason": reason });
           console.error("Error importing lead:", error);
         }
       }
 
+      setFailedImportRows(failedRows);
       setImportMessage(
-        `Import complete: ${success} success, ${failed} failed. Missing email/phone are allowed by the import screen; only rows without Full Name are skipped. ` +
-        (failureDetails.length ? "Failure details: " + failureDetails.slice(0, 3).join(" | ") : "")
+        `Import complete: ${success} successful, ${failed} failed. ` +
+        (failedRows.length ? "Download the failed rows report, correct the Failure Reason, then upload that file again. Successful rows are not included in the report." : "All rows imported successfully.")
       );
 
       await loadLeads();
 
     };
+
+  // Download only failed rows, preserving original columns and adding the reason.
+  const downloadFailedImportRows = () => {
+    if (!isAdmin() || failedImportRows.length === 0) return;
+
+    const win = window as unknown as Record<string, unknown>;
+    if (!win.XLSX) {
+      setImportMessage("Excel library is not ready. Please wait a moment and try again.");
+      return;
+    }
+
+    const XLSX = win.XLSX as {
+      utils: {
+        book_new: () => unknown;
+        json_to_sheet: (data: Record<string, unknown>[]) => unknown;
+        book_append_sheet: (workbook: unknown, sheet: unknown, name: string) => void;
+      };
+      writeFile: (workbook: unknown, filename: string) => void;
+    };
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(failedImportRows);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Failed Leads");
+    const today = new Date().toISOString().split("T")[0];
+    XLSX.writeFile(workbook, `DERIVION_Failed_Lead_Import_${today}.xlsx`);
+  };
 
   // ============================================================
 
@@ -2336,9 +2369,15 @@ export default function LeadsPage() {
 
                 <p className="text-sm text-gray-500 mt-0.5">
 
-                  Upload an Excel file to import multiple leads into the CRM.
+                  Upload an Excel file to import multiple leads into the CRM. Missing email, phone, and other optional fields will be left blank.
 
                 </p>
+                <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+                  <p className="font-bold mb-1">Supported Excel columns</p>
+                  <p><b>Required:</b> Name / Full Name / Student Name / Lead Name.</p>
+                  <p><b>Optional:</b> Email / Mail / Email Address; Phone / Number / Mobile / Mobile Number; Age; Course / Course Interested; Lead Source / Source; Status; Priority; City / Location; Education / Qualification; Current Profession / Profession / Occupation; Primary Objective / Objective / Goal; Trading Experience / Experience; Customer Looking For / Looking For; Interested Area / Area of Interest.</p>
+                  <p className="mt-1">Column headings are matched without case or spacing differences. Keep one lead per row. Missing email or phone is allowed. If a row fails, download the failed-rows report, correct the row using its Failure Reason, and upload it again.</p>
+                </div>
 
               </div>
 
@@ -2624,6 +2663,19 @@ export default function LeadsPage() {
 
                   </div>
 
+                )}
+
+                {failedImportRows.length > 0 && (
+                  <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                    <p className="text-sm font-semibold text-amber-900 mb-2">{failedImportRows.length} row(s) failed. Download the report to see the exact reason for each failure.</p>
+                    <button
+                      type="button"
+                      onClick={downloadFailedImportRows}
+                      className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-lg"
+                    >
+                      Download Failed Rows (.xlsx)
+                    </button>
+                  </div>
                 )}
 
                 <button
