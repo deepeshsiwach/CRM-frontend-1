@@ -317,11 +317,15 @@ function LeadDetailsContent() {
       });
       if (res.ok) {
         const users: User[] = await res.json();
+        const currentUserId = localStorage.getItem("userId");
+
         const activeAgents = users.filter(
           (u) =>
             String(u.role).toUpperCase() === "AGENT" &&
-            (!u.status || String(u.status).toUpperCase() === "ACTIVE")
+            (!u.status || String(u.status).toUpperCase() === "ACTIVE") &&
+            String(u.id) !== String(currentUserId)
         );
+
         setAgents(activeAgents);
       }
     } catch (err) {
@@ -330,6 +334,18 @@ function LeadDetailsContent() {
   };
 
   const confirmTransfer = async () => {
+    const currentUserId = localStorage.getItem("userId");
+
+    if (
+      currentUserId &&
+      String(selectedAgentId) === String(currentUserId)
+    ) {
+      setTransferMessage({
+        text: "You cannot transfer a lead to yourself. Please select another agent.",
+        isError: true,
+      });
+      return;
+    }
     if (!selectedTeamId) {
       setTransferMessage({ text: "Please select the team.", isError: true });
       return;
