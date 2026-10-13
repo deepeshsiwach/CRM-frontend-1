@@ -4781,26 +4781,6 @@ export default function DashboardPage() {
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={() => router.push("/add-lead")}
-            className="
-            bg-blue-600
-            hover:bg-blue-700
-            text-white
-            text-sm
-            font-semibold
-            px-5
-            py-2.5
-            rounded-lg
-            transition-colors
-            duration-200
-            shadow-sm
-          "
-          >
-            + Add Lead
-          </button>
-
         </div>
 
 
