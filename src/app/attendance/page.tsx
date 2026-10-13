@@ -29,6 +29,9 @@ interface AttendanceRow {
     normalBreakSeconds: number;
 
     exceptionBreakSeconds: number;
+    onBreak?: boolean;
+    activeBreakType?: "NORMAL" | "EXCEPTION" | null;
+    activeBreakStartTime?: string | null;
 
 }
 
@@ -117,12 +120,15 @@ export default function AttendancePage() {
     const router = useRouter();
 
     const [rows, setRows] = useState<AttendanceRow[]>([]);
+
     const [userRole, setUserRole] = useState<string | null>(null);
 
     const [searchTerm, setSearchTerm] = useState("");
 
     // Admin date-range filters use the YYYY-MM-DD format returned by the API.
+
     const [dateFrom, setDateFrom] = useState("");
+
     const [dateTo, setDateTo] = useState("");
 
     const [loading, setLoading] = useState(false);
@@ -148,6 +154,7 @@ export default function AttendancePage() {
         }
 
         const role = getUserRole();
+
         setUserRole(role);
 
         if (role !== "ADMIN" && role !== "AGENT") {
@@ -169,6 +176,17 @@ export default function AttendancePage() {
         }
 
     }, [router]);
+
+    // Keep Admin live-break status updated automatically every 15 seconds.
+    useEffect(() => {
+        if (userRole !== "ADMIN") return;
+
+        const intervalId = window.setInterval(() => {
+            void loadAttendance();
+        }, 15000);
+
+        return () => window.clearInterval(intervalId);
+    }, [userRole]);
 
     async function loadAttendance() {
 
@@ -309,16 +327,23 @@ export default function AttendancePage() {
                 const exceptionBreakSeconds = Math.max(0, Number(breakSummary?.exceptionUsedSeconds) || 0);
 
                 const loginMilliseconds = data.loginTime
+
                     ? new Date(data.loginTime).getTime()
+
                     : 0;
 
                 const endMilliseconds = data.logoutTime
+
                     ? new Date(data.logoutTime).getTime()
+
                     : loginMilliseconds;
 
                 const grossWorkingSeconds = Math.max(
+
                     0,
+
                     Math.floor((endMilliseconds - loginMilliseconds) / 1000)
+
                 );
 
                 setRows([{
@@ -428,60 +453,97 @@ export default function AttendancePage() {
     }
 
     async function deleteAttendance(id: number) {
+
         if (getUserRole() !== "ADMIN") {
+
             setMessage("Only administrators can delete attendance records.");
+
             return;
+
         }
 
         const confirmed = window.confirm(
+
             `Delete attendance record ID ${id}? This action cannot be undone.`
+
         );
 
         if (!confirmed) return;
 
         try {
+
             setMessage("");
 
             const token = getToken();
+
             if (!token) {
+
                 router.replace("/");
+
                 return;
+
             }
 
             const response = await fetch(
+
                 `${API_BASE_URL}/api/admin/attendance/${id}`,
+
                 {
+
                     method: "DELETE",
+
                     headers: {
+
                         Authorization: `Bearer ${token}`,
+
                     },
+
                 }
+
             );
 
             const data = await response.json().catch(() => null);
 
             if (!response.ok) {
+
                 throw new Error(
+
                     data?.message ||
+
                     data?.error ||
+
                     `Unable to delete attendance record (HTTP ${response.status}).`
+
                 );
+
             }
 
             if (selected?.id === id) {
+
                 setSelected(null);
+
             }
 
             setMessage("Attendance record deleted successfully.");
+
             await loadAttendance();
+
         } catch (error) {
+
             console.error("Attendance deletion error:", error);
+
             setMessage(
+
                 error instanceof Error
+
                     ? error.message
+
                     : "Unable to delete attendance record."
+
             );
+
         }
+
     }
 
     const filteredRows = useMemo(() => {
@@ -491,19 +553,29 @@ export default function AttendancePage() {
         return rows.filter((row) => {
 
             // API attendanceDate is YYYY-MM-DD, so string comparison is date-safe.
+
             if (dateFrom && row.attendanceDate < dateFrom) return false;
+
             if (dateTo && row.attendanceDate > dateTo) return false;
 
             if (!search) return true;
 
             return [
+
                 row.agentName,
+
                 row.agentId,
+
                 row.attendanceDate,
+
                 row.loginTime,
+
                 row.logoutTime,
+
             ]
+
                 .map((value) => String(value ?? "").toLowerCase())
+
                 .some((value) => value.includes(search));
 
         });
@@ -551,13 +623,21 @@ export default function AttendancePage() {
                         </button>
 
                         <button
+
                             type="button"
+
                             onClick={() => {
+
                                 if (userRole === "ADMIN") {
+
                                     loadAttendance();
+
                                 } else {
+
                                     loadMyAttendance();
+
                                 }
+
                             }}
 
                             disabled={loading}
@@ -589,69 +669,127 @@ export default function AttendancePage() {
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
 
                         {userRole === "ADMIN" && (
+
                             <>
+
                                 <div className="flex flex-col gap-1.5">
+
                                     <label htmlFor="attendance-date-from" className="text-xs font-semibold text-gray-600">
+
                                         From date
+
                                     </label>
+
                                     <input
+
                                         id="attendance-date-from"
+
                                         type="date"
+
                                         value={dateFrom}
+
                                         max={dateTo || undefined}
+
                                         onChange={(event) => setDateFrom(event.target.value)}
+
                                         className="rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+
                                     />
+
                                 </div>
+
                                 <div className="flex flex-col gap-1.5">
+
                                     <label htmlFor="attendance-date-to" className="text-xs font-semibold text-gray-600">
+
                                         To date
+
                                     </label>
+
                                     <input
+
                                         id="attendance-date-to"
+
                                         type="date"
+
                                         value={dateTo}
+
                                         min={dateFrom || undefined}
+
                                         onChange={(event) => setDateTo(event.target.value)}
+
                                         className="rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+
                                     />
+
                                 </div>
+
                             </>
+
                         )}
 
                         <div className="flex-1">
+
                             <label htmlFor="attendance-search" className="mb-1.5 block text-xs font-semibold text-gray-600">
+
                                 Search
+
                             </label>
+
                             <input
+
                                 id="attendance-search"
+
                                 type="text"
+
                                 value={searchTerm}
+
                                 onChange={(event) => setSearchTerm(event.target.value)}
+
                                 placeholder="Search agent, ID or date..."
+
                                 className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+
                             />
+
                         </div>
 
                         {userRole === "ADMIN" && (
+
                             <button
+
                                 type="button"
+
                                 onClick={() => {
+
                                     setDateFrom("");
+
                                     setDateTo("");
+
                                     setSearchTerm("");
+
                                 }}
+
                                 className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+
                             >
+
                                 Clear Filters
+
                             </button>
+
                         )}
+
                     </div>
 
                     {userRole === "ADMIN" && (
+
                         <p className="mt-3 text-xs text-gray-500">
+
                             Showing {filteredRows.length} of {rows.length} attendance records. Choose either date or both dates to filter a range.
+
                         </p>
+
                     )}
 
                 </div>
@@ -679,7 +817,9 @@ export default function AttendancePage() {
                                     <th className="px-4 py-3">Normal Break</th>
 
                                     <th className="px-4 py-3">Exception / Meeting</th>
-
+                                    {userRole === "ADMIN" && (
+                                        <th className="px-4 py-3">Live Break Status</th>
+                                    )}
                                     <th className="px-4 py-3 text-center">Action</th>
 
                                 </tr>
@@ -694,7 +834,7 @@ export default function AttendancePage() {
 
                                         <td
 
-                                            colSpan={8}
+                                            colSpan={userRole === "ADMIN" ? 9 : 8}
 
                                             className="px-4 py-10 text-center text-gray-400"
 
@@ -775,10 +915,15 @@ export default function AttendancePage() {
                                             <td className="whitespace-nowrap px-4 py-4 font-semibold text-blue-700">
 
                                                 {formatDuration(
+
                                                     Math.max(
+
                                                         0,
+
                                                         Number(row.workingSeconds) || 0
+
                                                     )
+
                                                 )}
 
                                             </td>
@@ -795,25 +940,69 @@ export default function AttendancePage() {
 
                                             </td>
 
+                                            {userRole === "ADMIN" && (
+                                                <td className="whitespace-nowrap px-4 py-4">
+                                                    {row.onBreak ? (
+                                                        <div className="flex flex-col items-start gap-1">
+                                                            <span className="rounded-full bg-orange-100 px-2.5 py-1 text-xs font-bold text-orange-700">
+                                                                On Break
+                                                            </span>
+                                                            <span className="text-xs text-gray-600">
+                                                                {row.activeBreakType === "EXCEPTION"
+                                                                    ? "Exception / Meeting"
+                                                                    : row.activeBreakType === "NORMAL"
+                                                                        ? "Normal Break"
+                                                                        : "Active Break"}
+                                                            </span>
+                                                            {row.activeBreakStartTime && (
+                                                                <span className="text-xs text-gray-500">
+                                                                    Since {formatTime(row.activeBreakStartTime)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
+                                                            Working
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            )}
                                             <td className="px-4 py-4 text-center">
 
                                                 {userRole === "ADMIN" && (
+
                                                     <div className="flex items-center justify-center gap-2">
+
                                                         <button
+
                                                             type="button"
+
                                                             onClick={() => openDetails(row.id)}
+
                                                             className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50"
+
                                                         >
+
                                                             View
+
                                                         </button>
+
                                                         <button
+
                                                             type="button"
+
                                                             onClick={() => deleteAttendance(row.id)}
+
                                                             className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+
                                                         >
+
                                                             Delete
+
                                                         </button>
+
                                                     </div>
+
                                                 )}
 
                                             </td>
