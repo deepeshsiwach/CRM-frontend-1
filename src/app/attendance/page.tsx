@@ -148,6 +148,7 @@ export default function AttendancePage() {
         }
 
         const role = getUserRole();
+        setUserRole(role);
 
         if (role !== "ADMIN" && role !== "AGENT") {
 
@@ -552,7 +553,7 @@ export default function AttendancePage() {
                         <button
                             type="button"
                             onClick={() => {
-                                if (getUserRole() === "ADMIN") {
+                                if (userRole === "ADMIN") {
                                     loadAttendance();
                                 } else {
                                     loadMyAttendance();
@@ -587,7 +588,7 @@ export default function AttendancePage() {
 
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
 
-                        {getUserRole() === "ADMIN" && (
+                        {userRole === "ADMIN" && (
                             <>
                                 <div className="flex flex-col gap-1.5">
                                     <label htmlFor="attendance-date-from" className="text-xs font-semibold text-gray-600">
@@ -632,7 +633,7 @@ export default function AttendancePage() {
                             />
                         </div>
 
-                        {getUserRole() === "ADMIN" && (
+                        {userRole === "ADMIN" && (
                             <button
                                 type="button"
                                 onClick={() => {
@@ -647,7 +648,7 @@ export default function AttendancePage() {
                         )}
                     </div>
 
-                    {getUserRole() === "ADMIN" && (
+                    {userRole === "ADMIN" && (
                         <p className="mt-3 text-xs text-gray-500">
                             Showing {filteredRows.length} of {rows.length} attendance records. Choose either date or both dates to filter a range.
                         </p>
@@ -796,7 +797,7 @@ export default function AttendancePage() {
 
                                             <td className="px-4 py-4 text-center">
 
-                                                {getUserRole() === "ADMIN" && (
+                                                {userRole === "ADMIN" && (
                                                     <div className="flex items-center justify-center gap-2">
                                                         <button
                                                             type="button"
