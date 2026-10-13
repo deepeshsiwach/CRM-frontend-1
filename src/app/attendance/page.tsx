@@ -117,6 +117,7 @@ export default function AttendancePage() {
     const router = useRouter();
 
     const [rows, setRows] = useState<AttendanceRow[]>([]);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const [searchTerm, setSearchTerm] = useState("");
 
@@ -306,11 +307,18 @@ export default function AttendancePage() {
 
                 const exceptionBreakSeconds = Math.max(0, Number(breakSummary?.exceptionUsedSeconds) || 0);
 
-                const loginMilliseconds = data.loginTime ? new Date(data.loginTime).getTime() : Date.now();
+                const loginMilliseconds = data.loginTime
+                    ? new Date(data.loginTime).getTime()
+                    : 0;
 
-                const endMilliseconds = data.logoutTime ? new Date(data.logoutTime).getTime() : Date.now();
+                const endMilliseconds = data.logoutTime
+                    ? new Date(data.logoutTime).getTime()
+                    : loginMilliseconds;
 
-                const grossWorkingSeconds = Math.max(0, Math.floor((endMilliseconds - loginMilliseconds) / 1000));
+                const grossWorkingSeconds = Math.max(
+                    0,
+                    Math.floor((endMilliseconds - loginMilliseconds) / 1000)
+                );
 
                 setRows([{
 
