@@ -405,7 +405,7 @@ export default function DashboardPage() {
 
   const [breakModalOpen, setBreakModalOpen] = useState(false);
   const [breakType, setBreakType] =
-    useState<"NORMAL" | "EXCEPTION">("NORMAL");
+    useState<"LUNCH" | "TEA" | "BIO" | "EXCEPTION">("LUNCH");
   const [breakReason, setBreakReason] = useState("");
   const [breakActive, setBreakActive] = useState(false);
   const [breakLoading, setBreakLoading] = useState(false);
@@ -413,12 +413,15 @@ export default function DashboardPage() {
 
   const [breakElapsedSeconds, setBreakElapsedSeconds] = useState(0);
   const [normalBreakUsedSeconds, setNormalBreakUsedSeconds] = useState(0);
+  const [lunchBreakUsedSeconds, setLunchBreakUsedSeconds] = useState(0);
+  const [teaBreakUsedSeconds, setTeaBreakUsedSeconds] = useState(0);
+  const [bioBreakUsedSeconds, setBioBreakUsedSeconds] = useState(0);
   const [exceptionBreakUsedSeconds, setExceptionBreakUsedSeconds] = useState(0);
   const [activeBreakStartTime, setActiveBreakStartTime] = useState<number | null>(
     null
   );
   const [activeBreakType, setActiveBreakType] = useState<
-    "NORMAL" | "EXCEPTION" | null
+    "NORMAL" | "LUNCH" | "TEA" | "BIO" | "EXCEPTION" | null
   >(null);
 
 
@@ -663,6 +666,9 @@ export default function DashboardPage() {
       setNormalBreakUsedSeconds(
         Number(data?.normalUsedSeconds) || 0
       );
+      setLunchBreakUsedSeconds(Number(data?.lunchUsedSeconds) || 0);
+      setTeaBreakUsedSeconds(Number(data?.teaUsedSeconds) || 0);
+      setBioBreakUsedSeconds(Number(data?.bioUsedSeconds) || 0);
 
       setExceptionBreakUsedSeconds(
         Number(data?.exceptionUsedSeconds) || 0
@@ -687,6 +693,9 @@ export default function DashboardPage() {
 
         if (
           activeType === "NORMAL" ||
+          activeType === "LUNCH" ||
+          activeType === "TEA" ||
+          activeType === "BIO" ||
           activeType === "EXCEPTION"
         ) {
           setActiveBreakType(activeType);
@@ -694,9 +703,7 @@ export default function DashboardPage() {
 
         // Backend is authoritative for elapsed time.
         // Do not calculate elapsed time from the timestamp.
-        setBreakElapsedSeconds((previous) =>
-          Math.max(previous, activeElapsed)
-        );
+        setBreakElapsedSeconds(activeElapsed);
       } else {
         setBreakActive(false);
         setBreakElapsedSeconds(0);
@@ -763,8 +770,8 @@ export default function DashboardPage() {
           setBreakActive(true);
 
           const typeValue = String(activeData.breakType || "").toUpperCase();
-          if (typeValue === "NORMAL" || typeValue === "EXCEPTION") {
-            setActiveBreakType(typeValue);
+          if (["NORMAL", "LUNCH", "TEA", "BIO", "EXCEPTION"].includes(typeValue)) {
+            setActiveBreakType(typeValue as "NORMAL" | "LUNCH" | "TEA" | "BIO" | "EXCEPTION");
           }
         } else {
           setBreakActive(false);
@@ -785,7 +792,7 @@ export default function DashboardPage() {
   }
 
   async function startBreak(
-    selectedType: "NORMAL" | "EXCEPTION",
+    selectedType: "LUNCH" | "TEA" | "BIO" | "EXCEPTION",
     reason: string
   ) {
     try {
@@ -872,7 +879,7 @@ export default function DashboardPage() {
 
       setBreakModalOpen(false);
       setBreakReason("");
-      setBreakType("NORMAL");
+      setBreakType("LUNCH");
       setBreakMessage("");
 
       await checkCurrentBreak();
@@ -4750,7 +4757,7 @@ export default function DashboardPage() {
                   endBreak();
                 } else {
                   setBreakMessage("");
-                  setBreakType("NORMAL");
+                  setBreakType("LUNCH");
                   setBreakReason("");
                   setBreakModalOpen(true);
                 }
@@ -4780,6 +4787,26 @@ export default function DashboardPage() {
                   : "☕ Break"}
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={() => router.push("/add-lead")}
+            className="
+            bg-blue-600
+            hover:bg-blue-700
+            text-white
+            text-sm
+            font-semibold
+            px-5
+            py-2.5
+            rounded-lg
+            transition-colors
+            duration-200
+            shadow-sm
+          "
+          >
+            + Add Lead
+          </button>
 
         </div>
 
@@ -4834,7 +4861,13 @@ export default function DashboardPage() {
               >
                 {activeBreakType === "EXCEPTION"
                   ? "⚠ EXCEPTION / MEETING"
-                  : "☕ ON BREAK"}
+                  : activeBreakType === "LUNCH"
+                    ? "🍽 LUNCH BREAK"
+                    : activeBreakType === "TEA"
+                      ? "☕ TEA BREAK"
+                      : activeBreakType === "BIO"
+                        ? "🚻 BIO BREAK"
+                        : "☕ ON BREAK"}
               </div>
 
               <div
@@ -4852,7 +4885,7 @@ export default function DashboardPage() {
               <div className="mt-3 text-sm font-medium text-gray-600">
                 {activeBreakType === "EXCEPTION"
                   ? "This time does not count toward your normal 1-hour break limit."
-                  : "Break time is tracked from the server-recorded start time."}
+                  : `Break time is tracked from the server-recorded start time. ${activeBreakType === "LUNCH" ? "Lunch allowance: 35 minutes." : activeBreakType === "TEA" ? "Tea allowance: 30 minutes." : activeBreakType === "BIO" ? "Bio allowance: 20 minutes." : ""}`}
               </div>
             </div>
 
@@ -4864,7 +4897,7 @@ export default function DashboardPage() {
                 <div className="mt-1 text-2xl font-black text-gray-800">
                   {formatBreakDuration(
                     normalBreakUsedSeconds +
-                    (activeBreakType === "NORMAL"
+                    (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
                       ? breakElapsedSeconds
                       : 0)
                   )}
@@ -4882,7 +4915,7 @@ export default function DashboardPage() {
                     0,
                     3600 -
                     normalBreakUsedSeconds -
-                    (activeBreakType === "NORMAL"
+                    (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
                       ? breakElapsedSeconds
                       : 0)
                   ) === 0
@@ -4896,7 +4929,7 @@ export default function DashboardPage() {
                       0,
                       3600 -
                       normalBreakUsedSeconds -
-                      (activeBreakType === "NORMAL"
+                      (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
                         ? breakElapsedSeconds
                         : 0)
                     )
@@ -6452,28 +6485,35 @@ export default function DashboardPage() {
             </p>
 
             <div className="mt-5 space-y-3">
-
-              <button
-                type="button"
-                onClick={() => {
-                  setBreakType("NORMAL");
-                  setBreakMessage("");
-                }}
-                className={`
-                  w-full rounded-lg border-2 p-4 text-left
-                  ${breakType === "NORMAL"
-                    ? "border-orange-500 bg-orange-50"
-                    : "border-gray-200"
-                  }
-                `}
-              >
-                <div className="font-semibold text-gray-800">
-                  ☕ Normal Break
-                </div>
-                <div className="mt-1 text-sm text-gray-500">
-                  Counts toward the daily 1-hour normal break limit.
-                </div>
-              </button>
+              {([
+                { type: "LUNCH", title: "🍽 Lunch Break", allowance: "35 minutes per day", used: lunchBreakUsedSeconds, limit: 35 * 60 },
+                { type: "TEA", title: "☕ Tea Break", allowance: "30 minutes per day", used: teaBreakUsedSeconds, limit: 30 * 60 },
+                { type: "BIO", title: "🚻 Bio Break", allowance: "20 minutes per day", used: bioBreakUsedSeconds, limit: 20 * 60 },
+              ] as const).map((option) => {
+                const remaining = Math.max(0, option.limit - option.used);
+                const exhausted = remaining <= 0;
+                return (
+                  <button
+                    key={option.type}
+                    type="button"
+                    disabled={exhausted || breakLoading}
+                    onClick={() => {
+                      setBreakType(option.type);
+                      setBreakMessage("");
+                    }}
+                    className={`w-full rounded-lg border-2 p-4 text-left disabled:cursor-not-allowed disabled:opacity-50 ${breakType === option.type ? "border-orange-500 bg-orange-50" : "border-gray-200"}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="font-semibold text-gray-800">{option.title}</div>
+                      <div className="text-sm font-semibold text-gray-600">{option.allowance}</div>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-500">
+                      Used {formatBreakDuration(option.used)} · Remaining {formatBreakDuration(remaining)}
+                      {exhausted ? " · Daily allowance used" : ""}
+                    </div>
+                  </button>
+                );
+              })}
 
               <button
                 type="button"
@@ -6481,23 +6521,13 @@ export default function DashboardPage() {
                   setBreakType("EXCEPTION");
                   setBreakMessage("");
                 }}
-                className={`
-                  w-full rounded-lg border-2 p-4 text-left
-                  ${breakType === "EXCEPTION"
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200"
-                  }
-                `}
+                className={`w-full rounded-lg border-2 p-4 text-left ${breakType === "EXCEPTION" ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
               >
-                <div className="font-semibold text-gray-800">
-                  ⚠ Exception / Meeting
-                </div>
+                <div className="font-semibold text-gray-800">⚠ Exception / Meeting</div>
                 <div className="mt-1 text-sm text-gray-500">
-                  Technical issue or unexpected management meeting.
-                  Does not count toward the normal 1-hour limit.
+                  Technical issue or unexpected management meeting. Reason required.
                 </div>
               </button>
-
             </div>
 
             <div className="mt-5">
@@ -6544,7 +6574,7 @@ export default function DashboardPage() {
                 onClick={() => {
                   setBreakModalOpen(false);
                   setBreakReason("");
-                  setBreakType("NORMAL");
+                  setBreakType("LUNCH");
                   setBreakMessage("");
                 }}
                 disabled={breakLoading}
