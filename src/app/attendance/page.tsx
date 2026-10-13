@@ -29,8 +29,11 @@ interface AttendanceRow {
     normalBreakSeconds: number;
 
     exceptionBreakSeconds: number;
+
     onBreak?: boolean;
+
     activeBreakType?: "NORMAL" | "EXCEPTION" | null;
+
     activeBreakStartTime?: string | null;
 
 }
@@ -123,6 +126,10 @@ export default function AttendancePage() {
 
     const [userRole, setUserRole] = useState<string | null>(null);
 
+    // Set the India-local date after the component mounts to avoid
+    // evaluating the current date during Next.js production prerendering.
+    const [todayInIndia, setTodayInIndia] = useState("");
+
     const [searchTerm, setSearchTerm] = useState("");
 
     // Admin date-range filters use the YYYY-MM-DD format returned by the API.
@@ -142,6 +149,10 @@ export default function AttendancePage() {
     const [detailsLoading, setDetailsLoading] = useState(false);
 
     useEffect(() => {
+
+        setTodayInIndia(
+            new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })
+        );
 
         const token = getToken();
 
@@ -178,14 +189,19 @@ export default function AttendancePage() {
     }, [router]);
 
     // Keep Admin live-break status updated automatically every 15 seconds.
+
     useEffect(() => {
+
         if (userRole !== "ADMIN") return;
 
         const intervalId = window.setInterval(() => {
+
             void loadAttendance();
+
         }, 15000);
 
         return () => window.clearInterval(intervalId);
+
     }, [userRole]);
 
     async function loadAttendance() {
@@ -817,9 +833,13 @@ export default function AttendancePage() {
                                     <th className="px-4 py-3">Normal Break</th>
 
                                     <th className="px-4 py-3">Exception / Meeting</th>
+
                                     {userRole === "ADMIN" && (
+
                                         <th className="px-4 py-3">Live Break Status</th>
+
                                     )}
+
                                     <th className="px-4 py-3 text-center">Action</th>
 
                                 </tr>
@@ -941,32 +961,59 @@ export default function AttendancePage() {
                                             </td>
 
                                             {userRole === "ADMIN" && (
+
                                                 <td className="whitespace-nowrap px-4 py-4">
-                                                    {row.onBreak ? (
-                                                        <div className="flex flex-col items-start gap-1">
-                                                            <span className="rounded-full bg-orange-100 px-2.5 py-1 text-xs font-bold text-orange-700">
-                                                                On Break
-                                                            </span>
-                                                            <span className="text-xs text-gray-600">
-                                                                {row.activeBreakType === "EXCEPTION"
-                                                                    ? "Exception / Meeting"
-                                                                    : row.activeBreakType === "NORMAL"
-                                                                        ? "Normal Break"
-                                                                        : "Active Break"}
-                                                            </span>
-                                                            {row.activeBreakStartTime && (
-                                                                <span className="text-xs text-gray-500">
-                                                                    Since {formatTime(row.activeBreakStartTime)}
+
+                                                    {row.attendanceDate === todayInIndia && !row.logoutTime ? (
+                                                        row.onBreak ? (
+
+                                                            <div className="flex flex-col items-start gap-1">
+
+                                                                <span className="rounded-full bg-orange-100 px-2.5 py-1 text-xs font-bold text-orange-700">
+
+                                                                    On Break
+
                                                                 </span>
-                                                            )}
-                                                        </div>
+
+                                                                <span className="text-xs text-gray-600">
+
+                                                                    {row.activeBreakType === "EXCEPTION"
+
+                                                                        ? "Exception / Meeting"
+
+                                                                        : row.activeBreakType === "NORMAL"
+
+                                                                            ? "Normal Break"
+
+                                                                            : "Active Break"}
+
+                                                                </span>
+
+                                                                {row.activeBreakStartTime && (
+
+                                                                    <span className="text-xs text-gray-500">
+
+                                                                        Since {formatTime(row.activeBreakStartTime)}
+
+                                                                    </span>
+
+                                                                )}
+
+                                                            </div>
+
+                                                        ) : (
+                                                            <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
+                                                                Working
+                                                            </span>
+                                                        )
                                                     ) : (
-                                                        <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
-                                                            Working
-                                                        </span>
+                                                        <span className="text-gray-400">—</span>
                                                     )}
+
                                                 </td>
+
                                             )}
+
                                             <td className="px-4 py-4 text-center">
 
                                                 {userRole === "ADMIN" && (
