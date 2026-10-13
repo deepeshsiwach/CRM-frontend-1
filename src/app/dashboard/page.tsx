@@ -694,7 +694,9 @@ export default function DashboardPage() {
 
         // Backend is authoritative for elapsed time.
         // Do not calculate elapsed time from the timestamp.
-        setBreakElapsedSeconds(activeElapsed);
+        setBreakElapsedSeconds((previous) =>
+          Math.max(previous, activeElapsed)
+        );
       } else {
         setBreakActive(false);
         setBreakElapsedSeconds(0);
