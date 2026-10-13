@@ -65,14 +65,35 @@ export default function LeadAssignmentsPage() {
 
   const token = getToken();
 
+
   const getUnassignedLeads = useCallback(() => {
     const activeAssignedLeadIds = new Set(
       allAssignments
         .filter((a) => a.status === "ACTIVE")
         .map((a) => Number(a.leadId))
     );
-    return allLeads.filter((lead) => !activeAssignedLeadIds.has(Number(lead.id)));
+
+    const closedStatuses = new Set([
+      "ENROLLED",
+      "NOT_INTERESTED",
+      "LOST",
+      "WRONG_NUMBER",
+    ]);
+
+    return allLeads.filter((lead) => {
+      const status = String(lead.status || "NEW")
+        .trim()
+        .toUpperCase();
+
+      const isClosed = closedStatuses.has(status);
+      const isAlreadyAssigned = activeAssignedLeadIds.has(
+        Number(lead.id)
+      );
+
+      return !isClosed && !isAlreadyAssigned;
+    });
   }, [allAssignments, allLeads]);
+
 
   const loadData = useCallback(async () => {
     if (!token) {
@@ -413,15 +434,14 @@ export default function LeadAssignmentsPage() {
               {bulkAssigning
                 ? "Assigning..."
                 : selectedLeadIds.length > 0
-                ? `Assign ${selectedLeadIds.length} Leads`
-                : "Assign Selected Leads"}
+                  ? `Assign ${selectedLeadIds.length} Leads`
+                  : "Assign Selected Leads"}
             </button>
 
             {bulkMessage && (
               <span
-                className={`text-xs font-semibold ${
-                  bulkMessage.includes("success") ? "text-green-600" : "text-red-600"
-                }`}
+                className={`text-xs font-semibold ${bulkMessage.includes("success") ? "text-green-600" : "text-red-600"
+                  }`}
               >
                 {bulkMessage}
               </span>
@@ -490,11 +510,10 @@ export default function LeadAssignmentsPage() {
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{a.assignedAt || "-"}</td>
                       <td className="px-4 py-3">
                         <span
-                          className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
-                            a.status === "ACTIVE"
+                          className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${a.status === "ACTIVE"
                               ? "bg-green-100 text-green-700"
                               : "bg-gray-100 text-gray-600"
-                          }`}
+                            }`}
                         >
                           {a.status || "-"}
                         </span>
