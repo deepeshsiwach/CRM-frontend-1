@@ -132,6 +132,13 @@ export default function LeadsPage() {
 
   const router = useRouter();
 
+  // Prevent hydration mismatch for UI that depends on browser-stored user roles.
+  const [isClientReady, setIsClientReady] = useState(false);
+
+  useEffect(() => {
+    setIsClientReady(true);
+  }, []);
+
   const [allLeads, setAllLeads] = useState<Lead[]>([]);
 
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
@@ -2305,7 +2312,7 @@ export default function LeadsPage() {
 
             </button>
 
-            {isAdmin() && (
+            {isClientReady && isAdmin() && (
               <button
 
                 type="button"
@@ -2353,7 +2360,7 @@ export default function LeadsPage() {
 
             ==================================================== */}
 
-        {isAdmin() && excelOpen && (
+        {isClientReady && isAdmin() && excelOpen && (
 
           <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5 shadow-sm">
 
@@ -2974,7 +2981,7 @@ export default function LeadsPage() {
 
             ==================================================== */}
 
-        {isAgent() && (
+        {isClientReady && isAgent() && (
 
           <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-700">
 
