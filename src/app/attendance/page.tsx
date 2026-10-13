@@ -32,7 +32,7 @@ interface AttendanceRow {
 
     onBreak?: boolean;
 
-    activeBreakType?: "NORMAL" | "EXCEPTION" | null;
+    activeBreakType?: "NORMAL" | "LUNCH" | "TEA" | "BIO" | "EXCEPTION" | null;
 
     activeBreakStartTime?: string | null;
 
@@ -42,7 +42,7 @@ interface BreakRow {
 
     id: number;
 
-    breakType: "NORMAL" | "EXCEPTION";
+    breakType: "NORMAL" | "LUNCH" | "TEA" | "BIO" | "EXCEPTION";
 
     startTime: string;
 
@@ -978,14 +978,16 @@ export default function AttendancePage() {
                                                                 <span className="text-xs text-gray-600">
 
                                                                     {row.activeBreakType === "EXCEPTION"
-
                                                                         ? "Exception / Meeting"
-
-                                                                        : row.activeBreakType === "NORMAL"
-
-                                                                            ? "Normal Break"
-
-                                                                            : "Active Break"}
+                                                                        : row.activeBreakType === "LUNCH"
+                                                                            ? "Lunch Break"
+                                                                            : row.activeBreakType === "TEA"
+                                                                                ? "Tea Break"
+                                                                                : row.activeBreakType === "BIO"
+                                                                                    ? "Bio Break"
+                                                                                    : row.activeBreakType === "NORMAL"
+                                                                                        ? "Normal Break"
+                                                                                        : "Active Break"}
 
                                                                 </span>
 
