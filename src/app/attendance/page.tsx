@@ -542,10 +542,14 @@ export default function AttendancePage() {
                         </button>
 
                         <button
-
                             type="button"
-
-                            onClick={getUserRole() === "ADMIN" ? loadAttendance : loadMyAttendance}
+                            onClick={() => {
+                                if (getUserRole() === "ADMIN") {
+                                    loadAttendance();
+                                } else {
+                                    loadMyAttendance();
+                                }
+                            }}
 
                             disabled={loading}
 
