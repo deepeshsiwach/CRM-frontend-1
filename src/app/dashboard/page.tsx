@@ -2493,7 +2493,7 @@ export default function DashboardPage() {
 
 
 
-      const leads: Lead[] =
+      const leadsPayload: unknown =
 
         leadsRes.status === "fulfilled" &&
 
@@ -2502,6 +2502,19 @@ export default function DashboardPage() {
           ? await leadsRes.value.json()
 
           : [];
+
+      // Accept a raw list or common wrapped/paginated response shapes.
+      const leads: Lead[] = Array.isArray(leadsPayload)
+        ? (leadsPayload as Lead[])
+        : leadsPayload &&
+          typeof leadsPayload === "object" &&
+          Array.isArray((leadsPayload as Record<string, unknown>).content)
+          ? ((leadsPayload as Record<string, unknown>).content as Lead[])
+          : leadsPayload &&
+            typeof leadsPayload === "object" &&
+            Array.isArray((leadsPayload as Record<string, unknown>).leads)
+            ? ((leadsPayload as Record<string, unknown>).leads as Lead[])
+            : [];
 
 
 
@@ -3109,6 +3122,8 @@ export default function DashboardPage() {
 
 
 
+
+
     });
 
 
@@ -3146,6 +3161,31 @@ export default function DashboardPage() {
 
 
       prepareCanvas(leadCanvas);
+
+      console.info("[Dashboard chart] Lead Overview", {
+        leadsReceived: leads.length,
+        statusCounts,
+        canvasWidth: leadCanvas.clientWidth,
+        canvasHeight: leadCanvas.clientHeight,
+      });
+
+      if (Object.keys(statusCounts).length === 0) {
+        const parent = leadCanvas.parentElement;
+        if (parent && !parent.querySelector("[data-lead-chart-empty]")) {
+          const emptyMessage = document.createElement("div");
+          emptyMessage.dataset.leadChartEmpty = "true";
+          emptyMessage.textContent = "No lead status data available";
+          emptyMessage.style.cssText =
+            "display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:14px;";
+          parent.appendChild(emptyMessage);
+        }
+        return;
+      }
+
+      leadCanvas.parentElement
+        ?.querySelector("[data-lead-chart-empty]")
+        ?.remove();
+
 
 
 
