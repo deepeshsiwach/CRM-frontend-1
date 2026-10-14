@@ -2281,25 +2281,16 @@ export default function DashboardPage() {
 
           // Preserve the previously working summary-chart path for agents.
           // Admin/management continues to use actual lead records for charts.
-          if (hasSummaryLeadStatuses && role === "AGENT") {
+
+          if (hasSummaryLeadStatuses) {
             await renderSummaryCharts(summary, role);
             return;
           }
 
-          if (hasSummaryLeadStatuses && role !== "AGENT") {
-            await renderSummaryCharts(summary, role);
-            return;
-          }
+          console.warn(
+            "Dashboard summary has no usable leadStatusCounts; loading fallback chart data."
+          );
 
-          if (!hasSummaryLeadStatuses) {
-            console.warn(
-              "Dashboard summary has no usable leadStatusCounts; loading fallback chart data."
-            );
-          } else {
-            console.info(
-              "Admin/management dashboard: loading fallback lead data for charts."
-            );
-          }
 
 
 
