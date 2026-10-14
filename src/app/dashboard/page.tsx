@@ -536,6 +536,10 @@ export default function DashboardPage() {
     useRef<ChartType | null>(null);
 
 
+  // Prevent overlapping dashboard requests from replacing newer charts.
+  const dashboardLoadVersionRef = useRef(0);
+
+
 
 
 
@@ -1154,7 +1158,9 @@ export default function DashboardPage() {
 
     summary: Record<string, unknown>,
 
-    role: string
+    role: string,
+
+    loadVersion: number
 
   ) {
 
@@ -1170,13 +1176,13 @@ export default function DashboardPage() {
 
     await waitForChartLayout();
 
-
-
-
+    // Ignore a slow request if a newer dashboard load has started.
+    if (loadVersion !== dashboardLoadVersionRef.current) return;
 
     const Chart =
-
       (await import("chart.js/auto")).default;
+
+    if (loadVersion !== dashboardLoadVersionRef.current) return;
 
 
 
@@ -1950,7 +1956,7 @@ export default function DashboardPage() {
 
   ) {
 
-
+    const loadVersion = ++dashboardLoadVersionRef.current;
 
     try {
 
@@ -2354,7 +2360,9 @@ export default function DashboardPage() {
 
             summary,
 
-            role
+            role,
+
+            loadVersion
 
           );
 
@@ -2980,7 +2988,9 @@ export default function DashboardPage() {
 
         token,
 
-        headers
+        headers,
+
+        loadVersion
 
       );
 
@@ -3034,21 +3044,20 @@ export default function DashboardPage() {
 
     token: string,
 
-    headers: Record<string, string>
+    headers: Record<string, string>,
+
+    loadVersion: number
 
   ) {
 
-
-
     await waitForChartLayout();
 
-
-
-
+    if (loadVersion !== dashboardLoadVersionRef.current) return;
 
     const Chart =
-
       (await import("chart.js/auto")).default;
+
+    if (loadVersion !== dashboardLoadVersionRef.current) return;
 
 
 
