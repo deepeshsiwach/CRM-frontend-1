@@ -660,33 +660,30 @@ export default function DashboardPage() {
       const data = await response.json();
 
       // ==========================================
-      // BREAK TOTALS
+      // ACTIVE BREAK + BREAK TOTALS
+      // Backend totals include the currently active break. Remove that
+      // active portion from the base totals so the live timer counts it once.
       // ==========================================
+      const activeStart = data?.activeBreakStartTime ?? null;
+      const activeType = String(data?.activeBreakType ?? "").toUpperCase();
+      const activeElapsed = Number(data?.activeBreakElapsedSeconds) || 0;
+      const normalActive = Boolean(activeStart) && ["NORMAL", "LUNCH", "TEA", "BIO"].includes(activeType);
 
       setNormalBreakUsedSeconds(
-        Number(data?.normalUsedSeconds) || 0
+        Math.max(0, (Number(data?.normalUsedSeconds) || 0) - (normalActive ? activeElapsed : 0))
       );
-      setLunchBreakUsedSeconds(Number(data?.lunchUsedSeconds) || 0);
-      setTeaBreakUsedSeconds(Number(data?.teaUsedSeconds) || 0);
-      setBioBreakUsedSeconds(Number(data?.bioUsedSeconds) || 0);
-
+      setLunchBreakUsedSeconds(
+        Math.max(0, (Number(data?.lunchUsedSeconds) || 0) - (activeStart && activeType === "LUNCH" ? activeElapsed : 0))
+      );
+      setTeaBreakUsedSeconds(
+        Math.max(0, (Number(data?.teaUsedSeconds) || 0) - (activeStart && activeType === "TEA" ? activeElapsed : 0))
+      );
+      setBioBreakUsedSeconds(
+        Math.max(0, (Number(data?.bioUsedSeconds) || 0) - (activeStart && activeType === "BIO" ? activeElapsed : 0))
+      );
       setExceptionBreakUsedSeconds(
-        Number(data?.exceptionUsedSeconds) || 0
+        Math.max(0, (Number(data?.exceptionUsedSeconds) || 0) - (activeStart && activeType === "EXCEPTION" ? activeElapsed : 0))
       );
-
-      // ==========================================
-      // ACTIVE BREAK
-      // ==========================================
-
-      const activeStart =
-        data?.activeBreakStartTime ?? null;
-
-      const activeType = String(
-        data?.activeBreakType ?? ""
-      ).toUpperCase();
-
-      const activeElapsed =
-        Number(data?.activeBreakElapsedSeconds) || 0;
 
       if (activeStart) {
         setBreakActive(true);
@@ -986,10 +983,77 @@ export default function DashboardPage() {
     };
   }, [userRole]);
 
+  // CHART CLEANUP
+
+  // ==========================================================
+
+
+
+  useEffect(() => {
+
+
+
+    return () => {
+
+
+
+      if (leadOverviewChartRef.current) {
+
+
+
+        leadOverviewChartRef.current.destroy();
+
+
+
+        leadOverviewChartRef.current = null;
+
+
+
+      }
 
 
 
 
+
+      if (crmActivityChartRef.current) {
+
+
+
+        crmActivityChartRef.current.destroy();
+
+
+
+        crmActivityChartRef.current = null;
+
+
+
+      }
+
+
+
+
+
+      if (agentLeadDistChartRef.current) {
+
+
+
+        agentLeadDistChartRef.current.destroy();
+
+
+
+        agentLeadDistChartRef.current = null;
+
+
+
+      }
+
+
+
+    };
+
+
+
+  }, []);
 
 
 
@@ -2299,10 +2363,9 @@ export default function DashboardPage() {
               (count) => Number(count) > 0
             );
 
-          // Use summary data for charts for BOTH Admin and Agent.
-          // The summary response already contains leadStatusCounts and CRM totals.
-          // Keep the fallback only when usable lead-status data is missing.
-          if (hasSummaryLeadStatuses) {
+          // Preserve the previously working summary-chart path for agents.
+          // Admin/management continues to use actual lead records for charts.
+          if (hasSummaryLeadStatuses && role === "AGENT") {
             await renderSummaryCharts(summary, role);
             return;
           }
@@ -4856,63 +4919,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-xl bg-white p-4 text-center shadow-sm">
-                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Normal Used
-                </div>
-                <div className="mt-1 text-2xl font-black text-gray-800">
-                  {formatBreakDuration(
-                    normalBreakUsedSeconds +
-                    (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
-                      ? breakElapsedSeconds
-                      : 0)
-                  )}
-                </div>
-              </div>
 
-              <div className="rounded-xl bg-white p-4 text-center shadow-sm">
-                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Normal Remaining
-                </div>
-                <div
-                  className={`
-                    mt-1 text-2xl font-black
-                    ${Math.max(
-                    0,
-                    (85 * 60) -
-                    normalBreakUsedSeconds -
-                    (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
-                      ? breakElapsedSeconds
-                      : 0)
-                  ) === 0
-                      ? "text-red-600"
-                      : "text-green-600"
-                    }
-                  `}
-                >
-                  {formatBreakDuration(
-                    Math.max(
-                      0,
-                      (85 * 60) -
-                      normalBreakUsedSeconds -
-                      (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
-                        ? breakElapsedSeconds
-                        : 0)
-                    )
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-xl bg-white p-4 text-center shadow-sm">
-                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Exception Used
-                </div>
-                <div className="mt-1 text-2xl font-black text-gray-800">
-                  {formatBreakDuration(exceptionBreakUsedSeconds)}
-                </div>
-              </div>
-            </div>
 
             <button
               type="button"
