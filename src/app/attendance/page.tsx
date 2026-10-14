@@ -348,11 +348,11 @@ export default function AttendancePage() {
 
                     : 0;
 
+
                 const endMilliseconds = data.logoutTime
-
                     ? new Date(data.logoutTime).getTime()
+                    : Date.now();
 
-                    : loginMilliseconds;
 
                 const grossWorkingSeconds = Math.max(
 
