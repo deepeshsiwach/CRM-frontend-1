@@ -536,10 +536,6 @@ export default function DashboardPage() {
     useRef<ChartType | null>(null);
 
 
-  // Prevent overlapping dashboard requests from replacing newer charts.
-  const dashboardLoadVersionRef = useRef(0);
-
-
 
 
 
@@ -1158,9 +1154,7 @@ export default function DashboardPage() {
 
     summary: Record<string, unknown>,
 
-    role: string,
-
-    loadVersion: number
+    role: string
 
   ) {
 
@@ -1176,13 +1170,13 @@ export default function DashboardPage() {
 
     await waitForChartLayout();
 
-    // Ignore a slow request if a newer dashboard load has started.
-    if (loadVersion !== dashboardLoadVersionRef.current) return;
+
+
+
 
     const Chart =
-      (await import("chart.js/auto")).default;
 
-    if (loadVersion !== dashboardLoadVersionRef.current) return;
+      (await import("chart.js/auto")).default;
 
 
 
@@ -1956,7 +1950,7 @@ export default function DashboardPage() {
 
   ) {
 
-    const loadVersion = ++dashboardLoadVersionRef.current;
+
 
     try {
 
@@ -2360,9 +2354,7 @@ export default function DashboardPage() {
 
             summary,
 
-            role,
-
-            loadVersion
+            role
 
           );
 
@@ -2988,9 +2980,7 @@ export default function DashboardPage() {
 
         token,
 
-        headers,
-
-        loadVersion
+        headers
 
       );
 
@@ -3044,20 +3034,21 @@ export default function DashboardPage() {
 
     token: string,
 
-    headers: Record<string, string>,
-
-    loadVersion: number
+    headers: Record<string, string>
 
   ) {
 
+
+
     await waitForChartLayout();
 
-    if (loadVersion !== dashboardLoadVersionRef.current) return;
+
+
+
 
     const Chart =
-      (await import("chart.js/auto")).default;
 
-    if (loadVersion !== dashboardLoadVersionRef.current) return;
+      (await import("chart.js/auto")).default;
 
 
 
@@ -4888,13 +4879,27 @@ export default function DashboardPage() {
                   }
                 `}
               >
-                {formatBreakDuration(breakElapsedSeconds)}
+                {formatBreakDuration(
+                  activeBreakType === "EXCEPTION"
+                    ? breakElapsedSeconds
+                    : Math.max(
+                      0,
+                      (activeBreakType === "LUNCH"
+                        ? 35 * 60 - lunchBreakUsedSeconds
+                        : activeBreakType === "TEA"
+                          ? 30 * 60 - teaBreakUsedSeconds
+                          : activeBreakType === "BIO"
+                            ? 20 * 60 - bioBreakUsedSeconds
+                            : 85 * 60 - normalBreakUsedSeconds) -
+                      breakElapsedSeconds
+                    )
+                )}
               </div>
 
               <div className="mt-3 text-sm font-medium text-gray-600">
                 {activeBreakType === "EXCEPTION"
-                  ? "This time does not count toward your normal 1-hour break limit."
-                  : `Break time is tracked from the server-recorded start time. ${activeBreakType === "LUNCH" ? "Lunch allowance: 35 minutes." : activeBreakType === "TEA" ? "Tea allowance: 30 minutes." : activeBreakType === "BIO" ? "Bio allowance: 20 minutes." : ""}`}
+                  ? "This time does not count toward your normal break allowance."
+                  : `Remaining time counts down from your daily allowance. ${activeBreakType === "LUNCH" ? "Lunch allowance: 35 minutes." : activeBreakType === "TEA" ? "Tea allowance: 30 minutes." : activeBreakType === "BIO" ? "Bio allowance: 20 minutes." : "Daily normal break allowance: 85 minutes."}`}
               </div>
             </div>
 
@@ -4922,7 +4927,7 @@ export default function DashboardPage() {
                     mt-1 text-2xl font-black
                     ${Math.max(
                     0,
-                    3600 -
+                    (85 * 60) -
                     normalBreakUsedSeconds -
                     (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
                       ? breakElapsedSeconds
@@ -4936,7 +4941,7 @@ export default function DashboardPage() {
                   {formatBreakDuration(
                     Math.max(
                       0,
-                      3600 -
+                      (85 * 60) -
                       normalBreakUsedSeconds -
                       (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
                         ? breakElapsedSeconds
