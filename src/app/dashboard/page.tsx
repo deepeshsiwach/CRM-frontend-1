@@ -1658,7 +1658,31 @@ export default function DashboardPage() {
 
     }
 
-    // Render Agent Lead Distribution whenever its canvas exists.
+
+
+
+
+    // ========================================================
+
+    // AGENT ROLE DOES NOT NEED MANAGEMENT CHART
+
+    // ========================================================
+
+
+
+    if (role === "AGENT") {
+
+
+
+      return;
+
+
+
+    }
+
+
+
+
 
     // ========================================================
 
@@ -2342,9 +2366,9 @@ export default function DashboardPage() {
               (count) => Number(count) > 0
             );
 
-          // Use summary data for charts for BOTH agents and admin.
-          // The summary endpoint already supplies leadStatusCounts,
-          // CRM activity totals, and agentLeadDistribution.
+          // Use summary data for charts for BOTH Admin and Agent.
+          // The summary response already contains leadStatusCounts and CRM totals.
+          // Keep the fallback only when usable lead-status data is missing.
           if (hasSummaryLeadStatuses) {
             await renderSummaryCharts(summary, role);
             return;
