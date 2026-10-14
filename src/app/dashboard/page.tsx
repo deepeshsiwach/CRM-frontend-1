@@ -1658,31 +1658,7 @@ export default function DashboardPage() {
 
     }
 
-
-
-
-
-    // ========================================================
-
-    // AGENT ROLE DOES NOT NEED MANAGEMENT CHART
-
-    // ========================================================
-
-
-
-    if (role === "AGENT") {
-
-
-
-      return;
-
-
-
-    }
-
-
-
-
+    // Render Agent Lead Distribution whenever its canvas exists.
 
     // ========================================================
 
@@ -2366,19 +2342,23 @@ export default function DashboardPage() {
               (count) => Number(count) > 0
             );
 
-          // Use the dashboard summary for all roles when it contains valid
-          // lead-status data. The summary already includes the metrics needed
-          // for all three charts; sending Admin through the fallback path can
-          // leave charts blank when one of the separate API calls fails or
-          // returns a different response shape.
+          // Use summary data for charts for BOTH agents and admin.
+          // The summary endpoint already supplies leadStatusCounts,
+          // CRM activity totals, and agentLeadDistribution.
           if (hasSummaryLeadStatuses) {
             await renderSummaryCharts(summary, role);
             return;
           }
 
-          console.warn(
-            "Dashboard summary has no usable leadStatusCounts; loading fallback chart data."
-          );
+          if (!hasSummaryLeadStatuses) {
+            console.warn(
+              "Dashboard summary has no usable leadStatusCounts; loading fallback chart data."
+            );
+          } else {
+            console.info(
+              "Admin/management dashboard: loading fallback lead data for charts."
+            );
+          }
 
 
 
