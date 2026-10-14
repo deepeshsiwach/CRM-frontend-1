@@ -537,6 +537,12 @@ export default function DashboardPage() {
 
 
 
+  // Guard flag: prevents async loadDashboard from
+  // touching state / creating charts after unmount.
+  const isMountedRef = useRef(true);
+
+
+
 
 
   // ==========================================================
@@ -577,7 +583,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
 
-
+    isMountedRef.current = true;
 
     const token = getToken();
 
@@ -621,7 +627,26 @@ export default function DashboardPage() {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
 
+    return () => {
+      // Prevent the in-flight async loadDashboard from
+      // creating charts or updating state after unmount.
+      isMountedRef.current = false;
 
+      // Destroy Chart.js instances so they don't block
+      // canvas re-use on the next mount.
+      if (leadOverviewChartRef.current) {
+        leadOverviewChartRef.current.destroy();
+        leadOverviewChartRef.current = null;
+      }
+      if (crmActivityChartRef.current) {
+        crmActivityChartRef.current.destroy();
+        crmActivityChartRef.current = null;
+      }
+      if (agentLeadDistChartRef.current) {
+        agentLeadDistChartRef.current.destroy();
+        agentLeadDistChartRef.current = null;
+      }
+    };
 
   }, []);
 
@@ -1140,12 +1165,12 @@ export default function DashboardPage() {
 
     if (leadCanvas) {
 
+      if (leadOverviewChartRef.current) {
+        leadOverviewChartRef.current.destroy();
+        leadOverviewChartRef.current = null;
+      }
 
-
-
-
-
-
+      if (!isMountedRef.current) return;
 
       leadOverviewChartRef.current =
 
@@ -1333,13 +1358,12 @@ export default function DashboardPage() {
 
     if (activityCanvas) {
 
+      if (crmActivityChartRef.current) {
+        crmActivityChartRef.current.destroy();
+        crmActivityChartRef.current = null;
+      }
 
-
-
-
-
-
-
+      if (!isMountedRef.current) return;
 
       prepareCanvas(activityCanvas);
 
@@ -3014,13 +3038,12 @@ export default function DashboardPage() {
 
     if (leadCanvas) {
 
+      if (leadOverviewChartRef.current) {
+        leadOverviewChartRef.current.destroy();
+        leadOverviewChartRef.current = null;
+      }
 
-
-
-
-
-
-
+      if (!isMountedRef.current) return;
 
       prepareCanvas(leadCanvas);
 
@@ -3214,12 +3237,12 @@ export default function DashboardPage() {
 
     if (activityCanvas) {
 
+      if (crmActivityChartRef.current) {
+        crmActivityChartRef.current.destroy();
+        crmActivityChartRef.current = null;
+      }
 
-
-
-
-
-
+      if (!isMountedRef.current) return;
 
       prepareCanvas(activityCanvas);
 
