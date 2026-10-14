@@ -1335,19 +1335,7 @@ export default function DashboardPage() {
 
 
 
-      if (crmActivityChartRef.current) {
 
-
-
-        crmActivityChartRef.current.destroy();
-
-
-
-        crmActivityChartRef.current = null;
-
-
-
-      }
 
 
 
@@ -1633,19 +1621,7 @@ export default function DashboardPage() {
 
 
 
-      if (agentLeadDistChartRef.current) {
 
-
-
-        agentLeadDistChartRef.current.destroy();
-
-
-
-        agentLeadDistChartRef.current = null;
-
-
-
-      }
 
 
 
@@ -3240,19 +3216,6 @@ export default function DashboardPage() {
 
 
 
-      if (crmActivityChartRef.current) {
-
-
-
-        crmActivityChartRef.current.destroy();
-
-
-
-        crmActivityChartRef.current = null;
-
-
-
-      }
 
 
 
@@ -3608,19 +3571,7 @@ export default function DashboardPage() {
 
 
 
-      if (agentLeadDistChartRef.current) {
 
-
-
-        agentLeadDistChartRef.current.destroy();
-
-
-
-        agentLeadDistChartRef.current = null;
-
-
-
-      }
 
 
 
