@@ -2286,6 +2286,11 @@ export default function DashboardPage() {
             return;
           }
 
+          if (hasSummaryLeadStatuses && role !== "AGENT") {
+            await renderSummaryCharts(summary, role);
+            return;
+          }
+
           if (!hasSummaryLeadStatuses) {
             console.warn(
               "Dashboard summary has no usable leadStatusCounts; loading fallback chart data."
