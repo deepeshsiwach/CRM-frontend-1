@@ -716,10 +716,79 @@ export default function DashboardPage() {
   }
 
   async function checkCurrentBreak() {
-    // Use the break-summary endpoint as the single source of truth.
-    // Do not let an empty /break/active response clear a break that the
-    // summary endpoint still reports as active.
-    await loadBreakSummary();
+    try {
+      const token = getToken();
+      const userId = localStorage.getItem("userId");
+
+      if (!token || !userId) return;
+
+      const headers = { Authorization: `Bearer ${token}` };
+      const agentId = Number(userId);
+
+      // Check today's attendance. Some API responses may have an empty body,
+      // so read text first instead of assuming every successful response is JSON.
+      const todayResponse = await fetch(
+        `${API_BASE_URL}/api/attendance/today?agentId=${agentId}`,
+        { method: "GET", headers }
+      );
+
+      if (todayResponse.ok) {
+        const todayText = await todayResponse.text();
+        if (todayText.trim()) {
+          try {
+            const todayData = JSON.parse(todayText);
+            if (todayData?.activeBreak === true) {
+              setBreakActive(true);
+            }
+          } catch (parseError) {
+            console.warn("Today's attendance response was not valid JSON.", parseError);
+          }
+        }
+      } else {
+        console.warn("Today's attendance check failed:", todayResponse.status);
+      }
+
+      // Check for an active break. An empty response means no active break.
+      const activeResponse = await fetch(
+        `${API_BASE_URL}/api/attendance/break/active?agentId=${agentId}`,
+        { method: "GET", headers }
+      );
+
+      if (activeResponse.ok) {
+        const activeText = await activeResponse.text();
+        let activeData: { breakType?: string; startTime?: string; breakStartTime?: string } | null = null;
+
+        if (activeText.trim()) {
+          try {
+            activeData = JSON.parse(activeText);
+          } catch (parseError) {
+            console.warn("Active-break response was not valid JSON.", parseError);
+          }
+        }
+
+        if (activeData) {
+          setBreakActive(true);
+
+          const typeValue = String(activeData.breakType || "").toUpperCase();
+          if (["NORMAL", "LUNCH", "TEA", "BIO", "EXCEPTION"].includes(typeValue)) {
+            setActiveBreakType(typeValue as "NORMAL" | "LUNCH" | "TEA" | "BIO" | "EXCEPTION");
+          }
+        } else {
+          setBreakActive(false);
+          setBreakElapsedSeconds(0);
+          setActiveBreakStartTime(null);
+          setActiveBreakType(null);
+        }
+      } else {
+        console.warn("Active-break check failed:", activeResponse.status);
+      }
+
+      // Refresh server-recorded break totals; failures here should not break
+      // the current-break check.
+      await loadBreakSummary();
+    } catch (error) {
+      console.error("Check current break error:", error);
+    }
   }
 
   async function startBreak(
@@ -2297,22 +2366,19 @@ export default function DashboardPage() {
               (count) => Number(count) > 0
             );
 
-          // Preserve the previously working summary-chart path for agents.
-          // Admin/management continues to use actual lead records for charts.
-          if (hasSummaryLeadStatuses && role === "AGENT") {
+          // Use the dashboard summary for all roles when it contains valid
+          // lead-status data. The summary already includes the metrics needed
+          // for all three charts; sending Admin through the fallback path can
+          // leave charts blank when one of the separate API calls fails or
+          // returns a different response shape.
+          if (hasSummaryLeadStatuses) {
             await renderSummaryCharts(summary, role);
             return;
           }
 
-          if (!hasSummaryLeadStatuses) {
-            console.warn(
-              "Dashboard summary has no usable leadStatusCounts; loading fallback chart data."
-            );
-          } else {
-            console.info(
-              "Admin/management dashboard: loading fallback lead data for charts."
-            );
-          }
+          console.warn(
+            "Dashboard summary has no usable leadStatusCounts; loading fallback chart data."
+          );
 
 
 
