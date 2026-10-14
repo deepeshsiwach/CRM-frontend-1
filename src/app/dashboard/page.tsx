@@ -1142,25 +1142,6 @@ export default function DashboardPage() {
 
 
 
-      if (leadOverviewChartRef.current) {
-
-
-
-        leadOverviewChartRef.current.destroy();
-
-
-
-        leadOverviewChartRef.current = null;
-
-
-
-      }
-
-
-
-
-
-      prepareCanvas(leadCanvas);
 
 
 
@@ -3059,19 +3040,7 @@ export default function DashboardPage() {
 
 
 
-      if (leadOverviewChartRef.current) {
 
-
-
-        leadOverviewChartRef.current.destroy();
-
-
-
-        leadOverviewChartRef.current = null;
-
-
-
-      }
 
 
 
