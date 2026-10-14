@@ -986,77 +986,10 @@ export default function DashboardPage() {
     };
   }, [userRole]);
 
-  // CHART CLEANUP
-
-  // ==========================================================
-
-
-
-  useEffect(() => {
-
-
-
-    return () => {
-
-
-
-      if (leadOverviewChartRef.current) {
-
-
-
-        leadOverviewChartRef.current.destroy();
-
-
-
-        leadOverviewChartRef.current = null;
-
-
-
-      }
 
 
 
 
-
-      if (crmActivityChartRef.current) {
-
-
-
-        crmActivityChartRef.current.destroy();
-
-
-
-        crmActivityChartRef.current = null;
-
-
-
-      }
-
-
-
-
-
-      if (agentLeadDistChartRef.current) {
-
-
-
-        agentLeadDistChartRef.current.destroy();
-
-
-
-        agentLeadDistChartRef.current = null;
-
-
-
-      }
-
-
-
-    };
-
-
-
-  }, []);
 
 
 
