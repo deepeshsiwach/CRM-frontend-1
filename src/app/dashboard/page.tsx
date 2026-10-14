@@ -2366,14 +2366,22 @@ export default function DashboardPage() {
               (count) => Number(count) > 0
             );
 
-          if (hasSummaryLeadStatuses) {
-            await renderSummaryCharts(summary, role);
-            return;
+          // Always continue to the fallback API calls below. The summary
+          // endpoint can return valid card counts while its chart data is
+          // incomplete or incompatible with Chart.js. The fallback builder
+          // uses the actual /api/leads records and renders the charts directly.
+          if (!hasSummaryLeadStatuses) {
+            console.warn(
+              "Dashboard summary has no usable leadStatusCounts; loading fallback chart data."
+            );
+          } else {
+            console.info(
+              "Dashboard summary has lead statuses; using fallback chart data to render charts consistently."
+            );
           }
 
-          console.warn(
-            "Dashboard summary has no leadStatusCounts; loading fallback chart data."
-          );
+          // Do not return here: loadDashboard must continue to the fallback
+          // API calls and buildCharts() below.
 
 
 
