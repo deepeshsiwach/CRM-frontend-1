@@ -2366,22 +2366,22 @@ export default function DashboardPage() {
               (count) => Number(count) > 0
             );
 
-          // Always continue to the fallback API calls below. The summary
-          // endpoint can return valid card counts while its chart data is
-          // incomplete or incompatible with Chart.js. The fallback builder
-          // uses the actual /api/leads records and renders the charts directly.
+          // Preserve the previously working summary-chart path for agents.
+          // Admin/management continues to use actual lead records for charts.
+          if (hasSummaryLeadStatuses && role === "AGENT") {
+            await renderSummaryCharts(summary, role);
+            return;
+          }
+
           if (!hasSummaryLeadStatuses) {
             console.warn(
               "Dashboard summary has no usable leadStatusCounts; loading fallback chart data."
             );
           } else {
             console.info(
-              "Dashboard summary has lead statuses; using fallback chart data to render charts consistently."
+              "Admin/management dashboard: loading fallback lead data for charts."
             );
           }
-
-          // Do not return here: loadDashboard must continue to the fallback
-          // API calls and buildCharts() below.
 
 
 
@@ -2493,7 +2493,7 @@ export default function DashboardPage() {
 
 
 
-      const leadsPayload: unknown =
+      const leads: Lead[] =
 
         leadsRes.status === "fulfilled" &&
 
@@ -2502,19 +2502,6 @@ export default function DashboardPage() {
           ? await leadsRes.value.json()
 
           : [];
-
-      // Accept a raw list or common wrapped/paginated response shapes.
-      const leads: Lead[] = Array.isArray(leadsPayload)
-        ? (leadsPayload as Lead[])
-        : leadsPayload &&
-          typeof leadsPayload === "object" &&
-          Array.isArray((leadsPayload as Record<string, unknown>).content)
-          ? ((leadsPayload as Record<string, unknown>).content as Lead[])
-          : leadsPayload &&
-            typeof leadsPayload === "object" &&
-            Array.isArray((leadsPayload as Record<string, unknown>).leads)
-            ? ((leadsPayload as Record<string, unknown>).leads as Lead[])
-            : [];
 
 
 
@@ -3122,8 +3109,6 @@ export default function DashboardPage() {
 
 
 
-
-
     });
 
 
@@ -3161,31 +3146,6 @@ export default function DashboardPage() {
 
 
       prepareCanvas(leadCanvas);
-
-      console.info("[Dashboard chart] Lead Overview", {
-        leadsReceived: leads.length,
-        statusCounts,
-        canvasWidth: leadCanvas.clientWidth,
-        canvasHeight: leadCanvas.clientHeight,
-      });
-
-      if (Object.keys(statusCounts).length === 0) {
-        const parent = leadCanvas.parentElement;
-        if (parent && !parent.querySelector("[data-lead-chart-empty]")) {
-          const emptyMessage = document.createElement("div");
-          emptyMessage.dataset.leadChartEmpty = "true";
-          emptyMessage.textContent = "No lead status data available";
-          emptyMessage.style.cssText =
-            "display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:14px;";
-          parent.appendChild(emptyMessage);
-        }
-        return;
-      }
-
-      leadCanvas.parentElement
-        ?.querySelector("[data-lead-chart-empty]")
-        ?.remove();
-
 
 
 
