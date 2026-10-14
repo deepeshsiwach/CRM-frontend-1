@@ -412,8 +412,6 @@ export default function DashboardPage() {
   const [breakMessage, setBreakMessage] = useState("");
 
   const [breakElapsedSeconds, setBreakElapsedSeconds] = useState(0);
-  // Elapsed seconds already included in the latest backend summary.
-  const [breakElapsedAtSummarySeconds, setBreakElapsedAtSummarySeconds] = useState(0);
   const [normalBreakUsedSeconds, setNormalBreakUsedSeconds] = useState(0);
   const [lunchBreakUsedSeconds, setLunchBreakUsedSeconds] = useState(0);
   const [teaBreakUsedSeconds, setTeaBreakUsedSeconds] = useState(0);
@@ -690,10 +688,6 @@ export default function DashboardPage() {
       const activeElapsed =
         Number(data?.activeBreakElapsedSeconds) || 0;
 
-      // Backend totals already include the active break up to this snapshot.
-      // Only count elapsed seconds accumulated after this snapshot in the UI.
-      setBreakElapsedAtSummarySeconds(activeStart ? activeElapsed : 0);
-
       if (activeStart) {
         setBreakActive(true);
 
@@ -713,7 +707,6 @@ export default function DashboardPage() {
       } else {
         setBreakActive(false);
         setBreakElapsedSeconds(0);
-        setBreakElapsedAtSummarySeconds(0);
         setActiveBreakStartTime(null);
         setActiveBreakType(null);
       }
@@ -723,79 +716,10 @@ export default function DashboardPage() {
   }
 
   async function checkCurrentBreak() {
-    try {
-      const token = getToken();
-      const userId = localStorage.getItem("userId");
-
-      if (!token || !userId) return;
-
-      const headers = { Authorization: `Bearer ${token}` };
-      const agentId = Number(userId);
-
-      // Check today's attendance. Some API responses may have an empty body,
-      // so read text first instead of assuming every successful response is JSON.
-      const todayResponse = await fetch(
-        `${API_BASE_URL}/api/attendance/today?agentId=${agentId}`,
-        { method: "GET", headers }
-      );
-
-      if (todayResponse.ok) {
-        const todayText = await todayResponse.text();
-        if (todayText.trim()) {
-          try {
-            const todayData = JSON.parse(todayText);
-            if (todayData?.activeBreak === true) {
-              setBreakActive(true);
-            }
-          } catch (parseError) {
-            console.warn("Today's attendance response was not valid JSON.", parseError);
-          }
-        }
-      } else {
-        console.warn("Today's attendance check failed:", todayResponse.status);
-      }
-
-      // Check for an active break. An empty response means no active break.
-      const activeResponse = await fetch(
-        `${API_BASE_URL}/api/attendance/break/active?agentId=${agentId}`,
-        { method: "GET", headers }
-      );
-
-      if (activeResponse.ok) {
-        const activeText = await activeResponse.text();
-        let activeData: { breakType?: string; startTime?: string; breakStartTime?: string } | null = null;
-
-        if (activeText.trim()) {
-          try {
-            activeData = JSON.parse(activeText);
-          } catch (parseError) {
-            console.warn("Active-break response was not valid JSON.", parseError);
-          }
-        }
-
-        if (activeData) {
-          setBreakActive(true);
-
-          const typeValue = String(activeData.breakType || "").toUpperCase();
-          if (["NORMAL", "LUNCH", "TEA", "BIO", "EXCEPTION"].includes(typeValue)) {
-            setActiveBreakType(typeValue as "NORMAL" | "LUNCH" | "TEA" | "BIO" | "EXCEPTION");
-          }
-        } else {
-          setBreakActive(false);
-          setBreakElapsedSeconds(0);
-          setActiveBreakStartTime(null);
-          setActiveBreakType(null);
-        }
-      } else {
-        console.warn("Active-break check failed:", activeResponse.status);
-      }
-
-      // Refresh server-recorded break totals; failures here should not break
-      // the current-break check.
-      await loadBreakSummary();
-    } catch (error) {
-      console.error("Check current break error:", error);
-    }
+    // Use the break-summary endpoint as the single source of truth.
+    // Do not let an empty /break/active response clear a break that the
+    // summary endpoint still reports as active.
+    await loadBreakSummary();
   }
 
   async function startBreak(
@@ -4917,7 +4841,7 @@ export default function DashboardPage() {
                           : activeBreakType === "BIO"
                             ? 20 * 60 - bioBreakUsedSeconds
                             : 85 * 60 - normalBreakUsedSeconds) -
-                      Math.max(0, breakElapsedSeconds - breakElapsedAtSummarySeconds)
+                      breakElapsedSeconds
                     )
                 )}
               </div>
@@ -4938,7 +4862,7 @@ export default function DashboardPage() {
                   {formatBreakDuration(
                     normalBreakUsedSeconds +
                     (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
-                      ? Math.max(0, breakElapsedSeconds - breakElapsedAtSummarySeconds)
+                      ? breakElapsedSeconds
                       : 0)
                   )}
                 </div>
@@ -4956,7 +4880,7 @@ export default function DashboardPage() {
                     (85 * 60) -
                     normalBreakUsedSeconds -
                     (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
-                      ? Math.max(0, breakElapsedSeconds - breakElapsedAtSummarySeconds)
+                      ? breakElapsedSeconds
                       : 0)
                   ) === 0
                       ? "text-red-600"
@@ -4982,7 +4906,7 @@ export default function DashboardPage() {
                   Exception Used
                 </div>
                 <div className="mt-1 text-2xl font-black text-gray-800">
-                  {formatBreakDuration(exceptionBreakUsedSeconds + (activeBreakType === "EXCEPTION" ? Math.max(0, breakElapsedSeconds - breakElapsedAtSummarySeconds) : 0))}
+                  {formatBreakDuration(exceptionBreakUsedSeconds)}
                 </div>
               </div>
             </div>
