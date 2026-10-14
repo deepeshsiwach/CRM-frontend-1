@@ -1219,9 +1219,13 @@ export default function AttendancePage() {
                                     <div className="mt-2 text-3xl font-black text-blue-800">
 
                                         {formatDuration(
-
-                                            selected.exceptionBreakSeconds
-
+                                            selected.breaks
+                                                .filter((item) => item.breakType === "EXCEPTION")
+                                                .reduce(
+                                                    (total, item) =>
+                                                        total + Math.max(0, Number(item.durationSeconds) || 0),
+                                                    0
+                                                )
                                         )}
 
                                     </div>
