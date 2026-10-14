@@ -412,6 +412,9 @@ export default function DashboardPage() {
   const [breakMessage, setBreakMessage] = useState("");
 
   const [breakElapsedSeconds, setBreakElapsedSeconds] = useState(0);
+  // Elapsed seconds already included in the latest backend summary.
+  // Only the increase after this baseline should be added to summary totals.
+  const [breakElapsedAtSummarySeconds, setBreakElapsedAtSummarySeconds] = useState(0);
   const [normalBreakUsedSeconds, setNormalBreakUsedSeconds] = useState(0);
   const [lunchBreakUsedSeconds, setLunchBreakUsedSeconds] = useState(0);
   const [teaBreakUsedSeconds, setTeaBreakUsedSeconds] = useState(0);
@@ -687,6 +690,10 @@ export default function DashboardPage() {
 
       const activeElapsed =
         Number(data?.activeBreakElapsedSeconds) || 0;
+
+      // The backend totals already include the active break up to this moment.
+      // Record that elapsed value so the live timer only adds the new seconds.
+      setBreakElapsedAtSummarySeconds(activeStart ? activeElapsed : 0);
 
       if (activeStart) {
         setBreakActive(true);
@@ -4891,15 +4898,15 @@ export default function DashboardPage() {
                           : activeBreakType === "BIO"
                             ? 20 * 60 - bioBreakUsedSeconds
                             : 85 * 60 - normalBreakUsedSeconds) -
-                      breakElapsedSeconds
+                      Math.max(0, breakElapsedSeconds - breakElapsedAtSummarySeconds)
                     )
                 )}
               </div>
 
               <div className="mt-3 text-sm font-medium text-gray-600">
                 {activeBreakType === "EXCEPTION"
-                  ? "This time does not count toward your normal break allowance."
-                  : `Remaining time counts down from your daily allowance. ${activeBreakType === "LUNCH" ? "Lunch allowance: 35 minutes." : activeBreakType === "TEA" ? "Tea allowance: 30 minutes." : activeBreakType === "BIO" ? "Bio allowance: 20 minutes." : "Daily normal break allowance: 85 minutes."}`}
+                  ? "This time does not count toward your normal 85-minute break allowance."
+                  : `Break time is tracked from the server-recorded start time. ${activeBreakType === "LUNCH" ? "Lunch allowance: 35 minutes." : activeBreakType === "TEA" ? "Tea allowance: 30 minutes." : activeBreakType === "BIO" ? "Bio allowance: 20 minutes." : ""}`}
               </div>
             </div>
 
@@ -4912,7 +4919,7 @@ export default function DashboardPage() {
                   {formatBreakDuration(
                     normalBreakUsedSeconds +
                     (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
-                      ? breakElapsedSeconds
+                      ? Math.max(0, breakElapsedSeconds - breakElapsedAtSummarySeconds)
                       : 0)
                   )}
                 </div>
@@ -4927,10 +4934,10 @@ export default function DashboardPage() {
                     mt-1 text-2xl font-black
                     ${Math.max(
                     0,
-                    (85 * 60) -
+                    85 * 60 -
                     normalBreakUsedSeconds -
                     (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
-                      ? breakElapsedSeconds
+                      ? Math.max(0, breakElapsedSeconds - breakElapsedAtSummarySeconds)
                       : 0)
                   ) === 0
                       ? "text-red-600"
@@ -4941,10 +4948,10 @@ export default function DashboardPage() {
                   {formatBreakDuration(
                     Math.max(
                       0,
-                      (85 * 60) -
+                      85 * 60 -
                       normalBreakUsedSeconds -
                       (activeBreakType === "NORMAL" || activeBreakType === "LUNCH" || activeBreakType === "TEA" || activeBreakType === "BIO"
-                        ? breakElapsedSeconds
+                        ? Math.max(0, breakElapsedSeconds - breakElapsedAtSummarySeconds)
                         : 0)
                     )
                   )}
@@ -4956,7 +4963,12 @@ export default function DashboardPage() {
                   Exception Used
                 </div>
                 <div className="mt-1 text-2xl font-black text-gray-800">
-                  {formatBreakDuration(exceptionBreakUsedSeconds)}
+                  {formatBreakDuration(
+                    exceptionBreakUsedSeconds +
+                    (activeBreakType === "EXCEPTION"
+                      ? Math.max(0, breakElapsedSeconds - breakElapsedAtSummarySeconds)
+                      : 0)
+                  )}
                 </div>
               </div>
             </div>
