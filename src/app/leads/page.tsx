@@ -3439,108 +3439,35 @@ export default function LeadsPage() {
 
                         >
 
+
                           {/* VIEW */}
-
                           <button
-
                             type="button"
-
                             title="View Lead"
-
-                            onClick={() =>
-
-                              viewLead(
-
-                                lead.id
-
-                              )
-
-                            }
-
+                            onClick={() => viewLead(lead.id)}
                             className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-blue-100 text-base transition-colors mr-0.5"
-
                           >
-
                             👁
-
-                          </button>
-
-                          {/* EDIT */}
-
-                          <button
-
-                            type="button"
-
-                            title="Edit Lead"
-
-                            onClick={() =>
-
-                              editLead(
-
-                                lead.id
-
-                              )
-
-                            }
-
-                            className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-yellow-100 text-base transition-colors mr-0.5"
-
-                          >
-
-                            ✏️
-
                           </button>
 
                           {/* ASSIGN */}
-
                           <button
-
                             type="button"
-
                             title="Assign Lead"
-
-                            onClick={() =>
-
-                              assignLead(
-
-                                lead.id
-
-                              )
-
-                            }
-
+                            onClick={() => assignLead(lead.id)}
                             className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-green-100 text-base transition-colors mr-0.5"
-
                           >
-
                             👤
-
                           </button>
 
                           {/* DELETE */}
-
                           <button
-
                             type="button"
-
                             title="Delete Lead"
-
-                            onClick={() =>
-
-                              deleteLead(
-
-                                lead.id
-
-                              )
-
-                            }
-
+                            onClick={() => deleteLead(lead.id)}
                             className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-red-100 text-base transition-colors"
-
                           >
-
                             🗑
-
                           </button>
 
                         </td>
