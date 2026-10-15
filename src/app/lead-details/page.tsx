@@ -231,6 +231,40 @@ function LeadDetailsContent() {
   }, [leadId, token]);
 
 
+  // Move to the next lead using the same per-agent circular queue
+  // used by the Leads page. The current lead is already at the end
+  // because the View action rotates it before opening this page.
+  const goToNextLead = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const userId = window.localStorage.getItem("userId") || "current-user";
+      const queueKey = `derivion_lead_queue_${userId}`;
+      const stored = window.localStorage.getItem(queueKey);
+      const queue: number[] = stored ? JSON.parse(stored) : [];
+
+      if (!Array.isArray(queue) || queue.length === 0) {
+        router.push("/leads");
+        return;
+      }
+
+      // The first ID is the next lead. Rotate it to the end before opening it.
+      const nextLeadId = queue[0];
+      if (nextLeadId == null || String(nextLeadId) === String(leadId)) {
+        router.push("/leads");
+        return;
+      }
+
+      const nextQueue = [...queue.slice(1), nextLeadId];
+      window.localStorage.setItem(queueKey, JSON.stringify(nextQueue));
+      router.push(`/lead-details?id=${nextLeadId}`);
+    } catch (error) {
+      console.error("Unable to move to next lead:", error);
+      router.push("/leads");
+    }
+  }, [leadId, router]);
+
+
   useEffect(() => {
     if (!token) {
       router.replace("/");
@@ -313,7 +347,9 @@ function LeadDetailsContent() {
 
       const updatedLead: Lead = responseText ? JSON.parse(responseText) : body;
       setLead((prev) => ({ ...prev, ...updatedLead }));
-      setSaveMessage({ text: "Lead details updated successfully.", isError: false });
+      setSaveMessage({ text: "Lead details updated successfully. Opening next lead...", isError: false });
+      // Advance only after the backend confirms the save succeeded.
+      window.setTimeout(() => goToNextLead(), 350);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to update lead details.";
       setSaveMessage({ text: message, isError: true });
@@ -443,11 +479,11 @@ function LeadDetailsContent() {
 
   return (
     <DashboardLayout activeMenu="leads">
-      <div className="space-y-6">
+      <div className="space-y-3">
         {/* PAGE HEADER */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Lead #{lead?.id} Details</h1>
+            <h1 className="text-xl font-bold text-gray-900 tracking-tight">Lead #{lead?.id} Details</h1>
             <p className="text-sm text-gray-500 mt-0.5">View and update complete information about this lead.</p>
           </div>
 
@@ -471,22 +507,22 @@ function LeadDetailsContent() {
         </div>
 
         {/* TWO COLUMN LAYOUT */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* LEFT COLUMN: EDITABLE DETAILS + CALL HISTORY */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-7 space-y-4">
             {/* LEAD DETAILS CARD */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+              <div className="px-3 py-2 border-b border-gray-100 bg-gray-50/50">
                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Lead Profile</h3>
               </div>
 
               <div className="divide-y divide-gray-100 text-sm">
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Lead ID</span>
                   <span className="sm:col-span-2 font-bold text-gray-900">{lead?.id ?? "-"}</span>
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Full Name</span>
                   <input
                     type="text"
@@ -496,7 +532,7 @@ function LeadDetailsContent() {
                   />
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Email</span>
                   <input
                     type="email"
@@ -506,17 +542,29 @@ function LeadDetailsContent() {
                   />
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Phone</span>
                   <input
                     type="text"
                     value={editPhone}
                     onChange={(e) => setEditPhone(e.target.value)}
-                    className="sm:col-span-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    className="sm:col-span-2 px-4 py-2.5 border-2 border-blue-300 rounded-lg text-base font-bold tracking-wide text-blue-900 bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
+                  {editPhone.trim() && (
+                    <div className="sm:col-start-2 sm:col-span-2 -mt-1">
+                      <a
+                        href={`tel:${editPhone.trim().replace(/[^+0-9]/g, "")}`}
+                        className="inline-flex items-center gap-2 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-green-700"
+                      >
+                        &#9742; Call {editPhone.trim()}
+                      </a>
+                    </div>
+                  )}
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Age</span>
                   <input
                     type="number"
@@ -528,7 +576,7 @@ function LeadDetailsContent() {
                   />
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Course</span>
                   <span className="sm:col-span-2 text-gray-800 flex items-center gap-2">
                     {lead?.courseInterested || "-"}
@@ -536,7 +584,7 @@ function LeadDetailsContent() {
                   </span>
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Lead Source</span>
                   <span className="sm:col-span-2 text-gray-800 flex items-center gap-2">
                     {lead?.leadSource || "-"}
@@ -544,7 +592,7 @@ function LeadDetailsContent() {
                   </span>
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Status</span>
                   <select
                     value={editStatus}
@@ -568,7 +616,7 @@ function LeadDetailsContent() {
                   </select>
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Priority</span>
                   <select
                     value={editPriority}
@@ -582,7 +630,7 @@ function LeadDetailsContent() {
                   </select>
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">City</span>
                   <input
                     type="text"
@@ -592,7 +640,7 @@ function LeadDetailsContent() {
                   />
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Education</span>
                   <input
                     type="text"
@@ -602,7 +650,7 @@ function LeadDetailsContent() {
                   />
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Current Profession</span>
                   <input
                     type="text"
@@ -612,7 +660,7 @@ function LeadDetailsContent() {
                   />
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Primary Objective</span>
                   <input
                     type="text"
@@ -622,7 +670,7 @@ function LeadDetailsContent() {
                   />
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Trading Experience</span>
                   <input
                     type="text"
@@ -632,7 +680,7 @@ function LeadDetailsContent() {
                   />
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Customer Looking For</span>
                   <input
                     type="text"
@@ -642,7 +690,7 @@ function LeadDetailsContent() {
                   />
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
+                <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-3 items-center gap-2">
                   <span className="font-semibold text-gray-600">Interested Area</span>
                   <input
                     type="text"
@@ -654,14 +702,23 @@ function LeadDetailsContent() {
               </div>
 
               {/* SAVE BUTTON */}
-              <div className="p-4 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center gap-3">
+              <div className="px-3 py-2 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   disabled={saving}
                   onClick={handleSaveDetails}
-                  className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
+                  className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
                 >
-                  {saving ? "Saving..." : "Save Lead Details"}
+                  {saving ? "Saving..." : "Save & Next Lead"}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={goToNextLead}
+                  className="px-4 py-2 text-sm font-semibold text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
+                >
+                  Next Lead &#8594;
                 </button>
 
                 {saveMessage && (
@@ -673,7 +730,7 @@ function LeadDetailsContent() {
             </div>
 
             {/* CALL HISTORY */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 space-y-3">
               <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                 <div>
                   <h3 className="text-base font-bold text-gray-900">Call History</h3>
@@ -730,9 +787,9 @@ function LeadDetailsContent() {
           </div>
 
           {/* RIGHT COLUMN: FOLLOW-UPS + NOTES */}
-          <div className="lg:col-span-5 space-y-6">
+          <div className="lg:col-span-5 space-y-4">
             {/* FOLLOW-UP HISTORY */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 space-y-3">
               <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                 <div>
                   <h3 className="text-base font-bold text-gray-900">Follow-up History</h3>
@@ -787,7 +844,7 @@ function LeadDetailsContent() {
             </div>
 
             {/* NOTES */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 space-y-3">
               <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                 <div>
                   <h3 className="text-base font-bold text-gray-900">Notes</h3>
