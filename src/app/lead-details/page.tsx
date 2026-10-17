@@ -486,6 +486,11 @@ function LeadDetailsContent() {
     }
   };
 
+  // WhatsApp click-to-chat supports this CRM's 10-digit Indian phone numbers.
+  const whatsappLocalNumber = (editPhone || "").replace(/\D/g, "");
+  const whatsappNumber = whatsappLocalNumber.length === 10 ? `91${whatsappLocalNumber}` : "";
+  const whatsappMessage = `Hi ${lead?.fullName || "there"}, I'm contacting you from ISFT regarding your course enquiry.`;
+
   if (loading) {
     return (
       <DashboardLayout activeMenu="leads" title="Lead Details">
@@ -572,13 +577,28 @@ function LeadDetailsContent() {
                     className="sm:col-span-2 px-4 py-2.5 border-2 border-gray-200 rounded-lg text-base font-bold tracking-wide text-gray-700 bg-gray-100 cursor-not-allowed focus:outline-none"
                   />
                   {editPhone.trim() && (
-                    <div className="sm:col-start-2 sm:col-span-2 -mt-1">
+                    <div className="sm:col-start-2 sm:col-span-2 -mt-1 flex flex-wrap items-center gap-2">
                       <a
                         href={`tel:${editPhone.trim().replace(/[^+0-9]/g, "")}`}
                         className="inline-flex items-center gap-2 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-green-700"
                       >
                         &#9742; Call {editPhone.trim()}
                       </a>
+                      {whatsappNumber ? (
+                        <a
+                          href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-md bg-[#25D366] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#1DA851]"
+                          aria-label={`Open WhatsApp chat with ${lead?.fullName || "this lead"}`}
+                        >
+                          <span aria-hidden="true">&#9993;</span> WhatsApp
+                        </a>
+                      ) : (
+                        <span className="text-xs font-medium text-amber-700" title="WhatsApp requires a 10-digit Indian mobile number.">
+                          WhatsApp unavailable: number must contain exactly 10 digits.
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
