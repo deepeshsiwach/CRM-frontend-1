@@ -97,6 +97,7 @@ export const PAGE_ACCESS: Record<string, string[]> = {
   "add-user": ["ADMIN"],
   "user-details": ["ADMIN"],
   "edit-user": ["ADMIN"],
+  survey: ["ADMIN"],
 };
 
 export const RESTRICTED_PAGES: Record<string, boolean> = {
@@ -105,6 +106,7 @@ export const RESTRICTED_PAGES: Record<string, boolean> = {
   teams: true,
   courses: true,
   campaigns: true,
+  survey: true,
 };
 
 export function canAccessPage(pageName: string): boolean {
