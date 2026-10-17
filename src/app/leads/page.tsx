@@ -3450,25 +3450,28 @@ export default function LeadsPage() {
                             👁
                           </button>
 
-                          {/* ASSIGN */}
-                          <button
-                            type="button"
-                            title="Assign Lead"
-                            onClick={() => assignLead(lead.id)}
-                            className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-green-100 text-base transition-colors mr-0.5"
-                          >
-                            👤
-                          </button>
+                          {/* ASSIGN AND DELETE - ADMIN ONLY */}
+                          {isClientReady && isAdmin() && (
+                            <>
+                              <button
+                                type="button"
+                                title="Assign Lead"
+                                onClick={() => assignLead(lead.id)}
+                                className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-green-100 text-base transition-colors mr-0.5"
+                              >
+                                👤
+                              </button>
 
-                          {/* DELETE */}
-                          <button
-                            type="button"
-                            title="Delete Lead"
-                            onClick={() => deleteLead(lead.id)}
-                            className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-red-100 text-base transition-colors"
-                          >
-                            🗑
-                          </button>
+                              <button
+                                type="button"
+                                title="Delete Lead"
+                                onClick={() => deleteLead(lead.id)}
+                                className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-red-100 text-base transition-colors"
+                              >
+                                🗑
+                              </button>
+                            </>
+                          )}
 
                         </td>
 
