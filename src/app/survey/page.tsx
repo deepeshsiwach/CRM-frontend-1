@@ -98,6 +98,9 @@ function buildContacts(csvText: string): SurveyContact[] {
 export default function SurveyPage() {
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const brochureInputRef = useRef<HTMLInputElement>(null);
+    const [brochureFile, setBrochureFile] = useState<File | null>(null);
+    const [brochureNotice, setBrochureNotice] = useState("");
     const [authorized, setAuthorized] = useState(false);
     const [authChecking, setAuthChecking] = useState(true);
     const [contacts, setContacts] = useState<SurveyContact[]>([]);
@@ -198,10 +201,59 @@ export default function SurveyPage() {
                         <p className="mt-1 text-sm text-slate-500">Upload survey contacts and open a personalized WhatsApp message for each person.</p>
                     </div>
                     <button type="button" onClick={() => fileInputRef.current?.click()} className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">Upload CSV</button>
+                    <button
+                        type="button"
+                        onClick={() => brochureInputRef.current?.click()}
+                        className="rounded-lg border border-indigo-600 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+                    >
+                        Upload Brochure (PDF)
+                    </button>
+
+                    <input
+                        ref={brochureInputRef}
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        className="hidden"
+                        onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (!file) return;
+
+                            if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+                                setBrochureNotice("Please select a PDF brochure.");
+                                setBrochureFile(null);
+                                event.target.value = "";
+                                return;
+                            }
+
+                            setBrochureFile(file);
+                            setBrochureNotice(`Brochure selected: ${file.name}`);
+                        }}
+                    />
                     <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleFileChange} />
                 </div>
 
                 {notice && <div role="status" className="rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-800">{notice}</div>}
+                {brochureNotice && (
+                    <div className="rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-800">
+                        {brochureNotice}
+
+                        {brochureFile && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setBrochureFile(null);
+                                    setBrochureNotice("");
+                                    if (brochureInputRef.current) {
+                                        brochureInputRef.current.value = "";
+                                    }
+                                }}
+                                className="ml-3 font-semibold underline"
+                            >
+                                Remove brochure
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><p className="text-sm text-slate-500">Total rows</p><p className="mt-2 text-3xl font-bold text-slate-900">{contacts.length}</p></div>
