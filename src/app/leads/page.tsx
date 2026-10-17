@@ -1137,17 +1137,9 @@ export default function LeadsPage() {
 
   ) => {
 
-    // ----------------------------------------------------------
-
-    // IMPORTANT:
-
-    // For agents, move the viewed lead to the end
-
-    // of the queue before opening the detail page.
-
-    // ----------------------------------------------------------
-
-    rotateLeadToEnd(id);
+    // Opening a lead must not rotate the agent queue.
+    // Queue rotation is handled only by an explicit Next Lead
+    // action or after a successful save on the lead details page.
 
     router.push(
 
@@ -2987,9 +2979,11 @@ export default function LeadsPage() {
 
             <strong>Agent Queue:</strong>{" "}
 
-            When you open a lead, that lead moves to the end of
+            The queue moves forward only when you click Next Lead
 
-            the queue and the next lead comes forward.
+            or successfully save lead details. Viewing a lead alone
+
+            does not change the queue.
 
           </div>
 
