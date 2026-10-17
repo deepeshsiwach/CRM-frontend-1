@@ -231,9 +231,8 @@ function LeadDetailsContent() {
   }, [leadId, token]);
 
 
-  // Move to the next lead using the same per-agent circular queue
-  // used by the Leads page. The current lead is already at the end
-  // because the View action rotates it before opening this page.
+  // Move the current lead to the end of this agent's queue, then open
+  // the first remaining lead. Viewing a lead alone does not rotate the queue.
   const goToNextLead = useCallback(() => {
     if (typeof window === "undefined") return;
 
@@ -241,23 +240,40 @@ function LeadDetailsContent() {
       const userId = window.localStorage.getItem("userId") || "current-user";
       const queueKey = `derivion_lead_queue_${userId}`;
       const stored = window.localStorage.getItem(queueKey);
-      const queue: number[] = stored ? JSON.parse(stored) : [];
+      const parsed: unknown = stored ? JSON.parse(stored) : [];
+      const queue: number[] = Array.isArray(parsed)
+        ? parsed.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+        : [];
 
-      if (!Array.isArray(queue) || queue.length === 0) {
+      if (!leadId || queue.length === 0) {
         router.push("/leads");
         return;
       }
 
-      // The first ID is the next lead. Rotate it to the end before opening it.
-      const nextLeadId = queue[0];
-      if (nextLeadId == null || String(nextLeadId) === String(leadId)) {
+      const currentId = Number(leadId);
+      const currentIndex = queue.findIndex((id) => id === currentId);
+      if (currentIndex === -1) {
+        // If this lead is not in the saved queue, leave the queue unchanged.
+        const nextLeadId = queue.find((id) => id !== currentId);
+        if (nextLeadId == null) {
+          router.push("/leads");
+          return;
+        }
+        router.push(`/lead-details?id=${nextLeadId}`);
+        return;
+      }
+
+      const nextQueue = queue.filter((id) => id !== currentId);
+      if (nextQueue.length === 0) {
+        window.localStorage.setItem(queueKey, JSON.stringify([currentId]));
         router.push("/leads");
         return;
       }
 
-      const nextQueue = [...queue.slice(1), nextLeadId];
+      // The current lead is now at the end; the first remaining ID is next.
+      nextQueue.push(currentId);
       window.localStorage.setItem(queueKey, JSON.stringify(nextQueue));
-      router.push(`/lead-details?id=${nextLeadId}`);
+      router.push(`/lead-details?id=${nextQueue[0]}`);
     } catch (error) {
       console.error("Unable to move to next lead:", error);
       router.push("/leads");
@@ -314,7 +330,8 @@ function LeadDetailsContent() {
     const body = {
       fullName: editName.trim(),
       email: editEmail.trim() || null,
-      phone: editPhone.trim(),
+      // Phone is displayed read-only; preserve the value loaded from the lead.
+      phone: lead?.phone || editPhone.trim(),
       age: ageNum,
       city: editCity.trim() || null,
       education: editEducation.trim() || null,
@@ -547,10 +564,12 @@ function LeadDetailsContent() {
                   <input
                     type="text"
                     value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
+                    readOnly
+                    aria-label="Phone number (read-only)"
                     inputMode="tel"
                     autoComplete="tel"
-                    className="sm:col-span-2 px-4 py-2.5 border-2 border-blue-300 rounded-lg text-base font-bold tracking-wide text-blue-900 bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    title="Phone number cannot be edited"
+                    className="sm:col-span-2 px-4 py-2.5 border-2 border-gray-200 rounded-lg text-base font-bold tracking-wide text-gray-700 bg-gray-100 cursor-not-allowed focus:outline-none"
                   />
                   {editPhone.trim() && (
                     <div className="sm:col-start-2 sm:col-span-2 -mt-1">
