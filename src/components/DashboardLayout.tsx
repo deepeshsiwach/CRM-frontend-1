@@ -76,7 +76,7 @@ export default function DashboardLayout({
     { href: "/teams", label: "🏢 Teams", key: "teams", restricted: true },
     { href: "/courses", label: "🎓 Courses", key: "courses", restricted: true },
     { href: "/campaigns", label: "📣 Campaigns", key: "campaigns", restricted: true },
-    { href: "/survey", label: "📊 Survey", key: "survey", adminOnly: true },
+    { href: "/survey", label: "📊 Survey", key: "survey", restricted: true, adminOnly: true },
   ];
 
   const isLinkVisible = (link: typeof navLinks[number]) => {
