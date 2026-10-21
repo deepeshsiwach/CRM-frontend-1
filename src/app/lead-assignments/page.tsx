@@ -46,6 +46,8 @@ export default function LeadAssignmentsPage() {
 
   const [allAssignments, setAllAssignments] = useState<Assignment[]>([]);
   const [filteredAssignments, setFilteredAssignments] = useState<Assignment[]>([]);
+  const [assignmentPage, setAssignmentPage] = useState(1);
+  const ASSIGNMENTS_PER_PAGE = 25;
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allTeams, setAllTeams] = useState<Team[]>([]);
   const [allLeads, setAllLeads] = useState<Lead[]>([]);
@@ -163,6 +165,15 @@ export default function LeadAssignmentsPage() {
   }, [searchText, allAssignments, allUsers]);
 
   const unassignedLeads = getUnassignedLeads();
+  const totalAssignmentPages = Math.max(
+    1,
+    Math.ceil(filteredAssignments.length / ASSIGNMENTS_PER_PAGE)
+  );
+
+  const paginatedAssignments = filteredAssignments.slice(
+    (assignmentPage - 1) * ASSIGNMENTS_PER_PAGE,
+    assignmentPage * ASSIGNMENTS_PER_PAGE
+  );
 
   // Selection handlers
   const handleSelectAll = (checked: boolean) => {
@@ -456,7 +467,10 @@ export default function LeadAssignmentsPage() {
             id="searchAssignment"
             placeholder="Search assignments..."
             value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              setAssignmentPage(1);
+            }}
             className="w-full sm:w-80 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           />
 
@@ -501,7 +515,7 @@ export default function LeadAssignmentsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredAssignments.map((a) => (
+                  paginatedAssignments.map((a) => (
                     <tr key={a.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 font-medium text-gray-900">{a.id}</td>
                       <td className="px-4 py-3 font-medium text-blue-600">{a.leadId}</td>
@@ -511,8 +525,8 @@ export default function LeadAssignmentsPage() {
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${a.status === "ACTIVE"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-600"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-600"
                             }`}
                         >
                           {a.status || "-"}
@@ -531,7 +545,50 @@ export default function LeadAssignmentsPage() {
                   ))
                 )}
               </tbody>
+
             </table>
+            <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
+              <p className="text-sm text-gray-600">
+                Showing{" "}
+                {filteredAssignments.length === 0
+                  ? 0
+                  : (assignmentPage - 1) * ASSIGNMENTS_PER_PAGE + 1}
+                {" "}to{" "}
+                {Math.min(
+                  assignmentPage * ASSIGNMENTS_PER_PAGE,
+                  filteredAssignments.length
+                )}{" "}
+                of {filteredAssignments.length} assignments
+              </p>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAssignmentPage((page) => Math.max(1, page - 1))}
+                  disabled={assignmentPage === 1}
+                  className="rounded border px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Previous
+                </button>
+
+                <span className="px-3 py-1 text-sm">
+                  Page {assignmentPage} of {totalAssignmentPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAssignmentPage((page) =>
+                      Math.min(totalAssignmentPages, page + 1)
+                    )
+                  }
+                  disabled={assignmentPage >= totalAssignmentPages}
+                  className="rounded border px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
