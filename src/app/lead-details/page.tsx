@@ -215,7 +215,8 @@ function LeadDetailsContent() {
   const loadNotes = useCallback(async () => {
     if (!leadId || !token) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/notes`, {
+      // Only this lead's notes (same result as filtering /api/notes, without downloading every note).
+      const res = await fetch(`${API_BASE_URL}/api/notes/lead/${leadId}`, {
         headers: { Authorization: "Bearer " + token },
       });
       if (res.ok) {

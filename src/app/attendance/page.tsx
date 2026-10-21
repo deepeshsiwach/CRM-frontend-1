@@ -196,7 +196,8 @@ export default function AttendancePage() {
 
         const intervalId = window.setInterval(() => {
 
-            void loadAttendance();
+            // Skip refreshes while the tab is in the background.
+            if (!document.hidden) void loadAttendance();
 
         }, 15000);
 
