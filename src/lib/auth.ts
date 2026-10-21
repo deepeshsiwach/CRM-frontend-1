@@ -41,6 +41,57 @@ export function logout(): void {
   window.location.href = "/";
 }
 
+// ============================================================
+// SESSION EXPIRY
+// ============================================================
+
+/** True when the JWT's exp claim is in the past (or the token cannot be read). */
+export function isTokenExpired(token: string | null, skewSeconds = 30): boolean {
+  if (!token) return true;
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return true;
+    const json = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof json.exp !== "number" || json.exp * 1000 <= Date.now() + skewSeconds * 1000;
+  } catch {
+    return true;
+  }
+}
+
+/** Clear the stored login and send the user to the login page with a session-expired notice. */
+export function expireSession(): void {
+  if (typeof window === "undefined") return;
+  ["jwtToken", "userId", "userName", "userEmail", "userRole"].forEach((k) => localStorage.removeItem(k));
+  window.location.replace("/?session=expired");
+}
+
+let sessionGuardInstalled = false;
+
+/**
+ * Installs one global fetch hook: an authenticated API call that is rejected because the session
+ * ended (401 from the Node backend; 403 with an expired token from the Spring backend) clears the
+ * login and redirects once, instead of leaving the page silently empty. Role-based 403s with a
+ * valid token are left to the page, as today.
+ */
+export function installSessionGuard(): void {
+  if (typeof window === "undefined" || sessionGuardInstalled) return;
+  sessionGuardInstalled = true;
+  const originalFetch = window.fetch.bind(window);
+  let redirecting = false;
+  window.fetch = async (input, init) => {
+    const response = await originalFetch(input, init);
+    if (redirecting || (response.status !== 401 && response.status !== 403)) return response;
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+    const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+    const authenticatedApiCall = url.includes("/api/") && !url.includes("/api/auth/login") && headers.has("Authorization");
+    if (authenticatedApiCall && (response.status === 401 || isTokenExpired(getToken()))) {
+      redirecting = true;
+      expireSession();
+    }
+    return response;
+  };
+}
+
 export function saveLoginData(data: {
   token: string;
   id: number | string;

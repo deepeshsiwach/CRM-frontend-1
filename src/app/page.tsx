@@ -5,23 +5,31 @@
 // Ported from index.html + script.js
 // ============================================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { API_BASE_URL } from "@/lib/config";
-import { getToken, saveLoginData } from "@/lib/auth";
+import { getToken, isTokenExpired, saveLoginData } from "@/lib/auth";
+
+// "/?session=expired" is set by expireSession(); read without a setState-in-effect (server snapshot: false).
+const noSubscribe = () => () => {};
+const readSessionExpired = () => new URLSearchParams(window.location.search).get("session") === "expired";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginMessage, setLoginMessage] = useState("");
+  const sessionExpired = useSyncExternalStore(noSubscribe, readSessionExpired, () => false);
+  const shownMessage = loginMessage || (sessionExpired ? "Your session has expired. Please log in again." : "");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // If already logged in, redirect to dashboard
+    // If already logged in with a valid session, redirect to dashboard; drop an expired one.
     const token = getToken();
-    if (token) {
+    if (token && isTokenExpired(token)) {
+      ["jwtToken", "userId", "userName", "userEmail", "userRole"].forEach((k) => localStorage.removeItem(k));
+    } else if (token) {
       router.replace("/dashboard");
     }
   }, [router]);
@@ -127,14 +135,14 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {loginMessage && (
+          {shownMessage && (
             <p
               id="loginMessage"
               className={`mt-4 text-sm text-center font-medium ${
-                loginMessage.includes("success") ? "text-green-600" : "text-red-500"
+                shownMessage.includes("success") ? "text-green-600" : "text-red-500"
               }`}
             >
-              {loginMessage}
+              {shownMessage}
             </p>
           )}
         </div>

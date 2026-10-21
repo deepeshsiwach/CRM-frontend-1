@@ -17,6 +17,9 @@ import {
   getUserRole,
   logout,
   PAGE_ACCESS,
+  isTokenExpired,
+  expireSession,
+  installSessionGuard,
 } from "@/lib/auth";
 
 import { API_BASE_URL } from "@/lib/config";
@@ -48,6 +51,11 @@ export default function DashboardLayout({
       router.replace("/");
       return;
     }
+    if (isTokenExpired(token)) {
+      expireSession();
+      return;
+    }
+    installSessionGuard();
 
     const name = getUserName();
     const role = getUserRole();
@@ -62,6 +70,14 @@ export default function DashboardLayout({
       router.replace("/dashboard");
     }
   }, [router, pathname]);
+
+  // Tokens last 8 hours: end the session on time even if the page makes no further API calls.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (getToken() && isTokenExpired(getToken())) expireSession();
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const navLinks = [
     { href: "/dashboard", label: "🏠 Dashboard", key: "dashboard" },
