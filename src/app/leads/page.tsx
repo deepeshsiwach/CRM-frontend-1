@@ -72,6 +72,21 @@ interface Course {
 
 }
 
+interface LeadAssignment {
+  id?: number;
+  leadId: number;
+  agentId: number;
+  status?: string;
+  assignedAt?: string;
+}
+
+interface AssignedAgentUser {
+  id: number;
+  fullName?: string;
+  name?: string;
+  username?: string;
+}
+
 // ============================================================
 
 // CONSTANTS
@@ -140,6 +155,9 @@ export default function LeadsPage() {
   }, []);
 
   const [allLeads, setAllLeads] = useState<Lead[]>([]);
+
+  // Active lead assignments mapped to the assigned agent name.
+  const [assignedAgentByLeadId, setAssignedAgentByLeadId] = useState<Record<number, string>>({});
 
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
 
@@ -505,6 +523,41 @@ export default function LeadsPage() {
       }
 
       const data: Lead[] = await res.json();
+
+      // --------------------------------------------------------
+      // LOAD ACTIVE ASSIGNMENTS + AGENT NAMES FOR THE TABLE
+      // --------------------------------------------------------
+      try {
+        const headers = { Authorization: "Bearer " + token };
+        const [assignmentsRes, usersRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/lead-assignments`, { headers }),
+          fetch(`${API_BASE_URL}/api/users`, { headers }),
+        ]);
+
+        if (assignmentsRes.ok && usersRes.ok) {
+          const assignments: LeadAssignment[] = await assignmentsRes.json();
+          const users: AssignedAgentUser[] = await usersRes.json();
+          const userById = new Map<number, AssignedAgentUser>(
+            users.map((user) => [Number(user.id), user])
+          );
+          const assignmentMap: Record<number, string> = {};
+
+          // Match the Lead Assignments page: only ACTIVE assignments count.
+          assignments
+            .filter((assignment) => String(assignment.status || "").toUpperCase() === "ACTIVE")
+            .forEach((assignment) => {
+              const agent = userById.get(Number(assignment.agentId));
+              const agentName = agent?.fullName || agent?.name || agent?.username;
+              if (agentName && Number.isFinite(Number(assignment.leadId))) {
+                assignmentMap[Number(assignment.leadId)] = agentName;
+              }
+            });
+
+          setAssignedAgentByLeadId(assignmentMap);
+        }
+      } catch (assignmentError) {
+        console.error("Unable to load lead assignment names:", assignmentError);
+      }
 
       // --------------------------------------------------------
 
@@ -3122,6 +3175,10 @@ export default function LeadsPage() {
                   </th>
 
                   <th className={thCls}>
+                    Assigned Agent
+                  </th>
+
+                  <th className={thCls}>
 
                     Action
 
@@ -3141,7 +3198,7 @@ export default function LeadsPage() {
 
                     <td
 
-                      colSpan={11}
+                      colSpan={12}
 
                       className="text-center py-10 text-gray-400"
 
@@ -3425,6 +3482,18 @@ export default function LeadsPage() {
 
                           }
 
+                        </td>
+
+                        <td className={tdCls}>
+                          {assignedAgentByLeadId[Number(lead.id)] ? (
+                            <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
+                              {assignedAgentByLeadId[Number(lead.id)]}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                              Not Assigned
+                            </span>
+                          )}
                         </td>
 
                         <td
