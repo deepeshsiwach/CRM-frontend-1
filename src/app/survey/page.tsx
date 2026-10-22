@@ -205,10 +205,23 @@ export default function SurveyPage() {
 
 
   const [notice, setNotice] = useState("");
+  const [whatsAppOpenedIds, setWhatsAppOpenedIds] = useState<string[]>([]);
 
   const [message, setMessage] = useState(
     "Hello {name},\n\nGreetings from ISFT (International School of Financial Trading)! We hope you are doing well. We would like to invite you to connect with us and learn more about our training programs. Please let us know a convenient time to speak.\n\nRegards,\nISFT Team"
   );
+
+  // Restore WhatsApp-open tracking saved in this browser
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("surveyWhatsAppOpenedIds");
+      if (saved) {
+        setWhatsAppOpenedIds(JSON.parse(saved) as string[]);
+      }
+    } catch {
+      // Ignore unavailable or invalid browser storage.
+    }
+  }, []);
 
   // ADMIN-ONLY PAGE ACCESS
   useEffect(() => {
@@ -234,6 +247,10 @@ export default function SurveyPage() {
   ).length;
 
   const invalidCount = contacts.length - validCount;
+  const openedCount = contacts.filter((contact) =>
+    whatsAppOpenedIds.includes(contact.id)
+  ).length;
+  const remainingCount = Math.max(0, validCount - openedCount);
 
   const filteredContacts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -451,7 +468,7 @@ export default function SurveyPage() {
         )}
 
         {/* SUMMARY CARDS */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-sm text-slate-500">Total rows</p>
             <p className="mt-2 text-3xl font-bold text-slate-900">
@@ -472,6 +489,26 @@ export default function SurveyPage() {
             </p>
             <p className="mt-2 text-3xl font-bold text-amber-700">
               {invalidCount}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-sky-200 bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">WhatsApp opened</p>
+            <p className="mt-2 text-3xl font-bold text-sky-700">
+              {openedCount}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Chats opened from this page
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-violet-200 bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Remaining</p>
+            <p className="mt-2 text-3xl font-bold text-violet-700">
+              {remainingCount}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Valid numbers not yet opened
             </p>
           </div>
         </div>
