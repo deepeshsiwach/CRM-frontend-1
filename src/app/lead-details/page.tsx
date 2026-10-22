@@ -1224,52 +1224,6 @@ const personalizeMessage = (template: string) =>
 
 
 
-        {/* PERSONAL OUTREACH TEMPLATES */}
-        <section className="mb-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <button
-            type="button"
-            onClick={() => setShowOutreachTemplates((visible) => !visible)}
-            aria-expanded={showOutreachTemplates}
-            className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-slate-50"
-          >
-            <span>
-              <span className="block text-sm font-bold text-slate-900">Outreach Templates</span>
-              <span className="mt-1 block text-xs text-slate-500">
-                Manage your saved WhatsApp greeting and email message
-              </span>
-            </span>
-            <span className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">
-              {showOutreachTemplates ? "Hide Templates ▲" : "Edit Templates ▼"}
-            </span>
-          </button>
-          {showOutreachTemplates && (
-            <div className="border-t border-slate-200 p-4">
-              <p className="mb-3 text-xs text-slate-500">
-                Signed in as {agentName}. Use {"{name}"} for the lead&apos;s name and {"{agentName}"} for your name.
-                These templates are saved for your account on this browser.
-              </p>
-              <label className="mb-1 block text-xs font-semibold text-slate-700">WhatsApp greeting</label>
-              <textarea value={whatsappTemplate} onChange={(e) => setWhatsappTemplate(e.target.value)} rows={3}
-                className="mb-3 w-full rounded-lg border border-slate-300 p-2 text-sm" />
-              <label className="mb-1 block text-xs font-semibold text-slate-700">Email subject</label>
-              <input value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)}
-                className="mb-3 w-full rounded-lg border border-slate-300 p-2 text-sm" />
-              <label className="mb-1 block text-xs font-semibold text-slate-700">Email greeting and message</label>
-              <textarea value={emailTemplate} onChange={(e) => setEmailTemplate(e.target.value)} rows={5}
-                className="mb-3 w-full rounded-lg border border-slate-300 p-2 text-sm" />
-              <button type="button" onClick={saveOutreachTemplates}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                Save My Templates
-              </button>
-              {saveMessage && (
-                <p className={`mt-2 text-xs font-semibold ${saveMessage.isError ? "text-red-600" : "text-green-600"}`}>
-                  {saveMessage.text}
-                </p>
-              )}
-            </div>
-          )}
-        </section>
-
         {/* TWO COLUMN LAYOUT */}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -2249,6 +2203,52 @@ const personalizeMessage = (template: string) =>
           </div>
 
         )}
+
+        {/* PERSONAL OUTREACH TEMPLATES */}
+        <section className="mb-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <button
+            type="button"
+            onClick={() => setShowOutreachTemplates((visible) => !visible)}
+            aria-expanded={showOutreachTemplates}
+            className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-slate-50"
+          >
+            <span>
+              <span className="block text-sm font-bold text-slate-900">Outreach Templates</span>
+              <span className="mt-1 block text-xs text-slate-500">
+                Manage your saved WhatsApp greeting and email message
+              </span>
+            </span>
+            <span className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">
+              {showOutreachTemplates ? "Hide Templates ▲" : "Edit Templates ▼"}
+            </span>
+          </button>
+          {showOutreachTemplates && (
+            <div className="border-t border-slate-200 p-4">
+              <p className="mb-3 text-xs text-slate-500">
+                Signed in as {agentName}. Use {"{name}"} for the lead&apos;s name and {"{agentName}"} for your name.
+                These templates are saved for your account on this browser.
+              </p>
+              <label className="mb-1 block text-xs font-semibold text-slate-700">WhatsApp greeting</label>
+              <textarea value={whatsappTemplate} onChange={(e) => setWhatsappTemplate(e.target.value)} rows={3}
+                className="mb-3 w-full rounded-lg border border-slate-300 p-2 text-sm" />
+              <label className="mb-1 block text-xs font-semibold text-slate-700">Email subject</label>
+              <input value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)}
+                className="mb-3 w-full rounded-lg border border-slate-300 p-2 text-sm" />
+              <label className="mb-1 block text-xs font-semibold text-slate-700">Email greeting and message</label>
+              <textarea value={emailTemplate} onChange={(e) => setEmailTemplate(e.target.value)} rows={5}
+                className="mb-3 w-full rounded-lg border border-slate-300 p-2 text-sm" />
+              <button type="button" onClick={saveOutreachTemplates}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                Save My Templates
+              </button>
+              {saveMessage && (
+                <p className={`mt-2 text-xs font-semibold ${saveMessage.isError ? "text-red-600" : "text-green-600"}`}>
+                  {saveMessage.text}
+                </p>
+              )}
+            </div>
+          )}
+        </section>
 
       </div>
 
