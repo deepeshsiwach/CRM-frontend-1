@@ -145,12 +145,14 @@ export const PAGE_ACCESS: Record<string, string[]> = {
   "edit-campaign": ["ADMIN", "MANAGER"],
   // ADMIN ONLY
   users: ["ADMIN"],
+    survey: ["ADMIN"],
   "add-user": ["ADMIN"],
   "user-details": ["ADMIN"],
   "edit-user": ["ADMIN"],
 };
 
 export const RESTRICTED_PAGES: Record<string, boolean> = {
+    survey: true,
   "lead-assignments": true,
   users: true,
   teams: true,

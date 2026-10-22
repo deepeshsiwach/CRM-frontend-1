@@ -63,6 +63,10 @@ export default function LeadAssignmentsPage() {
   const [searchText, setSearchText] = useState("");
   const [assignmentMessage, setAssignmentMessage] = useState("");
 
+  // Pagination for the assignments table
+const [assignmentPage, setAssignmentPage] = useState(1);
+const ASSIGNMENTS_PER_PAGE = 25;
+
   const token = getToken();
 
 
@@ -142,6 +146,7 @@ export default function LeadAssignmentsPage() {
 
   // Search filter
   useEffect(() => {
+    setAssignmentPage(1);
     if (!searchText.trim()) {
       setFilteredAssignments(allAssignments);
       return;
@@ -163,6 +168,26 @@ export default function LeadAssignmentsPage() {
   }, [searchText, allAssignments, allUsers]);
 
   const unassignedLeads = getUnassignedLeads();
+
+  const totalAssignmentPages = Math.max(
+  1,
+  Math.ceil(filteredAssignments.length / ASSIGNMENTS_PER_PAGE)
+);
+
+const paginatedAssignments = filteredAssignments.slice(
+  (assignmentPage - 1) * ASSIGNMENTS_PER_PAGE,
+  assignmentPage * ASSIGNMENTS_PER_PAGE
+);
+
+const firstAssignmentNumber =
+  filteredAssignments.length === 0
+    ? 0
+    : (assignmentPage - 1) * ASSIGNMENTS_PER_PAGE + 1;
+
+const lastAssignmentNumber = Math.min(
+  assignmentPage * ASSIGNMENTS_PER_PAGE,
+  filteredAssignments.length
+);
 
   // Selection handlers
   const handleSelectAll = (checked: boolean) => {
@@ -501,7 +526,7 @@ export default function LeadAssignmentsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredAssignments.map((a) => (
+                  paginatedAssignments.map((a) => (
                     <tr key={a.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 font-medium text-gray-900">{a.id}</td>
                       <td className="px-4 py-3 font-medium text-blue-600">{a.leadId}</td>
@@ -532,6 +557,49 @@ export default function LeadAssignmentsPage() {
                 )}
               </tbody>
             </table>
+          </div>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-4 border-t border-gray-200">
+            <p className="text-sm text-gray-600">
+              Showing{" "}
+              <span className="font-semibold">{firstAssignmentNumber}</span>
+              {"–"}
+              <span className="font-semibold">{lastAssignmentNumber}</span>
+              {" of "}
+              <span className="font-semibold">
+                {filteredAssignments.length}
+              </span>
+              {" assignments"}
+            </p>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setAssignmentPage((current) => Math.max(1, current - 1))
+                }
+                disabled={assignmentPage === 1}
+                className="px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Previous
+              </button>
+
+              <span className="text-sm text-gray-600 whitespace-nowrap">
+                Page {assignmentPage} of {totalAssignmentPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setAssignmentPage((current) =>
+                    Math.min(totalAssignmentPages, current + 1)
+                  )
+                }
+                disabled={assignmentPage >= totalAssignmentPages}
+                className="px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       </div>
