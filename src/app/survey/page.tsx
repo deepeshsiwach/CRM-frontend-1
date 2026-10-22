@@ -334,11 +334,7 @@ export default function SurveyPage() {
       return;
     }
 
-    if (brochureFile) {
-      setNotice(
-        `WhatsApp opened for ${contact.full_name || contact.phone}. Attach "${brochureFile.name}" manually in WhatsApp before sending.`
-      );
-    }
+    
   }
 
   // DOWNLOAD CONTACTS WITH INVALID OR MISSING PHONE NUMBERS
@@ -614,8 +610,7 @@ export default function SurveyPage() {
                           onClick={() => openWhatsApp(contact)}
                           className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
                         >
-                          Open WhatsApp
-                          {brochureFile ? " + Brochure" : ""}
+                          
                         </button>
                       ) : (
                         <span
