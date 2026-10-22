@@ -123,7 +123,17 @@ function LeadDetailsContent() {
 
   // Record today's lead view for the logged-in agent.
   const recordLeadView = useCallback(async () => {
-    if (!leadId || !token) return;
+  if (!leadId || !token) return;
+
+  if (typeof window === "undefined") return;
+
+  const userRole = (
+    localStorage.getItem("userRole") ||
+    localStorage.getItem("role") ||
+    ""
+  ).toUpperCase();
+
+  if (userRole !== "AGENT") return;
 
     try {
       const res = await fetch(
