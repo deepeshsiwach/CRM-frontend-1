@@ -193,7 +193,6 @@ export default function SurveyPage() {
   const router = useRouter();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const brochureInputRef = useRef<HTMLInputElement>(null);
 
   const [authorized, setAuthorized] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
@@ -204,7 +203,6 @@ export default function SurveyPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<ContactFilter>("all");
 
-  const [brochureFile, setBrochureFile] = useState<File | null>(null);
 
   const [notice, setNotice] = useState("");
 
@@ -306,51 +304,6 @@ export default function SurveyPage() {
     }
   }
 
-  // SELECT BROCHURE
-  function handleBrochureChange(
-    event: ChangeEvent<HTMLInputElement>
-  ) {
-    const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    const allowedTypes = [
-      "application/pdf",
-      "image/png",
-      "image/jpeg",
-    ];
-
-    const allowedExtensions = [".pdf", ".png", ".jpg", ".jpeg"];
-    const lowerName = file.name.toLowerCase();
-
-    if (
-      !allowedTypes.includes(file.type) ||
-      !allowedExtensions.some((extension) =>
-        lowerName.endsWith(extension)
-      )
-    ) {
-      setNotice("Please select a PDF, PNG or JPG brochure.");
-      event.target.value = "";
-      return;
-    }
-
-    // Keep the selection in browser memory; no server upload occurs.
-    setBrochureFile(file);
-    setNotice(`Brochure selected: ${file.name}`);
-  }
-
-  function removeBrochure() {
-    setBrochureFile(null);
-
-    if (brochureInputRef.current) {
-      brochureInputRef.current.value = "";
-    }
-
-    setNotice("Brochure removed.");
-  }
-
   // OPEN PERSONALIZED WHATSAPP CHAT
   function openWhatsApp(contact: SurveyContact) {
     if (!contact.normalizedPhone) {
@@ -362,11 +315,6 @@ export default function SurveyPage() {
       "{name}",
       contact.full_name || "there"
     );
-
-    if (brochureFile) {
-      personalized +=
-        "\n\nI've selected a brochure to share with you for your reference. I'll attach it in this chat.";
-    }
 
     const url = `https://wa.me/${contact.normalizedPhone}?text=${encodeURIComponent(
       personalized
@@ -475,7 +423,7 @@ export default function SurveyPage() {
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Upload survey contacts, select a brochure and prepare personalized WhatsApp messages.
+              Upload survey contacts and prepare personalized WhatsApp messages.
             </p>
           </div>
 
@@ -570,90 +518,6 @@ export default function SurveyPage() {
             Indian phone numbers are normalized with country code +91.
             Messages are not sent automatically or tracked by this page.
           </p>
-        </section>
-
-        {/* BROCHURE UPLOAD */}
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <div>
-              <h2 className="font-semibold text-slate-900">
-                Brochure Upload
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Select the course brochure you want to share with students.
-                Supported formats: PDF, PNG and JPG.
-              </p>
-
-              {brochureFile && (
-                <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                  <p className="break-all text-sm font-medium text-emerald-800">
-                    Selected: {brochureFile.name}
-                  </p>
-
-                  <p className="mt-1 text-xs text-emerald-700">
-                    Size: {(brochureFile.size / (1024 * 1024)).toFixed(2)} MB
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <input
-                ref={brochureInputRef}
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-                className="hidden"
-                onChange={handleBrochureChange}
-              />
-
-              <button
-                type="button"
-                onClick={() => brochureInputRef.current?.click()}
-                className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
-              >
-                {brochureFile ? "Change Brochure" : "Upload Brochure"}
-              </button>
-
-              {brochureFile && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const url = URL.createObjectURL(brochureFile);
-                      window.open(url, "_blank", "noopener,noreferrer");
-                      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
-                    }}
-                    className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                  >
-                    Preview
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={removeBrochure}
-                    className="rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50"
-                  >
-                    Remove
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
-            <p className="text-sm font-medium text-amber-900">
-              Important: WhatsApp attachment
-            </p>
-
-            <p className="mt-1 text-xs leading-5 text-amber-800">
-              The brochure is selected in this browser only. Clicking Open
-              WhatsApp prepares the message, but cannot attach the local file
-              automatically. After WhatsApp opens, attach the selected brochure
-              manually before sending it. The file is not stored on the CRM
-              server and will need to be selected again after refreshing the page.
-            </p>
-          </div>
         </section>
 
         {/* SURVEY CONTACTS TABLE */}
