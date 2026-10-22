@@ -206,22 +206,83 @@ export default function SurveyPage() {
 
   const [notice, setNotice] = useState("");
   const [whatsAppOpenedIds, setWhatsAppOpenedIds] = useState<string[]>([]);
+  const [emailDraftOpenedIds, setEmailDraftOpenedIds] = useState<string[]>([]);
+  const [storageLoaded, setStorageLoaded] = useState(false);
 
   const [message, setMessage] = useState(
     "Hello {name},\n\nGreetings from ISFT (International School of Financial Trading)! We hope you are doing well. We would like to invite you to connect with us and learn more about our training programs. Please let us know a convenient time to speak.\n\nRegards,\nISFT Team"
   );
+  const [emailSubject, setEmailSubject] = useState(
+    "Connect with ISFT - Training Programs"
+  );
+  const [emailMessage, setEmailMessage] = useState(
+    "Dear {name},\n\nGreetings from ISFT (International School of Financial Trading)! We would like to invite you to connect with us and learn more about our training programs. Please let us know a convenient time to speak.\n\nRegards,\nISFT Team"
+  );
 
-  // Restore WhatsApp-open tracking saved in this browser
+  // Restore survey data and outreach progress from this browser.
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem("surveyWhatsAppOpenedIds");
+      const saved = window.localStorage.getItem("surveyPageStateV1");
       if (saved) {
-        setWhatsAppOpenedIds(JSON.parse(saved) as string[]);
+        const parsed = JSON.parse(saved) as {
+          contacts?: SurveyContact[];
+          fileName?: string;
+          message?: string;
+          emailSubject?: string;
+          emailMessage?: string;
+          whatsAppOpenedIds?: string[];
+          emailDraftOpenedIds?: string[];
+        };
+
+        if (Array.isArray(parsed.contacts)) setContacts(parsed.contacts);
+        if (typeof parsed.fileName === "string") setFileName(parsed.fileName);
+        if (typeof parsed.message === "string") setMessage(parsed.message);
+        if (typeof parsed.emailSubject === "string") setEmailSubject(parsed.emailSubject);
+        if (typeof parsed.emailMessage === "string") setEmailMessage(parsed.emailMessage);
+        if (Array.isArray(parsed.whatsAppOpenedIds)) {
+          setWhatsAppOpenedIds(parsed.whatsAppOpenedIds);
+        }
+        if (Array.isArray(parsed.emailDraftOpenedIds)) {
+          setEmailDraftOpenedIds(parsed.emailDraftOpenedIds);
+        }
       }
     } catch {
-      // Ignore unavailable or invalid browser storage.
+      // Ignore invalid or unavailable browser storage.
+    } finally {
+      setStorageLoaded(true);
     }
   }, []);
+
+  // Persist contacts, templates and progress after initial restoration.
+  useEffect(() => {
+    if (!storageLoaded) return;
+
+    try {
+      window.localStorage.setItem(
+        "surveyPageStateV1",
+        JSON.stringify({
+          contacts,
+          fileName,
+          message,
+          emailSubject,
+          emailMessage,
+          whatsAppOpenedIds,
+          emailDraftOpenedIds,
+        })
+      );
+    } catch {
+      setNotice("Browser storage is full or unavailable. Your latest changes may not persist after refresh.");
+    }
+  }, [
+    storageLoaded,
+    contacts,
+    fileName,
+    message,
+    emailSubject,
+    emailMessage,
+    whatsAppOpenedIds,
+    emailDraftOpenedIds,
+  ]);
 
   // ADMIN-ONLY PAGE ACCESS
   useEffect(() => {
@@ -251,6 +312,16 @@ export default function SurveyPage() {
     whatsAppOpenedIds.includes(contact.id)
   ).length;
   const remainingCount = Math.max(0, validCount - openedCount);
+  const validEmailContacts = contacts.filter((contact) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email.trim())
+  );
+  const emailDraftOpenedCount = validEmailContacts.filter((contact) =>
+    emailDraftOpenedIds.includes(contact.id)
+  ).length;
+  const emailRemainingCount = Math.max(
+    0,
+    validEmailContacts.length - emailDraftOpenedCount
+  );
 
   const filteredContacts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -305,6 +376,8 @@ export default function SurveyPage() {
       setFileName(file.name);
       setSearch("");
       setFilter("all");
+      setWhatsAppOpenedIds([]);
+      setEmailDraftOpenedIds([]);
 
       const valid = parsed.filter(
         (contact) => !!contact.normalizedPhone
@@ -328,7 +401,7 @@ export default function SurveyPage() {
       return;
     }
 
-    let personalized = message.replaceAll(
+    const personalized = message.replaceAll(
       "{name}",
       contact.full_name || "there"
     );
@@ -337,13 +410,7 @@ export default function SurveyPage() {
       personalized
     )}`;
 
-    // Open directly from the button click to avoid popup blockers.
-    const newWindow = window.open(
-      url,
-      "_blank",
-      "noopener,noreferrer"
-    );
-
+    const newWindow = window.open(url, "_blank", "noopener,noreferrer");
     if (!newWindow) {
       setNotice(
         "WhatsApp could not open. Please allow pop-ups for this CRM site."
@@ -351,7 +418,44 @@ export default function SurveyPage() {
       return;
     }
 
-    
+    setWhatsAppOpenedIds((current) =>
+      current.includes(contact.id) ? current : [...current, contact.id]
+    );
+    setNotice(`WhatsApp opened for ${contact.full_name || contact.phone}.`);
+  }
+
+  // OPEN A PERSONALIZED GMAIL COMPOSE WINDOW
+  function openGmailDraft(contact: SurveyContact) {
+    const email = contact.email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setNotice("This contact does not have a valid email address.");
+      return;
+    }
+
+    const subject = emailSubject.replaceAll(
+      "{name}",
+      contact.full_name || "there"
+    );
+    const personalized = emailMessage.replaceAll(
+      "{name}",
+      contact.full_name || "there"
+    );
+    const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+      email
+    )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(personalized)}`;
+
+    const newWindow = window.open(url, "_blank", "noopener,noreferrer");
+    if (!newWindow) {
+      setNotice("Gmail could not open. Please allow pop-ups for this CRM site.");
+      return;
+    }
+
+    setEmailDraftOpenedIds((current) =>
+      current.includes(contact.id) ? current : [...current, contact.id]
+    );
+    setNotice(
+      `Gmail draft opened for ${contact.full_name || email}. Review and send it in Gmail.`
+    );
   }
 
   // DOWNLOAD CONTACTS WITH INVALID OR MISSING PHONE NUMBERS
@@ -436,7 +540,7 @@ export default function SurveyPage() {
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Upload survey contacts and prepare personalized WhatsApp messages.
+              Upload survey contacts and prepare personalized WhatsApp messages and Gmail drafts.
             </p>
           </div>
 
@@ -468,7 +572,7 @@ export default function SurveyPage() {
         )}
 
         {/* SUMMARY CARDS */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-sm text-slate-500">Total rows</p>
             <p className="mt-2 text-3xl font-bold text-slate-900">
@@ -511,6 +615,26 @@ export default function SurveyPage() {
               Valid numbers not yet opened
             </p>
           </div>
+
+          <div className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Gmail drafts opened</p>
+            <p className="mt-2 text-3xl font-bold text-blue-700">
+              {emailDraftOpenedCount}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Drafts opened from this page
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-indigo-200 bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Email remaining</p>
+            <p className="mt-2 text-3xl font-bold text-indigo-700">
+              {emailRemainingCount}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Valid email addresses not yet opened
+            </p>
+          </div>
         </div>
 
         {/* WHATSAPP MESSAGE TEMPLATE */}
@@ -550,6 +674,38 @@ export default function SurveyPage() {
           <p className="mt-2 text-xs text-slate-500">
             Indian phone numbers are normalized with country code +91.
             Messages are not sent automatically or tracked by this page.
+          </p>
+        </section>
+
+        {/* GMAIL EMAIL TEMPLATE */}
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4">
+            <h2 className="font-semibold text-slate-900">Gmail email template</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Use {"{name}"} to personalize each draft. Clicking Email opens a pre-filled draft in Gmail; review and send it manually.
+            </p>
+          </div>
+
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Email subject
+          </label>
+          <input
+            value={emailSubject}
+            onChange={(event) => setEmailSubject(event.target.value)}
+            className="mb-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          />
+
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Email message
+          </label>
+          <textarea
+            value={emailMessage}
+            onChange={(event) => setEmailMessage(event.target.value)}
+            rows={6}
+            className="w-full rounded-lg border border-slate-300 p-3 text-sm text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          />
+          <p className="mt-2 text-xs text-slate-500">
+            Drafts are opened in Gmail. This page cannot confirm whether an email was sent.
           </p>
         </section>
 
@@ -606,6 +762,7 @@ export default function SurveyPage() {
                   <th className="px-4 py-3">Email</th>
                   <th className="px-4 py-3">Group / type</th>
                   <th className="px-4 py-3">WhatsApp</th>
+                  <th className="px-4 py-3">Email</th>
                 </tr>
               </thead>
 
@@ -667,13 +824,37 @@ export default function SurveyPage() {
                         </span>
                       )}
                     </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email.trim()) ? (
+                        <button
+                          type="button"
+                          onClick={() => openGmailDraft(contact)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-[#EA4335] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#C5221F] focus:outline-none focus:ring-2 focus:ring-red-300"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="h-5 w-5"
+                            aria-hidden="true"
+                          >
+                            <path d="M2.5 5.2A2.5 2.5 0 0 1 5 2.7h14a2.5 2.5 0 0 1 2.5 2.5v13.6a2.5 2.5 0 0 1-2.5 2.5H5a2.5 2.5 0 0 1-2.5-2.5V5.2Zm2.1-.1 7.4 5.7 7.4-5.7H4.6Zm14.8 2.6-6.8 5.2a1 1 0 0 1-1.2 0L4.6 7.7v11.1c0 .2.2.4.4.4h14c.2 0 .4-.2.4-.4V7.7Z" />
+                          </svg>
+                          {emailDraftOpenedIds.includes(contact.id) ? "Draft opened" : "Email"}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-400" title="Missing or invalid email address">
+                          Unavailable
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 ))}
 
                 {!filteredContacts.length && (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="px-4 py-12 text-center text-slate-500"
                     >
                       {contacts.length
@@ -688,8 +869,7 @@ export default function SurveyPage() {
 
           <div className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500">
             Showing {filteredContacts.length} of {contacts.length} records.
-            Survey rows are processed in your browser and are not uploaded to
-            the CRM server.
+            Survey rows are saved in this browser and are not uploaded to the CRM server.
           </div>
         </section>
       </div>
