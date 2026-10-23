@@ -61,6 +61,8 @@ export default function FollowUpsPage() {
 
   const [searchText, setSearchText] = useState("");
   const [dueFilter, setDueFilter] = useState("ALL");
+  const [agentFilter, setAgentFilter] = useState("ALL");
+  const [statusTab, setStatusTab] = useState("ALL");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -178,6 +180,17 @@ export default function FollowUpsPage() {
       );
     }
 
+    if (agentFilter !== "ALL") {
+      result = result.filter((fu) => String(fu.agentId) === agentFilter);
+    }
+
+    if (statusTab !== "ALL") {
+      result = result.filter((fu) => {
+        if (statusTab === "OVERDUE") return getDueCategory(fu) === "OVERDUE";
+        return String(fu.status || "").toUpperCase() === statusTab;
+      });
+    }
+
     if (searchText.trim()) {
       const s = searchText.toLowerCase().trim();
 
@@ -234,6 +247,8 @@ export default function FollowUpsPage() {
   }, [
     searchText,
     dueFilter,
+    agentFilter,
+    statusTab,
     allFollowUps,
     leadNameMap,
     userNameMap,
@@ -402,6 +417,20 @@ export default function FollowUpsPage() {
     return "bg-gray-100 text-gray-700";
   };
 
+  const totalCount = allFollowUps.length;
+  const pendingCount = allFollowUps.filter(
+    (fu) => String(fu.status || "").toUpperCase() === "PENDING"
+  ).length;
+  const overdueCount = allFollowUps.filter(
+    (fu) => getDueCategory(fu) === "OVERDUE"
+  ).length;
+  const completedCount = allFollowUps.filter(
+    (fu) => String(fu.status || "").toUpperCase() === "COMPLETED"
+  ).length;
+  const agentOptions = Array.from(
+    new Set(allFollowUps.map((fu) => String(fu.agentId)))
+  ).filter((id) => id !== "undefined" && id !== "null");
+
   // ============================================================
   // STYLES
   // ============================================================
@@ -482,6 +511,21 @@ export default function FollowUpsPage() {
               </option>
             </select>
 
+            <select
+              id="followUpAgentFilter"
+              value={agentFilter}
+              onChange={(e) => setAgentFilter(e.target.value)}
+              className={inputCls}
+              aria-label="Filter follow-ups by agent"
+            >
+              <option value="ALL">All Agents</option>
+              {agentOptions.map((agentId) => (
+                <option key={agentId} value={agentId}>
+                  {userNameMap[agentId] || `Agent ${agentId}`}
+                </option>
+              ))}
+            </select>
+
           </div>
 
           {/* ==================================================
@@ -525,6 +569,49 @@ export default function FollowUpsPage() {
 
           </div>
 
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+          {[
+            { label: "Total Follow-ups", value: totalCount, tab: "ALL", style: "border-gray-200" },
+            { label: "Pending", value: pendingCount, tab: "PENDING", style: "border-amber-200" },
+            { label: "Overdue", value: overdueCount, tab: "OVERDUE", style: "border-red-200" },
+            { label: "Completed", value: completedCount, tab: "COMPLETED", style: "border-green-200" },
+          ].map((card) => (
+            <button
+              key={card.tab}
+              type="button"
+              onClick={() => setStatusTab(card.tab)}
+              className={`text-left bg-white rounded-xl border ${card.style} p-4 shadow-sm hover:shadow transition-shadow ${
+                statusTab === card.tab ? "ring-2 ring-blue-500" : ""
+              }`}
+            >
+              <div className="text-sm text-gray-500">{card.label}</div>
+              <div className="text-2xl font-bold text-gray-900 mt-1">{card.value}</div>
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          {[
+            { label: "All", value: "ALL" },
+            { label: "Pending", value: "PENDING" },
+            { label: "Overdue", value: "OVERDUE" },
+            { label: "Completed", value: "COMPLETED" },
+          ].map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => setStatusTab(tab.value)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                statusTab === tab.value
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* ====================================================
