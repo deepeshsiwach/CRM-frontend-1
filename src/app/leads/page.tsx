@@ -181,6 +181,8 @@ export default function LeadsPage() {
 
   const [message, setMessage] = useState("");
 
+  const [selectedLeadIds, setSelectedLeadIds] = useState<number[]>([]);
+
   // ============================================================
 
   // EXCEL IMPORT
@@ -1243,6 +1245,73 @@ export default function LeadsPage() {
   };
 
   // ============================================================
+
+  // ============================================================
+  // BULK LEAD SELECTION AND DELETE (ADMIN ONLY UI)
+  // ============================================================
+
+  const toggleLeadSelection = (leadId: number) => {
+    setSelectedLeadIds((current) =>
+      current.includes(leadId)
+        ? current.filter((id) => id !== leadId)
+        : [...current, leadId]
+    );
+  };
+
+  const visibleLeadIds = paginatedLeads.map((lead) => Number(lead.id));
+  const allVisibleSelected =
+    visibleLeadIds.length > 0 &&
+    visibleLeadIds.every((id) => selectedLeadIds.includes(id));
+
+  const toggleSelectVisibleLeads = () => {
+    setSelectedLeadIds((current) => {
+      if (allVisibleSelected) {
+        return current.filter((id) => !visibleLeadIds.includes(id));
+      }
+      return Array.from(new Set([...current, ...visibleLeadIds]));
+    });
+  };
+
+  const deleteSelectedLeads = async () => {
+    if (selectedLeadIds.length === 0) return;
+
+    const idsToDelete = [...selectedLeadIds];
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${idsToDelete.length} selected lead(s)? This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    let deletedCount = 0;
+    const failedIds: number[] = [];
+
+    for (const id of idsToDelete) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/leads/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: "Bearer " + token },
+        });
+
+        if (response.ok) {
+          deletedCount += 1;
+        } else {
+          failedIds.push(id);
+        }
+      } catch {
+        failedIds.push(id);
+      }
+    }
+
+    setSelectedLeadIds([]);
+    await loadLeads();
+
+    if (failedIds.length === 0) {
+      setMessage(`${deletedCount} lead(s) deleted successfully.`);
+    } else {
+      setMessage(
+        `${deletedCount} lead(s) deleted. Failed lead ID(s): ${failedIds.join(", ")}.`
+      );
+    }
+  };
 
   // DELETE LEAD
 
@@ -2335,6 +2404,21 @@ export default function LeadsPage() {
 
           <div className="flex gap-2">
 
+            {isClientReady && isAdmin() && (
+              <button
+                type="button"
+                onClick={deleteSelectedLeads}
+                disabled={selectedLeadIds.length === 0}
+                className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                  selectedLeadIds.length === 0
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-700 text-white shadow-sm"
+                }`}
+              >
+                Delete Selected{selectedLeadIds.length > 0 ? ` (${selectedLeadIds.length})` : ""}
+              </button>
+            )}
+
             <button
 
               type="button"
@@ -3174,6 +3258,19 @@ export default function LeadsPage() {
 
                   </th>
 
+                  {isClientReady && isAdmin() && (
+                    <th className={thCls}>
+                      <input
+                        type="checkbox"
+                        aria-label="Select all visible leads"
+                        checked={allVisibleSelected}
+                        onChange={toggleSelectVisibleLeads}
+                        disabled={visibleLeadIds.length === 0}
+                        className="h-4 w-4 cursor-pointer"
+                      />
+                    </th>
+                  )}
+
                   <th className={thCls}>
                     Assigned Agent
                   </th>
@@ -3198,7 +3295,7 @@ export default function LeadsPage() {
 
                     <td
 
-                      colSpan={12}
+                      colSpan={isClientReady && isAdmin() ? 13 : 12}
 
                       className="text-center py-10 text-gray-400"
 
@@ -3249,6 +3346,18 @@ export default function LeadsPage() {
                         className="hover:bg-gray-50 transition-colors"
 
                       >
+                        {isClientReady && isAdmin() && (
+                          <td className={tdCls}>
+                            <input
+                              type="checkbox"
+                              aria-label={`Select lead ${lead.id}`}
+                              checked={selectedLeadIds.includes(Number(lead.id))}
+                              onChange={() => toggleLeadSelection(Number(lead.id))}
+                              className="h-4 w-4 cursor-pointer"
+                            />
+                          </td>
+                        )}
+
 
                         <td
 
