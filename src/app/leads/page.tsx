@@ -3142,6 +3142,19 @@ export default function LeadsPage() {
 
                 <tr>
 
+                  {isClientReady && isAdmin() && (
+                    <th className={thCls}>
+                      <input
+                        type="checkbox"
+                        aria-label="Select all visible leads"
+                        checked={allVisibleSelected}
+                        onChange={toggleSelectVisibleLeads}
+                        disabled={visibleLeadIds.length === 0}
+                        className="h-4 w-4 cursor-pointer"
+                      />
+                    </th>
+                  )}
+
                   <th className={thCls}>
 
                     S.No.
@@ -3257,19 +3270,6 @@ export default function LeadsPage() {
                     City
 
                   </th>
-
-                  {isClientReady && isAdmin() && (
-                    <th className={thCls}>
-                      <input
-                        type="checkbox"
-                        aria-label="Select all visible leads"
-                        checked={allVisibleSelected}
-                        onChange={toggleSelectVisibleLeads}
-                        disabled={visibleLeadIds.length === 0}
-                        className="h-4 w-4 cursor-pointer"
-                      />
-                    </th>
-                  )}
 
                   <th className={thCls}>
                     Assigned Agent
