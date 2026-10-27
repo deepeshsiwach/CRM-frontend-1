@@ -176,6 +176,14 @@ interface LeadSource {
 
 }
 
+interface AgentCurrentLeadRow {
+  agentId: number;
+  agentName: string;
+  leadId: number | null;
+  leadName: string | null;
+  openedAt: string | null;
+}
+
 
 
 
@@ -495,6 +503,19 @@ export default function DashboardPage() {
 
     useState<AgentPerformance[]>([]);
 
+    // Agent current-lead activity
+const [agentCurrentLeads, setAgentCurrentLeads] =
+  useState<AgentCurrentLeadRow[]>([]);
+
+const [agentCurrentLeadsLoading, setAgentCurrentLeadsLoading] =
+  useState(false);
+
+const [agentCurrentLeadsSearch, setAgentCurrentLeadsSearch] =
+  useState("");
+
+const [agentCurrentLeadsRefresh, setAgentCurrentLeadsRefresh] =
+  useState(0);
+
 
 
   const [campaignPerformanceData, setCampaignPerformanceData] =
@@ -651,7 +672,66 @@ export default function DashboardPage() {
   }, []);
 
 
+// ==========================================================
+// AGENT CURRENT-LEAD ACTIVITY
+// ==========================================================
+useEffect(() => {
+  if (userRole !== "ADMIN" && userRole !== "MANAGER") {
+    return;
+  }
 
+  let cancelled = false;
+
+  async function loadAgentCurrentLeads() {
+    setAgentCurrentLeadsLoading(true);
+
+    try {
+      const token = getToken();
+
+      if (!token) {
+        if (!cancelled) setAgentCurrentLeads([]);
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/dashboard/agent-current-leads`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Agent activity request failed: ${response.status}`
+        );
+      }
+
+      const data: AgentCurrentLeadRow[] = await response.json();
+
+      if (!cancelled) {
+        setAgentCurrentLeads(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error("Unable to load agent activity:", error);
+
+      if (!cancelled) {
+        setAgentCurrentLeads([]);
+      }
+    } finally {
+      if (!cancelled) {
+        setAgentCurrentLeadsLoading(false);
+      }
+    }
+  }
+
+  void loadAgentCurrentLeads();
+
+  return () => {
+    cancelled = true;
+  };
+}, [userRole, agentCurrentLeadsRefresh]);
 
 
   // ==========================================================
