@@ -5749,6 +5749,152 @@ useEffect(() => {
         )}
 
 
+{isManagement && (
+  <AnalyticsCard
+  title="Agent Activity"
+  subtitle="Latest lead opened by each active agent"
+  large
+>
+  <div className="space-y-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <input
+        type="text"
+        value={agentCurrentLeadsSearch}
+        onChange={(e) => setAgentCurrentLeadsSearch(e.target.value)}
+        placeholder="Search agent, lead name or lead ID..."
+        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-500 sm:max-w-md"
+      />
+
+      <button
+        type="button"
+        onClick={() => setAgentCurrentLeadsRefresh((value) => value + 1)}
+        disabled={agentCurrentLeadsLoading}
+        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {agentCurrentLeadsLoading ? "Refreshing..." : "Refresh"}
+      </button>
+    </div>
+
+    <div className="flex flex-wrap gap-3 text-sm">
+      <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
+        Active agents: {agentCurrentLeads.length}
+      </span>
+      <span className="rounded-full bg-green-50 px-3 py-1 text-green-700">
+        Lead opened: {agentCurrentLeads.filter((row) => row.leadId !== null).length}
+      </span>
+      <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
+        No lead recorded: {agentCurrentLeads.filter((row) => row.leadId === null).length}
+      </span>
+    </div>
+
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200 text-sm">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">
+              Agent
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">
+              Latest Lead Opened
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">
+              Opened At
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">
+              Status
+            </th>
+          </tr>
+        </thead>
+
+        <tbody className="divide-y divide-gray-100 bg-white">
+          {agentCurrentLeadsLoading && agentCurrentLeads.length === 0 ? (
+            <tr>
+              <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                Loading agent activity...
+              </td>
+            </tr>
+          ) : agentCurrentLeads.filter((row) => {
+              const query = agentCurrentLeadsSearch.trim().toLowerCase();
+              if (!query) return true;
+
+              return [
+                row.agentName,
+                row.leadName ?? "",
+                row.leadId === null ? "" : String(row.leadId),
+              ].some((value) => value.toLowerCase().includes(query));
+            }).length === 0 ? (
+            <tr>
+              <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                No matching agent activity found.
+              </td>
+            </tr>
+          ) : (
+            agentCurrentLeads
+              .filter((row) => {
+                const query = agentCurrentLeadsSearch.trim().toLowerCase();
+                if (!query) return true;
+
+                return [
+                  row.agentName,
+                  row.leadName ?? "",
+                  row.leadId === null ? "" : String(row.leadId),
+                ].some((value) => value.toLowerCase().includes(query));
+              })
+              .map((row) => (
+                <tr key={row.agentId} className="hover:bg-gray-50">
+                  <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-800">
+                    {row.agentName}
+                  </td>
+
+                  <td className="px-4 py-3">
+                    {row.leadId !== null ? (
+                      <div>
+                        <div className="font-medium text-gray-800">
+                          {row.leadName || "Lead name unavailable"}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Lead ID: #{row.leadId}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">
+                        No lead opened yet
+                      </span>
+                    )}
+                  </td>
+
+                  <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+                    {row.openedAt
+                      ? new Date(row.openedAt).toLocaleString("en-IN")
+                      : "—"}
+                  </td>
+
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                        row.leadId !== null
+                          ? "bg-green-50 text-green-700"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {row.leadId !== null ? "Lead opened" : "No lead recorded"}
+                    </span>
+                  </td>
+                </tr>
+              ))
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    <p className="text-xs text-gray-500">
+      This shows the latest recorded lead opened by each active agent. It does
+      not confirm that the agent is still viewing that lead.
+    </p>
+  </div>
+</AnalyticsCard>
+)}
+
 
 
 
