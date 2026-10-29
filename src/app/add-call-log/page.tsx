@@ -480,6 +480,8 @@ function AddCallLogContent() {
                     NO_RESPONSE
                   </option>
 
+                  <option value="LOST">LOST</option>
+
                 </select>
 
               </div>

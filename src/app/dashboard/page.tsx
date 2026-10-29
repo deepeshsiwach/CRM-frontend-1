@@ -184,6 +184,12 @@ interface AgentCurrentLeadRow {
   openedAt: string | null;
 }
 
+interface AgentAttendanceSummary {
+  agentId: number;
+  agentName: string;
+  attendedLeads: number;
+}
+
 
 
 
@@ -220,6 +226,36 @@ function getTodayDateString(): string {
 
 
 
+
+async function fetchAttendedLeadCount(
+  token: string,
+  date: string
+): Promise<number> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/lead-views?date=${encodeURIComponent(date)}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Unable to load attended leads: HTTP ${response.status}`
+    );
+  }
+
+  const data: Array<{ leadId: string | number }> =
+    await response.json();
+
+  return new Set(
+    (Array.isArray(data) ? data : []).map((item) =>
+      String(item.leadId)
+    )
+  ).size;
+}
 
 
 function formatBreakDuration(totalSeconds: number): string {
@@ -515,6 +551,9 @@ const [agentCurrentLeadsSearch, setAgentCurrentLeadsSearch] =
 
 const [agentCurrentLeadsRefresh, setAgentCurrentLeadsRefresh] =
   useState(0);
+
+  const [agentAttendanceSummary, setAgentAttendanceSummary] =
+  useState<AgentAttendanceSummary[]>([]);
 
 
 
@@ -2029,11 +2068,20 @@ useEffect(() => {
 
 
 
-          setAttendedLeads(
-
-            summary.attendedLeads ?? 0
-
-          );
+          if (role === "AGENT") {
+  try {
+    const attendedCount = await fetchAttendedLeadCount(
+      token,
+      getTodayDateString()
+    );
+    setAttendedLeads(attendedCount);
+  } catch (error) {
+    console.error("Failed to load attended leads:", error);
+    setAttendedLeads(summary.attendedLeads ?? 0);
+  }
+} else {
+  setAttendedLeads(summary.attendedLeads ?? 0);
+}
 
 
 
@@ -2120,6 +2168,36 @@ useEffect(() => {
 
 
           if (role !== "AGENT") {
+
+            
+try {
+  const attendanceResponse = await fetch(
+    `${API_BASE_URL}/api/lead-views/summary?date=${encodeURIComponent(
+      getTodayDateString()
+    )}`,
+    {
+      method: "GET",
+      headers,
+    }
+  );
+
+  if (attendanceResponse.ok) {
+    const attendanceData: AgentAttendanceSummary[] =
+      await attendanceResponse.json();
+
+    setAgentAttendanceSummary(
+      Array.isArray(attendanceData) ? attendanceData : []
+    );
+  } else {
+    console.error(
+      "Failed to load agent attendance summary:",
+      attendanceResponse.status
+    );
+  }
+} catch (error) {
+  console.error("Unable to load agent attendance summary:", error);
+}
+
 
 
 
@@ -2572,11 +2650,17 @@ useEffect(() => {
 
 
 
-        setAttendedLeads(
+        try {
+  const attendedCount = await fetchAttendedLeadCount(
+    token,
+    getTodayDateString()
+  );
 
-          summary.attendedLeads
-
-        );
+  setAttendedLeads(attendedCount);
+} catch (error) {
+  console.error("Failed to load attended leads:", error);
+  setAttendedLeads(summary.attendedLeads);
+}
 
 
 
@@ -4928,11 +5012,11 @@ useEffect(() => {
 
           icon="☎️"
 
-          label="Attended Leads"
+          label="Today's Viewed Leads"
 
           value={attendedLeads}
 
-          sublabel="Leads worked today"
+          sublabel="Unique leads opened by agents today"
 
           id="attendedLeadsCard"
 
@@ -4952,11 +5036,11 @@ useEffect(() => {
 
           icon="⏳"
 
-          label="Remaining Leads"
+          label="Today's Pending Leads"
 
           value={remainingLeads}
 
-          sublabel="Yet to be worked"
+          sublabel="Assigned leads not yet viewed today"
 
           id="remainingLeadsCard"
 
@@ -5894,6 +5978,71 @@ useEffect(() => {
   </div>
 </AnalyticsCard>
 )}
+
+
+
+{/* AGENT DAILY ATTENDANCE SUMMARY */}
+{isManagement && (
+  <AnalyticsCard
+    title="Agent Daily Attendance"
+    subtitle={`Number of unique leads opened today (${getTodayDateString()})`}
+    large
+  >
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200 text-sm">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-4 py-3 text-left font-semibold text-gray-600">
+              Agent
+            </th>
+            <th className="px-4 py-3 text-center font-semibold text-gray-600">
+              Attended Leads
+            </th>
+          </tr>
+        </thead>
+
+        <tbody className="divide-y divide-gray-100 bg-white">
+          {agentAttendanceSummary.length === 0 ? (
+            <tr>
+              <td
+                colSpan={2}
+                className="px-4 py-8 text-center text-gray-500"
+              >
+                No attendance data available for today.
+              </td>
+            </tr>
+          ) : (
+            agentAttendanceSummary.map((agent) => (
+              <tr key={agent.agentId} className="hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-gray-800">
+                  {agent.agentName}
+                </td>
+                <td className="px-4 py-3 text-center font-semibold text-blue-600">
+                  {agent.attendedLeads}
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+
+        <tfoot className="bg-gray-50">
+          <tr>
+            <td className="px-4 py-3 font-semibold text-gray-800">
+              Total
+            </td>
+            <td className="px-4 py-3 text-center font-bold text-blue-700">
+              {agentAttendanceSummary.reduce(
+                (total, agent) => total + agent.attendedLeads,
+                0
+              )}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </AnalyticsCard>
+)}
+
 
 
 

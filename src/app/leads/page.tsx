@@ -147,12 +147,29 @@ export default function LeadsPage() {
 
   const router = useRouter();
 
+const [leadView, setLeadView] = useState("");
+
   // Prevent hydration mismatch for UI that depends on browser-stored user roles.
   const [isClientReady, setIsClientReady] = useState(false);
 
   useEffect(() => {
-    setIsClientReady(true);
-  }, []);
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const today = `${year}-${month}-${day}`;
+
+  setTodayDate(today);
+  setAttendanceDate(today);
+  setIsClientReady(true);
+}, []);
+
+  useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  const params = new URLSearchParams(window.location.search);
+  setLeadView(params.get("view") || "");
+}, []);
 
   const [allLeads, setAllLeads] = useState<Lead[]>([]);
 
@@ -182,6 +199,26 @@ export default function LeadsPage() {
   const [message, setMessage] = useState("");
 
   const [selectedLeadIds, setSelectedLeadIds] = useState<number[]>([]);
+
+  // ============================================================
+// ATTENDED LEADS DATE FILTER
+// ============================================================
+const [attendanceDate, setAttendanceDate] = useState("");
+const [todayDate, setTodayDate] = useState("");
+
+const [attendedLeadIds, setAttendedLeadIds] = useState<Set<number>>(
+  () => new Set()
+);
+
+
+
+const [adminAttendedLeadIds, setAdminAttendedLeadIds] = useState<Set<number>>(
+  () => new Set()
+);
+
+
+const [attendanceLoading, setAttendanceLoading] = useState(false);
+const [attendanceError, setAttendanceError] = useState("");
 
   // ============================================================
 
@@ -793,6 +830,105 @@ export default function LeadsPage() {
   }, [loadLeads]);
 
   // ============================================================
+// LOAD ATTENDED LEADS FOR THE SELECTED DATE
+// ============================================================
+
+useEffect(() => {
+  if (!isClientReady) return;
+
+  const role = String(getUserRole() || "")
+    .trim()
+    .toUpperCase()
+    .replace(/^ROLE_/, "");
+
+  const isManagementUser = role === "ADMIN" || role === "MANAGER";
+  const isAgentUser = role === "AGENT";
+
+  if (!isManagementUser && !isAgentUser) {
+    setAttendedLeadIds(new Set());
+    setAdminAttendedLeadIds(new Set());
+    setAttendanceError("");
+    setAttendanceLoading(false);
+    return;
+  }
+
+  let cancelled = false;
+
+  const loadAttendedLeads = async () => {
+    setAttendanceLoading(true);
+    setAttendanceError("");
+
+    try {
+      if (!token) {
+        throw new Error(
+          "Authentication token is missing. Please log in again."
+        );
+      }
+
+      const endpoint = isManagementUser
+        ? "/api/lead-views/all"
+        : "/api/lead-views";
+
+      const response = await fetch(
+        `${API_BASE_URL}${endpoint}?date=${encodeURIComponent(attendanceDate)}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Unable to load attendance records (HTTP ${response.status}).`
+        );
+      }
+
+      const data: Array<{ leadId: string | number }> =
+        await response.json();
+
+      const ids = new Set<number>(
+        (Array.isArray(data) ? data : [])
+          .map((item) => Number(item.leadId))
+          .filter((id) => Number.isFinite(id))
+      );
+
+      if (!cancelled) {
+        if (isManagementUser) {
+          setAdminAttendedLeadIds(ids);
+        } else {
+          setAttendedLeadIds(ids);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load attended leads:", error);
+
+      if (!cancelled) {
+        setAttendedLeadIds(new Set());
+        setAdminAttendedLeadIds(new Set());
+        setAttendanceError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load attendance records."
+        );
+      }
+    } finally {
+      if (!cancelled) {
+        setAttendanceLoading(false);
+      }
+    }
+  };
+
+  loadAttendedLeads();
+
+  return () => {
+    cancelled = true;
+  };
+}, [isClientReady, isAgent, token, attendanceDate]);
+
+
+  // ============================================================
 
   // APPLY FILTERS
 
@@ -801,6 +937,23 @@ export default function LeadsPage() {
   useEffect(() => {
 
     let leads = [...allLeads];
+
+
+    // ATTENDANCE VIEW FILTER
+    if (leadView === "attended") {
+      const attendedIds = isAgent()
+        ? attendedLeadIds
+        : adminAttendedLeadIds;
+
+      leads = leads.filter((lead) =>
+        attendedIds.has(Number(lead.id))
+      );
+    } else if (isAgent() && leadView === "remaining") {
+      leads = leads.filter(
+        (lead) => !attendedLeadIds.has(Number(lead.id))
+      );
+    }
+
 
     // ----------------------------------------------------------
 
@@ -1066,25 +1219,7 @@ export default function LeadsPage() {
 
     setCurrentPage(1);
 
-  }, [
-
-    allLeads,
-
-    searchText,
-
-    statusFilter,
-
-    priorityFilter,
-
-    sourceFilter,
-
-    courseFilter,
-
-    sortField,
-
-    sortDir,
-
-  ]);
+  }, [allLeads, searchText, statusFilter, priorityFilter, sourceFilter, courseFilter, sortField, sortDir, leadView, attendedLeadIds, adminAttendedLeadIds, isAgent]);
 
   // ============================================================
 
@@ -2839,6 +2974,45 @@ export default function LeadsPage() {
           </div>
 
         )}
+
+
+        {/* ====================================================
+    ATTENDANCE DATE FILTER
+    ==================================================== */}
+{isClientReady &&
+  isAgent() &&
+  (leadView === "attended" || leadView === "remaining") && (
+    <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4">
+      <div>
+        <label
+          htmlFor="attendance-date"
+          className="mb-1 block text-sm font-semibold text-gray-700"
+        >
+          Attendance Date
+        </label>
+
+        <input
+          id="attendance-date"
+          type="date"
+          value={attendanceDate}
+          max={todayDate}
+          onChange={(event) => {
+            setAttendanceDate(event.target.value);
+            setCurrentPage(1);
+          }}
+          className={inputCls}
+        />
+      </div>
+
+      <div className="text-sm text-gray-600">
+        {attendanceLoading
+          ? "Loading attendance..."
+          : attendanceError
+            ? attendanceError
+            : `${attendedLeadIds.size} leads viewed on ${attendanceDate}`}
+      </div>
+    </div>
+  )}
 
         {/* ====================================================
 
