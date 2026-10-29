@@ -2,6 +2,8 @@
 // DERIVION CRM - AUTH & ACCESS CONTROL UTILITIES
 // ============================================================
 
+import { API_BASE_URL } from "./config";
+
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("jwtToken");
@@ -58,6 +60,20 @@ export function isTokenExpired(token: string | null, skewSeconds = 30): boolean 
   }
 }
 
+/** Seconds until the token expires (negative if already expired). */
+export function tokenSecondsRemaining(token: string | null): number {
+  if (!token) return -1;
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return -1;
+    const json = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    if (typeof json.exp !== "number") return -1;
+    return Math.floor((json.exp * 1000 - Date.now()) / 1000);
+  } catch {
+    return -1;
+  }
+}
+
 /** Clear the stored login and send the user to the login page with a session-expired notice. */
 export function expireSession(): void {
   if (typeof window === "undefined") return;
@@ -65,31 +81,43 @@ export function expireSession(): void {
   window.location.replace("/?session=expired");
 }
 
-let sessionGuardInstalled = false;
+// ============================================================
+// REFRESH TOKEN (calls the HttpOnly-cookie refresh endpoint)
+// ============================================================
+
+let refreshPromise: Promise<boolean> | null = null;
 
 /**
- * Installs one global fetch hook: an authenticated API call that is rejected because the session
- * ended (401 from the Node backend; 403 with an expired token from the Spring backend) clears the
- * login and redirects once, instead of leaving the page silently empty. Role-based 403s with a
- * valid token are left to the page, as today.
+ * Calls POST /api/auth/refresh (the backend reads the HttpOnly cookie).
+ * On success: saves the new access token + user fields to localStorage, returns true.
+ * On failure: returns false (caller should redirect to login).
+ * Multiple callers that fire concurrently share the same in-flight Promise.
  */
-export function installSessionGuard(): void {
-  if (typeof window === "undefined" || sessionGuardInstalled) return;
-  sessionGuardInstalled = true;
-  const originalFetch = window.fetch.bind(window);
-  let redirecting = false;
-  window.fetch = async (input, init) => {
-    const response = await originalFetch(input, init);
-    if (redirecting || (response.status !== 401 && response.status !== 403)) return response;
-    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-    const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
-    const authenticatedApiCall = url.includes("/api/") && !url.includes("/api/auth/login") && headers.has("Authorization");
-    if (authenticatedApiCall && (response.status === 401 || isTokenExpired(getToken()))) {
-      redirecting = true;
-      expireSession();
+export async function refreshAccessToken(): Promise<boolean> {
+  if (refreshPromise) return refreshPromise;
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (!data.token) return false;
+      // Save the new access token (and user fields if returned)
+      localStorage.setItem("jwtToken", data.token);
+      if (data.id)       localStorage.setItem("userId",    String(data.id));
+      if (data.fullName) localStorage.setItem("userName",  data.fullName);
+      if (data.email)    localStorage.setItem("userEmail", data.email);
+      if (data.role)     localStorage.setItem("userRole",  data.role);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      refreshPromise = null;
     }
-    return response;
-  };
+  })();
+  return refreshPromise;
 }
 
 export function saveLoginData(data: {
@@ -104,6 +132,61 @@ export function saveLoginData(data: {
   localStorage.setItem("userName", data.fullName);
   localStorage.setItem("userEmail", data.email);
   localStorage.setItem("userRole", data.role);
+}
+
+// ============================================================
+// SESSION GUARD (fetch interceptor)
+// ============================================================
+
+let sessionGuardInstalled = false;
+
+/**
+ * Installs one global fetch hook.
+ * - On 401 from an authenticated API call: attempts silent token refresh first.
+ *   If refresh succeeds, retries the original request with the new token.
+ *   If refresh fails, redirects to login (session genuinely expired).
+ * - Role-based 403s with a valid token are left to the page.
+ */
+export function installSessionGuard(): void {
+  if (typeof window === "undefined" || sessionGuardInstalled) return;
+  sessionGuardInstalled = true;
+  const originalFetch = window.fetch.bind(window);
+  let redirecting = false;
+
+  window.fetch = async (input, init) => {
+    const response = await originalFetch(input, init);
+    if (redirecting) return response;
+
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
+    const isRefreshCall = url.includes("/api/auth/refresh");
+    const isLoginCall = url.includes("/api/auth/login");
+
+    // Only intercept authenticated API calls that return 401
+    if (response.status !== 401 || isRefreshCall || isLoginCall) return response;
+
+    const headers = new Headers(init?.headers ?? (input instanceof Request ? (input as Request).headers : undefined));
+    const isAuthenticatedApiCall = url.includes("/api/") && headers.has("Authorization");
+    if (!isAuthenticatedApiCall) return response;
+
+    // Attempt silent refresh
+    const refreshed = await refreshAccessToken();
+    if (!refreshed) {
+      redirecting = true;
+      expireSession();
+      return response;
+    }
+
+    // Retry the original request with the new access token
+    const newToken = getToken();
+    const newInit: RequestInit = {
+      ...(init ?? {}),
+      headers: {
+        ...(init?.headers ? Object.fromEntries(new Headers(init.headers)) : {}),
+        Authorization: `Bearer ${newToken}`,
+      },
+    };
+    return originalFetch(input, newInit);
+  };
 }
 
 // ============================================================
@@ -179,4 +262,3 @@ export function isManagement(): boolean {
 export function isAgent(): boolean {
   return getUserRole() === "AGENT";
 }
-

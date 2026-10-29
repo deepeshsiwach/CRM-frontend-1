@@ -20,6 +20,8 @@ import {
   isTokenExpired,
   expireSession,
   installSessionGuard,
+  tokenSecondsRemaining,
+  refreshAccessToken,
 } from "@/lib/auth";
 
 import { API_BASE_URL } from "@/lib/config";
@@ -71,10 +73,21 @@ export default function DashboardLayout({
     }
   }, [router, pathname]);
 
-  // Tokens last 8 hours: end the session on time even if the page makes no further API calls.
+  // Proactively refresh the access token when it has <= 5 min remaining.
+  // This keeps the session alive even on pages that make no API calls.
   useEffect(() => {
-    const id = window.setInterval(() => {
-      if (getToken() && isTokenExpired(getToken())) expireSession();
+    const id = window.setInterval(async () => {
+      const token = getToken();
+      if (!token) return;
+      const secs = tokenSecondsRemaining(token);
+      if (secs < 0) {
+        // Already expired — attempt refresh; if it fails, end the session.
+        const ok = await refreshAccessToken();
+        if (!ok) expireSession();
+      } else if (secs <= 300) {
+        // Within 5-minute warning window — refresh proactively (best-effort).
+        await refreshAccessToken();
+      }
     }, 60_000);
     return () => window.clearInterval(id);
   }, []);
@@ -112,18 +125,21 @@ export default function DashboardLayout({
       const userId = getUserId();
       const role = getUserRole();
 
-      if (token && userId && role === "AGENT") {
+      if (token && userId) {
+        // All roles: call the logout endpoint so the server-side refresh-token cookie is revoked.
+        // For AGENT this also closes attendance. For ADMIN/MANAGER it only clears the cookie.
         const response = await fetch(
           `${API_BASE_URL}/api/auth/logout/${userId}`,
           {
             method: "POST",
+            credentials: "include",
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
 
-        if (!response.ok) {
+        if (!response.ok && role === "AGENT") {
           console.error(
             "Failed to record attendance logout:",
             await response.text()
@@ -131,7 +147,7 @@ export default function DashboardLayout({
         }
       }
     } catch (error) {
-      console.error("Attendance logout error:", error);
+      console.error("Logout error:", error);
     } finally {
       logout();
     }

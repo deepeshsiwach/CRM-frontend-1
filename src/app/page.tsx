@@ -9,7 +9,7 @@ import { useState, useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { API_BASE_URL } from "@/lib/config";
-import { getToken, isTokenExpired, saveLoginData } from "@/lib/auth";
+import { getToken, isTokenExpired, saveLoginData, refreshAccessToken } from "@/lib/auth";
 
 // "/?session=expired" is set by expireSession(); read without a setState-in-effect (server snapshot: false).
 const noSubscribe = () => () => {};
@@ -25,13 +25,24 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // If already logged in with a valid session, redirect to dashboard; drop an expired one.
+    // If already logged in with a valid unexpired token, redirect straight to dashboard.
     const token = getToken();
-    if (token && isTokenExpired(token)) {
-      ["jwtToken", "userId", "userName", "userEmail", "userRole"].forEach((k) => localStorage.removeItem(k));
-    } else if (token) {
+    if (token && !isTokenExpired(token)) {
       router.replace("/dashboard");
+      return;
     }
+    // Token is missing or expired — attempt silent refresh via the HttpOnly cookie.
+    // If the refresh succeeds the user has a valid 5-day session; send them to dashboard.
+    // If it fails (cookie missing/expired/revoked), clear any stale localStorage and show the form.
+    refreshAccessToken().then((refreshed) => {
+      if (refreshed) {
+        router.replace("/dashboard");
+      } else {
+        ["jwtToken", "userId", "userName", "userEmail", "userRole"].forEach((k) =>
+          localStorage.removeItem(k)
+        );
+      }
+    });
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
