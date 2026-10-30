@@ -25,6 +25,17 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    // If user explicitly logged out, clear storage and do not silently auto-login
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("logged_out") === "1") {
+        ["jwtToken", "userId", "userName", "userEmail", "userRole"].forEach((k) =>
+          localStorage.removeItem(k)
+        );
+        return;
+      }
+    }
+
     // If already logged in with a valid unexpired token, redirect straight to dashboard.
     const token = getToken();
     if (token && !isTokenExpired(token)) {
@@ -32,8 +43,6 @@ export default function LoginPage() {
       return;
     }
     // Token is missing or expired — attempt silent refresh via the HttpOnly cookie.
-    // If the refresh succeeds the user has a valid 5-day session; send them to dashboard.
-    // If it fails (cookie missing/expired/revoked), clear any stale localStorage and show the form.
     refreshAccessToken().then((refreshed) => {
       if (refreshed) {
         router.replace("/dashboard");
@@ -53,6 +62,7 @@ export default function LoginPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

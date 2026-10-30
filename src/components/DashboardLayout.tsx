@@ -125,27 +125,18 @@ export default function DashboardLayout({
       const userId = getUserId();
       const role = getUserRole();
 
-      if (token && userId) {
-        // All roles: call the logout endpoint so the server-side refresh-token cookie is revoked.
-        // For AGENT this also closes attendance. For ADMIN/MANAGER it only clears the cookie.
-        const response = await fetch(
-          `${API_BASE_URL}/api/auth/logout/${userId}`,
-          {
-            method: "POST",
-            credentials: "include",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+      const logoutUrl = token && userId && role === "AGENT"
+        ? `${API_BASE_URL}/api/auth/logout/${userId}`
+        : `${API_BASE_URL}/api/auth/logout`;
 
-        if (!response.ok && role === "AGENT") {
-          console.error(
-            "Failed to record attendance logout:",
-            await response.text()
-          );
-        }
-      }
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      await fetch(logoutUrl, {
+        method: "POST",
+        credentials: "include",
+        headers,
+      }).catch((err) => console.error("Logout request failed:", err));
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -181,6 +172,7 @@ export default function DashboardLayout({
             alt="DERIVION"
             width={120}
             height={40}
+            loading="eager"
             className="h-8 w-auto object-contain"
           />
         </div>

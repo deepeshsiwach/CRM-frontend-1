@@ -40,7 +40,7 @@ export function logout(): void {
   localStorage.removeItem("userName");
   localStorage.removeItem("userEmail");
   localStorage.removeItem("userRole");
-  window.location.href = "/";
+  window.location.href = "/?logged_out=1";
 }
 
 // ============================================================
@@ -178,12 +178,11 @@ export function installSessionGuard(): void {
 
     // Retry the original request with the new access token
     const newToken = getToken();
+    const newHeaders = new Headers(init?.headers ?? (input instanceof Request ? (input as Request).headers : undefined));
+    newHeaders.set("Authorization", `Bearer ${newToken}`);
     const newInit: RequestInit = {
       ...(init ?? {}),
-      headers: {
-        ...(init?.headers ? Object.fromEntries(new Headers(init.headers)) : {}),
-        Authorization: `Bearer ${newToken}`,
-      },
+      headers: newHeaders,
     };
     return originalFetch(input, newInit);
   };

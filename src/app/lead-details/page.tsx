@@ -112,6 +112,18 @@ interface Note {
 
 }
 
+interface KnowledgeBankItem {
+  id: number;
+  userId: number;
+  title: string;
+  category: string;
+  content?: string | null;
+  fileName?: string | null;
+  fileType?: string | null;
+  fileSize?: number | null;
+  createdAt?: string;
+}
+
 
 
 interface Team {
@@ -362,6 +374,26 @@ const personalizeMessage = (template: string) =>
 
   const [transferOpen, setTransferOpen] = useState(false);
 
+  const [knowledgeBankOpen, setKnowledgeBankOpen] = useState(false);
+
+  const [knowledgeBankItems, setKnowledgeBankItems] = useState<KnowledgeBankItem[]>([]);
+const [knowledgeBankLoading, setKnowledgeBankLoading] = useState(false);
+const [knowledgeBankError, setKnowledgeBankError] = useState("");
+
+const [selectedKnowledgeBankCategory, setSelectedKnowledgeBankCategory] =
+  useState<string | null>(null);
+
+const [showKnowledgeBankForm, setShowKnowledgeBankForm] = useState(false);
+const [newMaterialTitle, setNewMaterialTitle] = useState("");
+const [newMaterialCategory, setNewMaterialCategory] = useState("calling-scripts");
+const [newMaterialContent, setNewMaterialContent] = useState("");
+const [savingKnowledgeBank, setSavingKnowledgeBank] = useState(false);
+const [knowledgeBankMessage, setKnowledgeBankMessage] = useState("");
+
+const [newMaterialFile, setNewMaterialFile] = useState<File | null>(null);
+
+
+
   const [teams, setTeams] = useState<Team[]>([]);
 
   const [agents, setAgents] = useState<User[]>([]);
@@ -377,6 +409,271 @@ const personalizeMessage = (template: string) =>
 
 
   const token = getToken();
+
+  const filteredKnowledgeBankItems = selectedKnowledgeBankCategory
+  ? knowledgeBankItems.filter(
+      (item) => item.category === selectedKnowledgeBankCategory
+    )
+  : knowledgeBankItems;
+
+  // Load the logged-in user's personal Knowledge Bank materials.
+useEffect(() => {
+  if (!knowledgeBankOpen) return;
+
+  let cancelled = false;
+
+  const loadKnowledgeBank = async () => {
+    if (!token) {
+      setKnowledgeBankError("Your session has expired. Please log in again.");
+      return;
+    }
+
+    setKnowledgeBankLoading(true);
+    setKnowledgeBankError("");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/knowledge-bank`, {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text() || "Failed to load Knowledge Bank.");
+      }
+
+      const data: KnowledgeBankItem[] = await res.json();
+
+      if (!cancelled) {
+        setKnowledgeBankItems(data);
+      }
+    } catch (error) {
+      if (!cancelled) {
+        setKnowledgeBankError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load Knowledge Bank."
+        );
+      }
+    } finally {
+      if (!cancelled) {
+        setKnowledgeBankLoading(false);
+      }
+    }
+  };
+
+  loadKnowledgeBank();
+
+  return () => {
+    cancelled = true;
+  };
+}, [knowledgeBankOpen, token]);
+
+
+
+// Save text-based or document-based Knowledge Bank material.
+const handleSaveKnowledgeBankMaterial = async () => {
+  if (!token) {
+    setKnowledgeBankMessage("Session expired. Please log in again.");
+    return;
+  }
+
+  if (!newMaterialTitle.trim()) {
+    setKnowledgeBankMessage("Please enter a material title.");
+    return;
+  }
+
+  if (!newMaterialContent.trim() && !newMaterialFile) {
+    setKnowledgeBankMessage(
+      "Please enter material content or select a document."
+    );
+    return;
+  }
+
+  if (newMaterialFile && newMaterialFile.size > 10 * 1024 * 1024) {
+    setKnowledgeBankMessage("File size must not exceed 10 MB.");
+    return;
+  }
+
+  setSavingKnowledgeBank(true);
+  setKnowledgeBankMessage("");
+
+  try {
+    let res: Response;
+
+    if (newMaterialFile) {
+      // Upload PDF, DOC or DOCX document.
+      const formData = new FormData();
+
+      formData.append("file", newMaterialFile);
+      formData.append("title", newMaterialTitle.trim());
+      formData.append("category", newMaterialCategory);
+
+      res = await fetch(
+        `${API_BASE_URL}/api/knowledge-bank/upload`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+          body: formData,
+        }
+      );
+    } else {
+      // Preserve the existing text-material API.
+      res = await fetch(`${API_BASE_URL}/api/knowledge-bank`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+        body: JSON.stringify({
+          title: newMaterialTitle.trim(),
+          category: newMaterialCategory,
+          content: newMaterialContent.trim(),
+        }),
+      });
+    }
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      let errorMessage = errorText || "Unable to save material.";
+
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        // Keep the original response text.
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    const savedItem: KnowledgeBankItem = await res.json();
+
+    setKnowledgeBankItems((previous) =>
+      [...previous, savedItem].sort((a, b) =>
+        a.title.localeCompare(b.title)
+      )
+    );
+
+    setNewMaterialTitle("");
+    setNewMaterialContent("");
+    setNewMaterialCategory("calling-scripts");
+    setNewMaterialFile(null);
+    setShowKnowledgeBankForm(false);
+
+    setKnowledgeBankMessage(
+      newMaterialFile
+        ? "Document uploaded successfully."
+        : "Material saved successfully."
+    );
+  } catch (error) {
+    setKnowledgeBankMessage(
+      error instanceof Error
+        ? error.message
+        : "Failed to save material."
+    );
+  } finally {
+    setSavingKnowledgeBank(false);
+  }
+};
+
+
+
+// Delete a Knowledge Bank material owned by the logged-in agent.
+const handleDeleteKnowledgeBankMaterial = async (item: KnowledgeBankItem) => {
+  if (!token) {
+    setKnowledgeBankMessage("Session expired. Please log in again.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Are you sure you want to delete "${item.title}"?`
+  );
+
+  if (!confirmed) return;
+
+  setKnowledgeBankMessage("");
+
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/api/knowledge-bank/${item.id}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        await res.text() || "Unable to delete material."
+      );
+    }
+
+    setKnowledgeBankItems((previous) =>
+      previous.filter((savedItem) => savedItem.id !== item.id)
+    );
+
+    setKnowledgeBankMessage("Material deleted successfully.");
+  } catch (error) {
+    setKnowledgeBankMessage(
+      error instanceof Error
+        ? error.message
+        : "Failed to delete material."
+    );
+  }
+};
+
+
+
+
+
+// PASTE THE NEW VIEW FUNCTION HERE
+const handleViewKnowledgeBankDocument = async (item: KnowledgeBankItem) => {
+  if (!token) {
+    setKnowledgeBankMessage("Session expired. Please log in again.");
+    return;
+  }
+
+  const newTab = window.open("about:blank", "_blank");
+
+  if (!newTab) {
+    setKnowledgeBankMessage("Please allow popups to view documents.");
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/api/knowledge-bank/${item.id}/view`,
+      {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(await res.text() || "Unable to open document.");
+    }
+
+    const data: { signedUrl: string; fileName: string } = await res.json();
+
+    if (!data.signedUrl) {
+      throw new Error("Document URL was not returned by the server.");
+    }
+
+    newTab.location.href = data.signedUrl;
+  } catch (error) {
+    newTab.close();
+    setKnowledgeBankMessage(
+      error instanceof Error ? error.message : "Unable to open document."
+    );
+  }
+};
+
 
 
 
@@ -1144,7 +1441,16 @@ const personalizeMessage = (template: string) =>
 
   const whatsappLocalNumber = (editPhone || "").replace(/\D/g, "");
 
-  const whatsappNumber = whatsappLocalNumber.length === 10 ? `91${whatsappLocalNumber}` : "";
+  
+const normalizedWhatsappNumber =
+  whatsappLocalNumber.length === 12 && whatsappLocalNumber.startsWith("91")
+    ? whatsappLocalNumber.slice(2)
+    : whatsappLocalNumber;
+
+const whatsappNumber = /^[6-9]\d{9}$/.test(normalizedWhatsappNumber)
+  ? `91${normalizedWhatsappNumber}`
+  : "";
+
 
   const whatsappMessage = `Hi ${lead?.fullName || "there"}, I'm contacting you from ISFT regarding your course enquiry.`;
 
@@ -1187,6 +1493,14 @@ const personalizeMessage = (template: string) =>
 
 
           <div className="flex items-center gap-3">
+
+            <button
+  type="button"
+  onClick={() => setKnowledgeBankOpen(true)}
+  className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
+>
+  📚 Knowledge Bank
+</button>
 
             <button
 
@@ -2203,6 +2517,354 @@ const personalizeMessage = (template: string) =>
           </div>
 
         )}
+
+
+        {/* KNOWLEDGE BANK POPUP */}
+{knowledgeBankOpen && (
+  <div
+    className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
+    onClick={(e) => {
+      if (e.target === e.currentTarget) {
+        setKnowledgeBankOpen(false);
+      }
+    }}
+  >
+      <div className="flex max-h-[85vh] w-full max-w-4xl flex-col overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 p-5">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900">
+            📚 Knowledge Bank
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Your personal calling scripts, course information and documents
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setKnowledgeBankOpen(false)}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-white"
+          aria-label="Close Knowledge Bank"
+        >
+          ✕ Close
+        </button>
+      </div>
+
+      {/* Search and actions */}
+      <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          type="search"
+          placeholder="Search scripts, courses and documents..."
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 sm:max-w-md"
+          disabled
+        />
+
+        <button
+  type="button"
+  onClick={() => {
+    setShowKnowledgeBankForm((previous) => !previous);
+    setKnowledgeBankMessage("");
+  }}
+  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+>
+  {showKnowledgeBankForm ? "Cancel" : "+ Add Material"}
+</button>
+      </div>
+
+      {/* Add Material Form */}
+{showKnowledgeBankForm && (
+  <div className="border-b border-slate-200 bg-blue-50/50 p-5">
+    <h3 className="mb-4 text-base font-bold text-slate-900">
+      Add New Material
+    </h3>
+
+    <div className="space-y-4">
+      <div>
+        <label className="mb-1 block text-sm font-semibold text-slate-700">
+          Material Title *
+        </label>
+
+        <input
+          type="text"
+          value={newMaterialTitle}
+          onChange={(e) => setNewMaterialTitle(e.target.value)}
+          placeholder="Enter material title"
+          maxLength={200}
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-semibold text-slate-700">
+          Category *
+        </label>
+
+        <select
+          value={newMaterialCategory}
+          onChange={(e) => setNewMaterialCategory(e.target.value)}
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="calling-scripts">Calling Scripts</option>
+          <option value="course-information">Course Information</option>
+          <option value="brochures-documents">Brochures & Documents</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-semibold text-slate-700">
+          Material Content *
+        </label>
+
+        <textarea
+          value={newMaterialContent}
+          onChange={(e) => setNewMaterialContent(e.target.value)}
+          placeholder="Write or paste your calling script, course information or other material..."
+          rows={6}
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+
+        <div>
+  <label className="mb-1 block text-sm font-semibold text-slate-700">
+    Upload PDF or Word Document (Optional)
+  </label>
+
+  <input
+    type="file"
+    accept=".pdf,.doc,.docx"
+    onChange={(e) =>
+      setNewMaterialFile(e.target.files?.[0] || null)
+    }
+    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+  />
+
+  <p className="mt-1 text-xs text-slate-500">
+    Supported formats: PDF, DOC and DOCX. Maximum size: 10 MB.
+  </p>
+
+  {newMaterialFile && (
+    <p className="mt-2 text-sm text-green-700">
+      Selected: {newMaterialFile.name}
+    </p>
+  )}
+</div>
+      </div>
+
+      {knowledgeBankMessage && (
+        <p className="text-sm font-medium text-red-600">
+          {knowledgeBankMessage}
+        </p>
+      )}
+
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            setShowKnowledgeBankForm(false);
+            setKnowledgeBankMessage("");
+          }}
+          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={handleSaveKnowledgeBankMaterial}
+          disabled={savingKnowledgeBank}
+          className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {savingKnowledgeBank ? "Saving..." : "Save Material"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+      {/* Categories */}
+      
+
+{/* Knowledge Bank Categories */}
+<div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-3">
+
+  {/* Calling Scripts */}
+  <button
+    type="button"
+    onClick={() => {
+      setSelectedKnowledgeBankCategory("calling-scripts");
+      setKnowledgeBankMessage("");
+    }}
+    className={`rounded-xl border p-4 text-left transition hover:shadow-md ${
+      selectedKnowledgeBankCategory === "calling-scripts"
+        ? "border-blue-500 bg-blue-100 ring-2 ring-blue-200"
+        : "border-blue-100 bg-blue-50 hover:border-blue-400"
+    }`}
+  >
+    <div className="text-2xl">💬</div>
+    <h3 className="mt-2 font-bold text-slate-900">
+      Calling Scripts
+    </h3>
+    <p className="mt-1 text-sm text-slate-600">
+      Calling scripts, objection handling and follow-ups.
+    </p>
+    <p className="mt-2 text-xs font-semibold text-blue-700">
+      {knowledgeBankItems.filter(
+        (item) => item.category === "calling-scripts"
+      ).length} materials · Open →
+    </p>
+  </button>
+
+  {/* Brochures & Documents */}
+  <button
+    type="button"
+    onClick={() => {
+      setSelectedKnowledgeBankCategory("brochures-documents");
+      setKnowledgeBankMessage("");
+    }}
+    className={`rounded-xl border p-4 text-left transition hover:shadow-md ${
+      selectedKnowledgeBankCategory === "brochures-documents"
+        ? "border-amber-500 bg-amber-100 ring-2 ring-amber-200"
+        : "border-amber-100 bg-amber-50 hover:border-amber-400"
+    }`}
+  >
+    <div className="text-2xl">📄</div>
+    <h3 className="mt-2 font-bold text-slate-900">
+      Brochures & Documents
+    </h3>
+    <p className="mt-1 text-sm text-slate-600">
+      PDF brochures and Word documents.
+    </p>
+    <p className="mt-2 text-xs font-semibold text-amber-700">
+      {knowledgeBankItems.filter(
+        (item) =>
+          item.category === "brochures-documents" && item.fileName
+      ).length} documents · Open →
+    </p>
+  </button>
+
+  {/* Course Information */}
+  <button
+    type="button"
+    onClick={() => {
+      setSelectedKnowledgeBankCategory("course-information");
+      setKnowledgeBankMessage("");
+    }}
+    className={`rounded-xl border p-4 text-left transition hover:shadow-md ${
+      selectedKnowledgeBankCategory === "course-information"
+        ? "border-emerald-500 bg-emerald-100 ring-2 ring-emerald-200"
+        : "border-emerald-100 bg-emerald-50 hover:border-emerald-400"
+    }`}
+  >
+    <div className="text-2xl">🎓</div>
+    <h3 className="mt-2 font-bold text-slate-900">
+      Course Information
+    </h3>
+    <p className="mt-1 text-sm text-slate-600">
+      Course details, fees, duration and eligibility.
+    </p>
+    <p className="mt-2 text-xs font-semibold text-emerald-700">
+      {knowledgeBankItems.filter(
+        (item) => item.category === "course-information"
+      ).length} materials · Open →
+    </p>
+  </button>
+
+</div>
+
+
+
+      {/* Saved Knowledge Bank Materials */}
+<div className="border-t border-slate-200 bg-white p-5">
+
+  {knowledgeBankLoading ? (
+    <p className="py-6 text-center text-sm text-gray-500">
+      Loading your materials...
+    </p>
+  ) : knowledgeBankError ? (
+    <p className="py-6 text-center text-sm font-medium text-red-600">
+      {knowledgeBankError}
+    </p>
+  ) : filteredKnowledgeBankItems.length === 0 ? (
+    <div className="py-6 text-center">
+      <div className="text-4xl">📂</div>
+      <h3 className="mt-3 font-semibold text-slate-800">
+        Your Knowledge Bank is empty
+      </h3>
+      <p className="mt-2 text-sm text-slate-500">
+        Add your personal calling scripts, course information and documents.
+      </p>
+    </div>
+  ) : (
+    <div className="space-y-3">
+      <h3 className="text-sm font-bold text-slate-800">
+        Your Saved Materials ({filteredKnowledgeBankItems.length})
+      </h3>
+
+      {filteredKnowledgeBankItems.map((item) => (
+        <div
+          key={item.id}
+          className="rounded-lg border border-slate-200 p-4"
+        >
+          <div className="flex items-start justify-between gap-3">
+  <div className="font-semibold text-slate-900">
+    {item.title}
+  </div>
+
+  <button
+    type="button"
+    onClick={() => handleDeleteKnowledgeBankMaterial(item)}
+    className="shrink-0 rounded-md border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
+  >
+    Delete
+  </button>
+</div>
+
+          <div className="mt-1 text-xs text-blue-600">
+            {item.category.replace(/-/g, " ")}
+          </div>
+
+          
+{item.fileName && (
+  <div className="mt-3 flex flex-wrap items-center gap-3">
+    <span className="text-xs text-slate-500">
+      📄 {item.fileName}
+    </span>
+
+    <button
+      type="button"
+      onClick={() => handleViewKnowledgeBankDocument(item)}
+      className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+    >
+      👁 View Document
+    </button>
+  </div>
+)}
+
+{item.content && (
+  <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+    {item.content}
+  </p>
+)}
+
+        </div>
+      ))}
+    </div>
+  )}
+
+</div>
+      {/* Footer */}
+      <div className="flex justify-end border-t border-slate-200 bg-slate-50 p-4">
+        <button
+          type="button"
+          onClick={() => setKnowledgeBankOpen(false)}
+          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* PERSONAL OUTREACH TEMPLATES */}
         <section className="mb-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
