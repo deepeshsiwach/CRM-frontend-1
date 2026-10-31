@@ -53,6 +53,25 @@ interface XLSXLibrary {
 export default function FollowUpsPage() {
   const router = useRouter();
 
+
+  const [selectedStatus, setSelectedStatus] = useState("");
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  setSelectedStatus(
+    (params.get("status") || "").toUpperCase()
+  );
+}, []);
+
+const [selectedView, setSelectedView] = useState("");
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  setSelectedView(
+    (params.get("view") || "").toLowerCase()
+  );
+}, []);
+
   const [allFollowUps, setAllFollowUps] = useState<FollowUp[]>([]);
   const [filteredFollowUps, setFilteredFollowUps] = useState<FollowUp[]>([]);
 
@@ -174,6 +193,28 @@ export default function FollowUpsPage() {
   useEffect(() => {
     let result = [...allFollowUps];
 
+    // FILTER TODAY'S FOLLOW-UPS
+if (selectedView === "today") {
+  const now = new Date();
+
+  const todayDate =
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  result = result.filter(
+    (fu) =>
+      fu.followUpDate?.split("T")[0] === todayDate
+  );
+}
+    
+    // FILTER BY DASHBOARD STATUS
+if (selectedStatus) {
+  result = result.filter(
+    (fu) =>
+      String(fu.status || "").toUpperCase() === selectedStatus
+  );
+}
+
+
     if (dueFilter !== "ALL") {
       result = result.filter(
         (fu) => getDueCategory(fu) === dueFilter
@@ -252,6 +293,8 @@ export default function FollowUpsPage() {
     allFollowUps,
     leadNameMap,
     userNameMap,
+    selectedStatus,
+    selectedView,
   ]);
 
   // ============================================================

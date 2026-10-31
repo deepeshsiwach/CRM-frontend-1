@@ -345,6 +345,29 @@ export default function SurveyPage() {
     });
   }, [contacts, search, filter]);
 
+  // CLEAR ALL SURVEY RECORDS
+function handleClearSurveyData() {
+  if (!contacts.length) {
+    setNotice("There are no survey records to delete.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Are you sure you want to permanently delete all ${contacts.length} survey records? This action cannot be undone.`
+  );
+
+  if (!confirmed) return;
+
+  setContacts([]);
+  setFileName("");
+  setWhatsAppOpenedIds([]);
+  setEmailDraftOpenedIds([]);
+  setSearch("");
+  setFilter("all");
+
+  setNotice("All survey records have been deleted successfully.");
+}
+
   // IMPORT CONTACTS FROM CSV
   async function handleFileChange(
     event: ChangeEvent<HTMLInputElement>
@@ -544,13 +567,24 @@ export default function SurveyPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
-          >
-            Upload CSV
-          </button>
+          <div className="flex flex-wrap gap-2">
+  <button
+    type="button"
+    onClick={handleClearSurveyData}
+    disabled={contacts.length === 0}
+    className="rounded-lg border border-red-300 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    Clear Survey Data
+  </button>
+
+  <button
+    type="button"
+    onClick={() => fileInputRef.current?.click()}
+    className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
+  >
+    Upload CSV
+  </button>
+</div>
 
           <input
             ref={fileInputRef}

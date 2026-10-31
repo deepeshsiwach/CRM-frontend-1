@@ -759,7 +759,9 @@ const handleViewKnowledgeBankDocument = async (item: KnowledgeBankItem) => {
 
     try {
 
-      const res = await fetch(`${API_BASE_URL}/api/leads/${leadId}`, {
+      const res = await fetch(
+  `${API_BASE_URL}/api/leads/${leadId}?includeClosedHistory=true`,
+  {
 
         headers: { Authorization: "Bearer " + token },
 

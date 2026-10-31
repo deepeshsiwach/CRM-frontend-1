@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import Script from "next/script";
 
@@ -954,6 +954,13 @@ useEffect(() => {
       );
     }
 
+    // UNASSIGNED LEADS VIEW FILTER
+if (leadView === "unassigned") {
+  leads = leads.filter(
+    (lead) => !assignedAgentByLeadId[Number(lead.id)]
+  );
+}
+
 
     // ----------------------------------------------------------
 
@@ -1219,7 +1226,7 @@ useEffect(() => {
 
     setCurrentPage(1);
 
-  }, [allLeads, searchText, statusFilter, priorityFilter, sourceFilter, courseFilter, sortField, sortDir, leadView, attendedLeadIds, adminAttendedLeadIds, isAgent]);
+  }, [allLeads, searchText, statusFilter, priorityFilter, sourceFilter, courseFilter, sortField, sortDir, leadView, attendedLeadIds, adminAttendedLeadIds, assignedAgentByLeadId, isAgent]);
 
   // ============================================================
 

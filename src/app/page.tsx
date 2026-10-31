@@ -19,6 +19,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
   const sessionExpired = useSyncExternalStore(noSubscribe, readSessionExpired, () => false);
   const shownMessage = loginMessage || (sessionExpired ? "Your session has expired. Please log in again." : "");
@@ -132,12 +133,12 @@ export default function LoginPage() {
               />
             </div>
 
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="password">
                 Password
               </label>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 placeholder="••••••••"
                 required
@@ -145,6 +146,31 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
+              <button
+  type="button"
+  onClick={() => setShowPassword(!showPassword)}
+  className="absolute right-3 top-1/2 translate-y-0.5 text-gray-500 hover:text-blue-600"
+  aria-label={showPassword ? "Hide password" : "Show password"}
+  title={showPassword ? "Hide password" : "Show password"}
+>
+  {showPassword ? (
+    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21"
+      viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3l18 18" />
+      <path d="M10.6 10.6a2 2 0 002.8 2.8" />
+      <path d="M9.9 5.2A11 11 0 0112 5c5 0 9 4 10 7-.4 1.2-1.2 2.3-2.2 3.2" />
+      <path d="M6.2 6.2C3.8 7.6 2.5 9.4 2 12c1 3 5 7 10 7 1 0 2-.2 2.9-.5" />
+    </svg>
+  ) : (
+    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21"
+      viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )}
+</button>
             </div>
 
             <button

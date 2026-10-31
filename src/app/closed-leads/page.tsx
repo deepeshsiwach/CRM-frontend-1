@@ -100,7 +100,12 @@ export default function ClosedLeadsPage() {
       const headers = { Authorization: "Bearer " + token };
 
       // 1. Leads
-      const leadsRes = await fetch(`${API_BASE_URL}/api/leads`, { headers });
+    const leadsUrl =
+  role === "AGENT"
+    ? `${API_BASE_URL}/api/leads/closed-history`
+    : `${API_BASE_URL}/api/leads`;
+
+const leadsRes = await fetch(leadsUrl, { headers });
       if (!leadsRes.ok) throw new Error("Failed to load leads");
       const leads: Lead[] = await leadsRes.json();
 
@@ -128,13 +133,7 @@ export default function ClosedLeadsPage() {
         FINAL_STATUSES.includes(String(l.status || "").toUpperCase())
       );
 
-      if (role === "AGENT") {
-        closed = closed.filter((lead) =>
-          assignmentsData.some(
-            (a) => Number(a.leadId) === Number(lead.id) && Number(a.agentId) === currentUserId
-          )
-        );
-      }
+      
 
       setAllClosedLeads(closed);
       setFilteredLeads(closed);
