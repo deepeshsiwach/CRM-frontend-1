@@ -66,34 +66,38 @@ function AddCallLogContent() {
   // ========================================
 
   const loadLeadDetails = useCallback(async () => {
-    if (!leadId || !token) {
-      setLeadDisplay("No Lead ID");
-      return;
-    }
+  const currentLeadId = leadIdParam || leadId;
 
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/leads/${leadId}`,
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        }
-      );
+  if (!currentLeadId || !token) {
+    setLeadDisplay("No Lead ID");
+    return;
+  }
 
-      if (!res.ok) {
-        throw new Error("Failed");
+  setLeadDisplay("Loading lead...");
+
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/api/leads/${currentLeadId}`,
+      {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
       }
+    );
 
-      const lead: Lead = await res.json();
-
-      setLeadDisplay(
-        `${lead.fullName || lead.name || "Lead"} (ID: ${leadId})`
-      );
-    } catch {
-      setLeadDisplay(`Lead (ID: ${leadId})`);
+    if (!res.ok) {
+      throw new Error("Failed");
     }
-  }, [leadId, token]);
+
+    const lead: Lead = await res.json();
+
+    setLeadDisplay(
+      `${lead.fullName || lead.name || "Lead"} (ID: ${currentLeadId})`
+    );
+  } catch {
+    setLeadDisplay(`Lead (ID: ${currentLeadId})`);
+  }
+}, [leadIdParam, leadId, token]);
 
   // ========================================
   // LOAD CURRENT AGENT DETAILS
@@ -170,8 +174,9 @@ function AddCallLogContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const currentLeadId = leadIdParam || leadId;
 
-    if (!leadId) {
+    if (!currentLeadId) {
       setMessage({
         text: "Lead ID is required.",
         isError: true,
@@ -197,13 +202,13 @@ function AddCallLogContent() {
 
     // Only fields that are currently required by the form
     const payload = {
-      leadId: Number(leadId),
-      agentId: Number(agentId),
-      callStartTime,
-      callEndTime: callEndTime || null,
-      callOutcome: callOutcome || null,
-      remarks: remarks.trim(),
-    };
+  leadId: Number(currentLeadId),
+  agentId: Number(agentId),
+  callStartTime,
+  callEndTime: callEndTime || null,
+  callOutcome: callOutcome || null,
+  remarks: remarks.trim(),
+};
 
     setSaving(true);
 

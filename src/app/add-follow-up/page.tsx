@@ -44,21 +44,34 @@ function AddFollowUpContent() {
   const token = getToken();
 
   const loadLeadDetails = useCallback(async () => {
-    if (!leadId || !token) {
-      setLeadDisplay("No Lead ID");
-      return;
-    }
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/leads/${leadId}`, {
+  const currentLeadId = leadIdParam || leadId;
+
+  if (!currentLeadId || !token) {
+    setLeadDisplay("No Lead ID");
+    return;
+  }
+
+  setLeadDisplay("Loading lead...");
+
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/api/leads/${currentLeadId}`,
+      {
         headers: { Authorization: "Bearer " + token },
-      });
-      if (!res.ok) throw new Error("Failed");
-      const lead: Lead = await res.json();
-      setLeadDisplay(`${lead.fullName || lead.name || "Lead"} (ID: ${leadId})`);
-    } catch {
-      setLeadDisplay(`Lead (ID: ${leadId})`);
-    }
-  }, [leadId, token]);
+      }
+    );
+
+    if (!res.ok) throw new Error("Failed");
+
+    const lead: Lead = await res.json();
+
+    setLeadDisplay(
+      `${lead.fullName || lead.name || "Lead"} (ID: ${currentLeadId})`
+    );
+  } catch {
+    setLeadDisplay(`Lead (ID: ${currentLeadId})`);
+  }
+}, [leadIdParam, leadId, token]);
 
   const loadAssignedAgent = useCallback(async () => {
     if (!token) return;
@@ -87,9 +100,10 @@ function AddFollowUpContent() {
     }
 
     // Admin / Manager: check active assignment for this lead
-    if (!leadId) return;
+    const currentLeadId = leadIdParam || leadId;
+if (!currentLeadId) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/lead-assignments/lead/${leadId}/active`, {
+      const res = await fetch(`${API_BASE_URL}/api/lead-assignments/lead/${currentLeadId}/active`, {
         headers: { Authorization: "Bearer " + token },
       });
       if (res.ok) {
@@ -112,7 +126,7 @@ function AddFollowUpContent() {
     } catch {
       setAgentDisplay("Unable to load assigned agent");
     }
-  }, [leadId, token]);
+  }, [leadIdParam, leadId, token]);
 
   useEffect(() => {
     if (!token) {
@@ -134,10 +148,12 @@ function AddFollowUpContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!leadId) {
-      setMessage({ text: "Please select a valid lead.", isError: true });
-      return;
-    }
+    const currentLeadId = leadIdParam || leadId;
+
+    if (!currentLeadId) {
+  setMessage({ text: "Please select a valid lead.", isError: true });
+  return;
+}
     if (!agentId) {
       setMessage({ text: "No active agent is assigned to this lead.", isError: true });
       return;
@@ -148,13 +164,13 @@ function AddFollowUpContent() {
     }
 
     const payload = {
-      leadId: Number(leadId),
-      agentId: Number(agentId),
-      followUpDate,
-      purpose: purpose.trim(),
-      status,
-      remarks: remarks.trim(),
-    };
+  leadId: Number(currentLeadId),
+  agentId: Number(agentId),
+  followUpDate,
+  purpose: purpose.trim(),
+  status,
+  remarks: remarks.trim(),
+};
 
     setSubmitting(true);
     setMessage({ text: "Saving follow-up...", isError: false });

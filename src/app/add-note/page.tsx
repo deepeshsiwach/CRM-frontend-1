@@ -40,21 +40,34 @@ function AddNoteContent() {
   const token = getToken();
 
   const loadLeadDetails = useCallback(async () => {
-    if (!leadId || !token) {
-      setLeadDisplay("No Lead ID");
-      return;
-    }
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/leads/${leadId}`, {
+  const currentLeadId = leadIdParam || leadId;
+
+  if (!currentLeadId || !token) {
+    setLeadDisplay("No Lead ID");
+    return;
+  }
+
+  setLeadDisplay("Loading lead...");
+
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/api/leads/${currentLeadId}`,
+      {
         headers: { Authorization: "Bearer " + token },
-      });
-      if (!res.ok) throw new Error("Failed");
-      const lead: Lead = await res.json();
-      setLeadDisplay(`${lead.fullName || lead.name || "Lead"} (ID: ${leadId})`);
-    } catch {
-      setLeadDisplay(`Lead (ID: ${leadId})`);
-    }
-  }, [leadId, token]);
+      }
+    );
+
+    if (!res.ok) throw new Error("Failed");
+
+    const lead: Lead = await res.json();
+
+    setLeadDisplay(
+      `${lead.fullName || lead.name || "Lead"} (ID: ${currentLeadId})`
+    );
+  } catch {
+    setLeadDisplay(`Lead (ID: ${currentLeadId})`);
+  }
+}, [leadIdParam, leadId, token]);
 
   const loadUserDetails = useCallback(async () => {
     const currentUserId = getUserId();
@@ -95,8 +108,9 @@ function AddNoteContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const currentLeadId = leadIdParam || leadId;
 
-    if (!leadId) {
+    if (!currentLeadId) {
       setMessage({ text: "Please select a valid lead.", isError: true });
       return;
     }
@@ -110,10 +124,10 @@ function AddNoteContent() {
     }
 
     const payload = {
-      leadId: Number(leadId),
-      userId: Number(userId),
-      note: note.trim(),
-    };
+  leadId: Number(currentLeadId),
+  userId: Number(userId),
+  note: note.trim(),
+};
 
     setSubmitting(true);
     setMessage({ text: "Adding note...", isError: false });

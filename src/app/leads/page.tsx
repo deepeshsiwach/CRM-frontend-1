@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import Script from "next/script";
 
@@ -3775,16 +3775,22 @@ if (leadView === "unassigned") {
                         </td>
 
                         <td className={tdCls}>
-                          {assignedAgentByLeadId[Number(lead.id)] ? (
-                            <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
-                              {assignedAgentByLeadId[Number(lead.id)]}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
-                              Not Assigned
-                            </span>
-                          )}
-                        </td>
+  {["ENROLLED", "NOT_INTERESTED", "LOST", "WRONG_NUMBER"].includes(
+    String(lead.status || "").toUpperCase()
+  ) ? (
+    <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
+      Closed / Disposed
+    </span>
+  ) : assignedAgentByLeadId[Number(lead.id)] ? (
+    <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
+      {assignedAgentByLeadId[Number(lead.id)]}
+    </span>
+  ) : (
+    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+      Not Assigned
+    </span>
+  )}
+</td>
 
                         <td
 
