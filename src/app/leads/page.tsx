@@ -176,6 +176,8 @@ const [leadView, setLeadView] = useState("");
   // Active lead assignments mapped to the assigned agent name.
   const [assignedAgentByLeadId, setAssignedAgentByLeadId] = useState<Record<number, string>>({});
 
+  const [assignedAtByLeadId, setAssignedAtByLeadId] = useState<Record<number, string>>({});
+
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -580,19 +582,27 @@ const [attendanceError, setAttendanceError] = useState("");
             users.map((user) => [Number(user.id), user])
           );
           const assignmentMap: Record<number, string> = {};
+const assignmentDateMap: Record<number, string> = {};
 
-          // Match the Lead Assignments page: only ACTIVE assignments count.
-          assignments
-            .filter((assignment) => String(assignment.status || "").toUpperCase() === "ACTIVE")
-            .forEach((assignment) => {
-              const agent = userById.get(Number(assignment.agentId));
-              const agentName = agent?.fullName || agent?.name || agent?.username;
-              if (agentName && Number.isFinite(Number(assignment.leadId))) {
-                assignmentMap[Number(assignment.leadId)] = agentName;
-              }
-            });
+// Match the Lead Assignments page: only ACTIVE assignments count.
+assignments
+  .filter((assignment) => String(assignment.status || "").toUpperCase() === "ACTIVE")
+  .forEach((assignment) => {
+    const agent = userById.get(Number(assignment.agentId));
+    const agentName = agent?.fullName || agent?.name || agent?.username;
+    const leadId = Number(assignment.leadId);
 
-          setAssignedAgentByLeadId(assignmentMap);
+    if (agentName && Number.isFinite(leadId)) {
+      assignmentMap[leadId] = agentName;
+
+      if (assignment.assignedAt) {
+        assignmentDateMap[leadId] = assignment.assignedAt;
+      }
+    }
+  });
+
+setAssignedAgentByLeadId(assignmentMap);
+setAssignedAtByLeadId(assignmentDateMap);
         }
       } catch (assignmentError) {
         console.error("Unable to load lead assignment names:", assignmentError);
@@ -3453,14 +3463,15 @@ if (leadView === "unassigned") {
                   </th>
 
                   <th className={thCls}>
-                    Assigned Agent
-                  </th>
+  Assigned Agent
+</th>
+<th className={thCls}>
+  Assigned At
+</th>
 
-                  <th className={thCls}>
-
-                    Action
-
-                  </th>
+                  <th className={`${thCls} sticky right-0 z-20 bg-gray-50 shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.15)]`}>
+  Action
+</th>
 
                 </tr>
 
@@ -3476,7 +3487,7 @@ if (leadView === "unassigned") {
 
                     <td
 
-                      colSpan={isClientReady && isAdmin() ? 13 : 12}
+                      colSpan={isClientReady && isAdmin() ? 14 : 13}
 
                       className="text-center py-10 text-gray-400"
 
@@ -3792,11 +3803,22 @@ if (leadView === "unassigned") {
   )}
 </td>
 
+<td className={`${tdCls} whitespace-nowrap`}>
+  {assignedAtByLeadId[Number(lead.id)]
+    ? new Date(assignedAtByLeadId[Number(lead.id)]).toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "—"}
+</td>
+
                         <td
-
-                          className={`${tdCls} whitespace-nowrap`}
-
-                        >
+  className={`${tdCls} whitespace-nowrap sticky right-0 z-10 bg-white shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.08)]`}
+>
 
 
                           {/* VIEW */}
