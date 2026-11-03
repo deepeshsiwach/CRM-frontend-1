@@ -532,7 +532,23 @@ const lastAssignmentNumber = Math.min(
                       <td className="px-4 py-3 font-medium text-blue-600">{a.leadId}</td>
                       <td className="px-4 py-3 font-medium text-gray-800">{getAgentDisplayName(a.agentId)}</td>
                       <td className="px-4 py-3 text-gray-500">{a.teamId || "-"}</td>
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{a.assignedAt || "-"}</td>
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+  {a.assignedAt
+    ? new Date(
+        /(?:Z|[+-]\d{2}:\d{2})$/i.test(a.assignedAt)
+          ? a.assignedAt
+          : `${a.assignedAt.replace(" ", "T")}Z`
+      ).toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "-"}
+</td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${a.status === "ACTIVE"

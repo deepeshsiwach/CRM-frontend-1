@@ -596,8 +596,13 @@ assignments
       assignmentMap[leadId] = agentName;
 
       if (assignment.assignedAt) {
-        assignmentDateMap[leadId] = assignment.assignedAt;
-      }
+  const rawAssignedAt = String(assignment.assignedAt);
+
+  assignmentDateMap[leadId] =
+    /(?:Z|[+-]\d{2}:\d{2})$/i.test(rawAssignedAt)
+      ? rawAssignedAt
+      : `${rawAssignedAt.replace(" ", "T")}Z`;
+}
     }
   });
 
@@ -3806,13 +3811,14 @@ if (leadView === "unassigned") {
 <td className={`${tdCls} whitespace-nowrap`}>
   {assignedAtByLeadId[Number(lead.id)]
     ? new Date(assignedAtByLeadId[Number(lead.id)]).toLocaleString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })
+  timeZone: "Asia/Kolkata",
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+})
     : "—"}
 </td>
 
