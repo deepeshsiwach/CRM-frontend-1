@@ -1755,15 +1755,9 @@ useEffect(() => {
 
 
 
-    const agentCanvas =
+    const agentCanvas = agentLeadDistCanvasRef.current;
 
-      agentLeadDistCanvasRef.current;
-
-
-
-
-
-    if (agentCanvas) {
+if (agentCanvas) {
   const existingAgentChart = Chart.getChart(agentCanvas);
 
   if (existingAgentChart) {
@@ -1774,9 +1768,59 @@ useEffect(() => {
 
   prepareCanvas(agentCanvas);
 
+  const agentNames = agentDist.map(
+    (a: Record<string, unknown>) =>
+      (a.agentName as string) || `Agent #${a.agentId}`
+  );
 
+  const agentCounts = agentDist.map(
+    (a: Record<string, unknown>) =>
+      Number(a.activeLeads) || 0
+  );
 
-  }
+  agentLeadDistChartRef.current = new Chart(agentCanvas, {
+    type: "bar",
+
+    data: {
+      labels: agentNames,
+      datasets: [
+        {
+          label: "Active Leads",
+          data: agentCounts,
+          backgroundColor: "#2563eb",
+          borderRadius: 8,
+          maxBarThickness: 60,
+        },
+      ],
+    },
+
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0,
+          },
+        },
+
+        x: {
+          grid: {
+            display: false,
+          },
+        },
+      },
+    },
+  });
+}
 
 
   }

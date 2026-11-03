@@ -20,7 +20,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 
 import { API_BASE_URL } from "@/lib/config";
 
-import { getToken } from "@/lib/auth";
+import { getToken, getUserName } from "@/lib/auth";
 
 
 
@@ -244,17 +244,9 @@ useEffect(() => {
 
   const userId = localStorage.getItem("userId") || "current-user";
 
-  const savedAgentName =
+  const savedAgentName = getUserName();
 
-    localStorage.getItem("userName") ||
-
-    localStorage.getItem("username") ||
-
-    "ISFT Team";
-
-
-
-  setAgentName(savedAgentName);
+setAgentName(savedAgentName?.trim() || "ISFT Team");
 
 
 
