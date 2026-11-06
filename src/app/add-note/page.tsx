@@ -37,6 +37,11 @@ function AddNoteContent() {
   const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+  setNote("");
+  setMessage(null);
+}, [leadIdParam]);
+
   const token = getToken();
 
   const loadLeadDetails = useCallback(async () => {
